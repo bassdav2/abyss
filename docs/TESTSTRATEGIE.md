@@ -10,7 +10,7 @@ Stand 22.09.2026. Ergebnisse gelten für den lokal geprüften Entwicklungsstand 
 4. **JavaFX-Komponenten:** `UiSmoke` löst JavaFX-KeyEvents und Button-Aktionen innerhalb der Anwendung aus. Geprüft sind Start/Seed, Bewegung, Pause/Weiter, Hilfe, Optionen, Werkstatt, Modulwahl, Routenwahl, persistierter Raumwechsel und Fortsetzen. 18 Prüfungen. Keine Betriebssystem-Eingaben.
 5. **Rendering/Audio:** `RenderSoak` zeichnet reale JavaFX-Frames und spielt automatisierte Runs. Native AudioClip-Objekte werden aus allen 16 Dateien geladen und mit Lautstärke null aufgerufen. Der 180-Sekunden-Lauf mit vierfacher Simulationszeit durchlief acht vollständige Runs ohne unbehandelte Ausnahme. Eine stumme Initialisierungsprüfung kann keine Klangqualität bestätigen.
 6. **Visuelle Layoutprüfung:** Tatsächlich gerenderte JavaFX-Screens von Titel, Vorbereitung, Archiv, Optionen, Hilfe, Pause, Route, Bergung und Gameplay. Kleinstes Fenster separat geprüft. Keine aus Konzeptbildern behaupteten Spielansichten.
-7. **Auslieferung:** Separates `.app`-Bundle mit eigener Laufzeit starten; Ressourcen, Save-Pfad und Screenshot aus dem Bundle prüfen. ZIP und Quellpaket auf vorhandene Dateien und Prüfsummen prüfen.
+7. **Auslieferung:** Separates `.app`-Bundle mit eigener Laufzeit starten; Ressourcen, Save-Pfad und Screenshot aus dem Bundle prüfen. ZIP und Quellpaket auf vorhandene Dateien und Prüfsummen prüfen. Beide Archive wurden separat entpackt: Die Mac-App startet und ihre Signatur ist gültig; das Quellprojekt baut in einem zuvor leeren Projektverzeichnis mit allen 41 Tests, Formatprüfung und Javadoc. Der vorhandene Gradle-Abhängigkeitscache wurde weiterverwendet. Details: `qa/release-check.json`.
 
 ## Reproduktion
 

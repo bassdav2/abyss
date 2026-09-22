@@ -18,7 +18,7 @@ A/D bewegen, Leertaste springen, J oder linke Maus angreifen, Shift ausweichen, 
 
 ## Nachweise
 
-41 JUnit-Testfälle/-konfigurationen bestanden. Darin 144 komplette Kampagnensimulationen mit normalen Spieleingaben; alle erreichten die Brücke. Zusätzlich 18 Prüfungen innerhalb der JavaFX-Oberfläche. Ein 180-Sekunden-Render-Probelauf mit vierfacher Simulation durchlief acht Runs ohne unbehandelte Ausnahme. Alle 16 nativen Audioclips wurden lautlos geladen und aufgerufen. App-Bundle separat gestartet; Signatur und 121 eingebettete Ressourcen per Prüfsumme kontrolliert.
+41 JUnit-Testfälle/-konfigurationen bestanden. Darin 144 komplette Kampagnensimulationen mit normalen Spieleingaben; alle erreichten die Brücke. Zusätzlich 18 Prüfungen innerhalb der JavaFX-Oberfläche. Ein 180-Sekunden-Render-Probelauf mit vierfacher Simulation durchlief acht Runs ohne unbehandelte Ausnahme. Alle 16 nativen Audioclips wurden lautlos geladen und aufgerufen. App-Bundle separat gestartet; Signatur und 121 eingebettete Ressourcen per Prüfsumme kontrolliert. Das Quell-ZIP wurde in einem frischen Verzeichnis entpackt und mit Test-, Format- und Javadoc-Prüfung vollständig neu gebaut (bestehender Gradle-Abhängigkeitscache). Auch die separat entpackte Mac-App startet erfolgreich. Archiv-Prüfsummen stehen in `release/SHA256SUMS.txt`.
 
 Die Demo und Screenshots nutzen zum Teil vorbereitete gültige QA-Spielstände. Bot-Zeiten sind keine menschlichen Spieldauern. Details: TESTSTRATEGIE.md und qa/test-summary.json.
 

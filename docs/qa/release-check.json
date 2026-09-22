@@ -1,0 +1,697 @@
+{
+  "verifiedUtc": "2026-09-22T00:12:40.902186+00:00",
+  "freshUnzipBuild": {
+    "tasks": [
+      "test",
+      "checkJavaFormat",
+      "javadoc"
+    ],
+    "allTasksExecuted": true,
+    "junit": {
+      "tests": 41,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "dependencyCache": "existing local Gradle cache reused; project build directory was absent"
+  },
+  "sourceFilesMatch": 167,
+  "sourceFilesDigest": "27c7efc2fb382a9370cdc13cf4d829a1687d14c7d8a903ad81cacae890879f0a",
+  "sourceFiles": [
+    {
+      "path": "build.gradle",
+      "sha256": "e91cd65185029347eed3083c21aaac11750a12e7f0afe92af2a42bced5bf5e93"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.jar",
+      "sha256": "b3a875ddc1f044746e1b1a55f645584505f4a10438c1afea9f15e92a7c42ec13"
+    },
+    {
+      "path": "gradle/wrapper/gradle-wrapper.properties",
+      "sha256": "a180163249c7252412ddaee1c7adcf59f6494b1183136f690fbd9a3b8aaed00e"
+    },
+    {
+      "path": "gradle.properties",
+      "sha256": "539e18784787a3f2a919c800e1d5edc7c449e0abcf2641e87dfb4ceba8827e50"
+    },
+    {
+      "path": "gradlew",
+      "sha256": "fb68debc1b1acf8ec55dc0d5e5495e1dedd0bd6b61f304bee61613eeb2bd9b92"
+    },
+    {
+      "path": "gradlew.bat",
+      "sha256": "fedad02c18e266ec094995a5751b7fe1eb6e74f66bf75db64fae2e50eb22c234"
+    },
+    {
+      "path": "run.command",
+      "sha256": "224c7e033c41bee5f8824d56989267c308da1870b8a047e2478453c303369229"
+    },
+    {
+      "path": "settings.gradle",
+      "sha256": "e68ceefefed46dfde98b707e0751d504c589e2c39903e650e3f896502a6d720c"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/Launcher.java",
+      "sha256": "8b076f009adfc06463a72041956610d241bef23a59659e758fb9c4730b743fd6"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/application/GameService.java",
+      "sha256": "1a8977573460f4cae780a130b691daad575b93876d088d3adfd63e8ce675e2d8"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/application/Profile.java",
+      "sha256": "8ae2c6124651b960e58952d6fb39d45668fbda99cb1d44b57a70045418098d0d"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/application/Settings.java",
+      "sha256": "73ae3b4f239a5a7e7cf6cf86852ddac91a4174e6f79659575fda4d01d4aa3b15"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/ActiveModule.java",
+      "sha256": "688cc1e164231924444e7cfe689b20e28808b4b7f05514c8edf5829ca47a9498"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/Actor.java",
+      "sha256": "31855cf4db2be7b927c8ad336f3c33596e9f7ef0e7816235ee06c5b4e4f09fd8"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/Bounds.java",
+      "sha256": "d868e55f23eed9d7c470de34658b177783446d9294a9acd0dfdedfb551c25f13"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/Enemy.java",
+      "sha256": "461e2dbe6ad4379c2a4ea382588b7d11d5c7056772359d61c45168afda6bccbb"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/EnemyAi.java",
+      "sha256": "24e64181ab2bb1eaa16fde0b2e447e344c107f529783a1db155aa7c99d7ab6c2"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/EnemyKind.java",
+      "sha256": "f40c557e8f6cb44ffb618eee7c762a8fdfd5916fb74950f058a2080ac4b0249b"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/GameEvent.java",
+      "sha256": "5aba2badf9acdcac137d1aa3859c388c1eb5f9381e26a3a636ed6ace7fadf229"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/GameRun.java",
+      "sha256": "f2291901870b471fd12dd43bb2551f93812b52ba1368a00ce8264767e7a000dd"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/Hazard.java",
+      "sha256": "046db2371276a915962aec348b81b2171e7c7926408263a87f3899f739bd6bd2"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/InputFrame.java",
+      "sha256": "25789e1eda19a194f70735e0ab8da81904f840606a205c2b1476d26ff9936aa7"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/Player.java",
+      "sha256": "5a9008b86efb0dbd7f7f079b203198798bf5fbfe0b7bbea284b180a35c4e03f9"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/Projectile.java",
+      "sha256": "652ea94ed7ed727627b21a8c2a65c09ff8be55bb7680cad46f1484f7b495b442"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/RoomGenerator.java",
+      "sha256": "43e37d8710af46cf12fad7be1c3c81dee29f9257fd658fb49f513effb8977bb9"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/RoomPlan.java",
+      "sha256": "a484d4f02d02fab053b5a4590a612d4a22f99cb705ce95e73805897eda56c7cb"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/RunCheckpoint.java",
+      "sha256": "642b3ee71f922f4a7316fcc4134d27c652c9fc4c7392403863099d051045cdc7"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/domain/Upgrade.java",
+      "sha256": "51e579fd49775d6589ae3baa162a6277eae3c7d33e82f1d0638531d9e3b8575d"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/infrastructure/AudioSystem.java",
+      "sha256": "1e616f6f320de17487a0ff06db271b4bf11bfb08d642d504e9065dc67db66255"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/infrastructure/FileGameRepository.java",
+      "sha256": "043eaf6fbd6b11953368d1ec6bc01552c1ea7a5b8279b7f9329416722b7946cc"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/ports/GameRepository.java",
+      "sha256": "292579175db56c6b1fa57b52084426a274ed9418ebeb417b45517cfddf04e258"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/ui/AbyssApplication.java",
+      "sha256": "c8d21bb77f465beae699d32f3718dff513964b86f6278fa7e0bf8eb4139e2740"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/ui/AssetCatalog.java",
+      "sha256": "e70b176034a0bd056987a872a33329e6640f26bb049982956644c28bb13ecef5"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/ui/GameRenderer.java",
+      "sha256": "9d5cb008bc98d1ee6577a3fa6b189c836812a7377190f16961cb60c1734ccbd2"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/ui/GameWindow.java",
+      "sha256": "904e2de1f47e333f9f755a07bae8721b0f6e8ce142a992917afe717e3a0b7f30"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/ui/InputController.java",
+      "sha256": "1327468c52914528ef389ae602b00b1c959a539d71ca7450bd08f0b4159e9e9e"
+    },
+    {
+      "path": "src/main/java/ch/zhaw/abyss/ui/ParticleField.java",
+      "sha256": "15c5abebd97c12ca4f647ccc0ab44d9a1c15ea4d7b1d41363834f1c4a1cefebd"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/attack-00.png",
+      "sha256": "3ff27fb4f363248ba80942040f99d5bd386bdf8362fbae1d29c4ea761172ae1a"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/attack-01.png",
+      "sha256": "3ff27fb4f363248ba80942040f99d5bd386bdf8362fbae1d29c4ea761172ae1a"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/attack-02.png",
+      "sha256": "6790186cf7674548ecd9b843dc8cc0a06634b0d351391ca2f476199cf5e5e29c"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/attack-03.png",
+      "sha256": "35fd00dae1f6e4716c8c77778af75e477e85c7b34331c3dd534b112984a4bc2d"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/hurt-00.png",
+      "sha256": "c1fdac29058e0ccb5090f4785b04ad250f8554275de1dd5e40a143f9df49a2f2"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/hurt-01.png",
+      "sha256": "b1f42ca8f59e768ce2a61802ba6c2491ab2356576e7287b22cb2f54c9e2bcd1c"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/idle-00.png",
+      "sha256": "1421c01d6bf876d790cb728b015ec284dfb45ae5dfbaaeed782a73507b4ffd2d"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/idle-01.png",
+      "sha256": "005341cf80b4305deac238e5193704820894464feb702f246afb462d87f54d17"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/idle-02.png",
+      "sha256": "1fd1ca96252b04d71a11a319326344daa9acdce9e1829b4a9f0694970e2faf2d"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/idle-03.png",
+      "sha256": "3cc37c1d99f56be967bad6fc689f9cf239503a064598e862fd9c8457f19fa99a"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/walk-00.png",
+      "sha256": "89d9fbcf977a1896c9b10e2d2ac43e08e2087af27af33917ee512ab13e858e5f"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/walk-01.png",
+      "sha256": "be26c12e6f6105a2709ada115a17e0e32924832f2d42dae1d74949192bf38eff"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/walk-02.png",
+      "sha256": "182c672fc5cfc21d60eb2c9a833adcd1ceadd5bb5c29e8f99cf46af1b624585a"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/walk-03.png",
+      "sha256": "195652494ca366cf01b0796ccf96f857364da667d520fc01d37225b65903913d"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/walk-04.png",
+      "sha256": "c5085d75237448e751df414ac4ffbb738594dcb59b03725abdeb8f50affea1fb"
+    },
+    {
+      "path": "src/main/resources/art/actors/captain/walk-05.png",
+      "sha256": "419b6eab715fe971306b3f9dc36bb98a1cae41c09ca0282f84a07247f2a878b8"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/attack-00.png",
+      "sha256": "9952005d6db2500d43c1e30b9fb99788a57f7fa72fb3dcf6c5e3001466951d3f"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/attack-01.png",
+      "sha256": "ece3460e48666ffa711d294c20c1458fb8ed108ff6aa5c8647e395e317b573cd"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/attack-02.png",
+      "sha256": "3dfe3628b0c27bcedf6f170053694dd30304d48fdaef319a5f4a31f73629ddcc"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/attack-03.png",
+      "sha256": "990c7be522d93471f220bbf9e8fd0ba24ebc1a3ddde4c75591785070a28e630a"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/hurt-00.png",
+      "sha256": "d0154038ba0314e9aa11c09197c7921d8d2a46fbc6deb3254adc5d350a3d44ed"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/hurt-01.png",
+      "sha256": "d0154038ba0314e9aa11c09197c7921d8d2a46fbc6deb3254adc5d350a3d44ed"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/idle-00.png",
+      "sha256": "a518581cfd0c01592aef9e56f14c59310dfb4968c88fef7ba3c80183210f71d9"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/idle-01.png",
+      "sha256": "a49938c45f02368c2776cda6637f5ad7099f9e0e3cadc0a05470d7c0be7bb46f"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/idle-02.png",
+      "sha256": "2f5c409f3526dccd10f6ef9a673bf5f2cf92681f86fcd74a792618ebfcff652d"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/idle-03.png",
+      "sha256": "1b2c8a6a91b3e257d978d41b9eaf921927b6b4cced57406efb3f8f33050e5f2b"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/walk-00.png",
+      "sha256": "e8b98a6e4d8ea3007c60ec304639d11e46b4b4f28350d8e9dbbb3c30a98e3f28"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/walk-01.png",
+      "sha256": "65433d098dbadd10de10f9dd4143427b0b0a9911d79b83f5462e31279919f2f4"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/walk-02.png",
+      "sha256": "b25a7eecf1382d3f77727a682897e318f480991f78f17ed554d41a6ff6da2919"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/walk-03.png",
+      "sha256": "f6bf139306f0703adb0b2f4a9e0ec108622c8bb960f2f0431660dc11009ae2e0"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/walk-04.png",
+      "sha256": "04a9477833ec73e585d410e5b12e1d8652314b96884e515a1c81bb50ec83369e"
+    },
+    {
+      "path": "src/main/resources/art/actors/drone/walk-05.png",
+      "sha256": "a9c7cf978022c81caf30509b94fe0aa23d345316cc1760ab4624ead8aa74c562"
+    },
+    {
+      "path": "src/main/resources/art/actors/manifest.json",
+      "sha256": "64cd95d06258388e619fd10bee2f13af20d4d60aac492c99c72e92523b6309e8"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/attack-00.png",
+      "sha256": "ee75490b46e0b0e39ddb06dfd2464aae1a56dd2785929a4292fa0948708839b3"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/attack-01.png",
+      "sha256": "6b59f90aabddfdb2c931b7b99c11f5793f21e05498d56696cd82133ddc9bcf19"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/attack-02.png",
+      "sha256": "1a749bf6b2310c0797c846083bf5c565397f791f704585b43a76f50b0001620a"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/attack-03.png",
+      "sha256": "00d8dd1879d5c8f1fc3cd4d90f7bed14bbd0879e8fe0d892949ad9fecfc6459a"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/attack-04.png",
+      "sha256": "8a03ea8a7db12cdd25437c3e5cf1ed326d8f6be728a6c1eb15672d686413b5ca"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/attack-05.png",
+      "sha256": "43fa67964eee522eac081d8ea23011c63bebcd87acf7a0c1e760acc0423bd078"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/dash-00.png",
+      "sha256": "0ae77345e52a3841f2faa724c9f45c5729615283f4a6e281300585a8f26a0461"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/dash-01.png",
+      "sha256": "b55bae780a6956f5a50f3e84c6de23c6b00713b04e2847135647ecc0bdf95c85"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/hurt-00.png",
+      "sha256": "f37015fa83435698e69789237e73d0d26e9624eef2c67a34552b9f9062e1b517"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/hurt-01.png",
+      "sha256": "067670a9904e632d51acebc2f9871016fc492cc36a5148955287cf5a804adbe2"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/idle-00.png",
+      "sha256": "872336badbdf6f25e4508371556ccd0a07badff2370bd54608071f264256c8bf"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/idle-01.png",
+      "sha256": "45362de9faa7ca17c266c611672d352621bbc2e77dbada8549d606bfb3db866a"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/idle-02.png",
+      "sha256": "679f34f72a3d22be03dce2f01cccd32e086d76dc77f047314106bb519f72e9c1"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/idle-03.png",
+      "sha256": "78cfdba84c3d123eaec27189aaf88abc78ea879d903e17e3fb052f4a4f4ca376"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-00.png",
+      "sha256": "36bf5fdeb654f41f7801723345889ffdab1375ec5732901da17887aa39185d5a"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-01.png",
+      "sha256": "94077f80078c981a4174a1099f30d877aeea3ca7514974d228b8d41bd56d6e0b"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-02.png",
+      "sha256": "77805943adfb777226f77014a6e7390324f4817f8eee5b75b0e3f4e87205d42f"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-03.png",
+      "sha256": "294b7698e86acdc539fce7f7fefae22978a51a5f3ff024c94a46ecd139bfe267"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-04.png",
+      "sha256": "c4d9372f91afcf762b6a4ed1351ea9f2ea95e3894368a3f3225e194e7ef85042"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-05.png",
+      "sha256": "614caa2e2912d8c98cabca1b2e07c1a3acb4a5e304919469b15a1d14c4f1aef9"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-06.png",
+      "sha256": "320d0a10204dfa8ebeb07e3c3d080084c11a6a0567ed27aa10a7173a36f1c011"
+    },
+    {
+      "path": "src/main/resources/art/actors/player/walk-07.png",
+      "sha256": "a9f5b01a629d869cd395e0227a5a09c5d7bbfe0c9f5c8bb29d8e54fcff797d68"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/attack-00.png",
+      "sha256": "43c00b602f2ed04a061369c50d4dab2ded48c42307674d32eb979a523e97a424"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/attack-01.png",
+      "sha256": "0d61c675c581e314cdf6cf685e4f8386c2ae360470db19f954433790480e6ced"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/attack-02.png",
+      "sha256": "0d61c675c581e314cdf6cf685e4f8386c2ae360470db19f954433790480e6ced"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/attack-03.png",
+      "sha256": "806b22db2ddd6a7f229939e6521b65a56c476d01483e0d28dee0ec1b80dbe1d0"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/hurt-00.png",
+      "sha256": "1ed224c1d6c9fe2583467ba35befd1fce448b6c234c049fa0d771fcabf6d17fa"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/hurt-01.png",
+      "sha256": "4d4a0a1a4dcd52688534177802bd5487c79afd35d425aabd8966fd084cf6b136"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/idle-00.png",
+      "sha256": "2c8eb92dd352be13bd1e98663bffded692a90383471d91bb5d34496ed095f4a7"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/idle-01.png",
+      "sha256": "0202843575aa0f18deed646ff2639b0176b16350e7a7f2a9480cd9610f48312f"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/idle-02.png",
+      "sha256": "a8557e72a093e19a5f322de3f73a5af234aa08b8cb9b3ccf34f818672f89cff0"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/idle-03.png",
+      "sha256": "128a4d744da61851e524411c74d8c6058cd0068cbdcd2e81c8c3af1dc7a3ecf2"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/walk-00.png",
+      "sha256": "f1631e6b2079a9905f586feb77114c2c811e8e3d0cdfb7a7560768b6073a575d"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/walk-01.png",
+      "sha256": "c70b4b9664cf1aba930e454580d29b638b9228b4a9b3900cbad349004d77d993"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/walk-02.png",
+      "sha256": "c5b59161a6aaa98a2580fbd0f7d4085545be719abc944d5486dfe726b3bdbe35"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/walk-03.png",
+      "sha256": "d7e24ffedf48cf4d7146bc329b4a7d283b97b5b970d5f0cf5fe37a8b12af5c58"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/walk-04.png",
+      "sha256": "89b8792d73a5bd12404747b862f1a76144d28721b588f4e632b8149248ed3eb0"
+    },
+    {
+      "path": "src/main/resources/art/actors/scuttler/walk-05.png",
+      "sha256": "0469dab1279be8718399f2ca8e73b6d5656568334a28bc7e4d9c6df8585f72a5"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/attack-00.png",
+      "sha256": "8fff316ba9b97c1e7abe39ccfb4256698405cce056911ee44883226e329050a3"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/attack-01.png",
+      "sha256": "dc44aa6ff2664236c8b781c56ff6231cc821406aff12c75c7efae036fdaea293"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/attack-02.png",
+      "sha256": "a85da9af909023d055166079c10b36890743512a03be12e876b299057ffe30f2"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/attack-03.png",
+      "sha256": "e016c1f750fef824c89d7e6855aaaa604434948853256f6c8fea2aae861931f6"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/hurt-00.png",
+      "sha256": "6d7c17324518d4d5927f2b8d185f34180b606f3f446587a8304286f74b1a2c7f"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/hurt-01.png",
+      "sha256": "a9f7619e5593c5a70817aec77444417aa891207071ed2d5e0a3d8913e25e29f3"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/idle-00.png",
+      "sha256": "8f6b665df9bc03dcfd3780177d017e71a19a427147bcbeb69944a8ff09330567"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/idle-01.png",
+      "sha256": "6f002e99209a48e1d82dba42fb8037ea9d1b2207f16a2d7c073491490e098847"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/idle-02.png",
+      "sha256": "caa8349576b822cc5e879ffb29a5f22bdd851342f762b49c50241251e275eb4f"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/idle-03.png",
+      "sha256": "caa8349576b822cc5e879ffb29a5f22bdd851342f762b49c50241251e275eb4f"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/walk-00.png",
+      "sha256": "c5f6efe3fb598a2ce6fb8ad63401b1a69f69455c0560573d39ed92e7664f6844"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/walk-01.png",
+      "sha256": "70235ea7fcc3dc1220e9e4cc6c654423818976f9115c59750775acd1c1262df6"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/walk-02.png",
+      "sha256": "5402169e7b96c58251050eb793eb5d508621ae7572f7374b92f7443120ef8481"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/walk-03.png",
+      "sha256": "acf47af69d9f6bdfa0978453371a86a5d5957fc4a2f45020d6572d48fb59ccd2"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/walk-04.png",
+      "sha256": "189f80d64dd3ae4e20c3d061f1917b6b8717cffc6a7c68b8352bda8b9eb6624b"
+    },
+    {
+      "path": "src/main/resources/art/actors/sentinel/walk-05.png",
+      "sha256": "e1fd7c2b2cbdcba252ee6433cfc4eb8b010f05b692878391212c572a390e1076"
+    },
+    {
+      "path": "src/main/resources/art/rooms/aft.png",
+      "sha256": "43d29be5b90f2689d8cf902f0d9049abd8e114ad845545327d6e5ddf46260a42"
+    },
+    {
+      "path": "src/main/resources/art/rooms/cargo.png",
+      "sha256": "f9ccbe5ca0b9f26696e9c3b5c55253717a8f4b0a8b4313642a827c0b93015ae2"
+    },
+    {
+      "path": "src/main/resources/art/rooms/command.png",
+      "sha256": "5024d7aca46b1747230c06c73269697a23d7faa9028672c41f75474574981c2b"
+    },
+    {
+      "path": "src/main/resources/art/rooms/commandhall.png",
+      "sha256": "40614ee45fb279f418d837c71c856fd02f7030c4327f6bb9f3cb919edb4353e2"
+    },
+    {
+      "path": "src/main/resources/art/rooms/cooling.png",
+      "sha256": "63d2412747e746f48f521d919bb27c2791ef82a3414dad68dad4fac6fdec8c9a"
+    },
+    {
+      "path": "src/main/resources/art/rooms/engine.png",
+      "sha256": "efa0a9fac0bf4fc275cbc6d418d6c52ad7415a58a853cc05b5fd61779c22872a"
+    },
+    {
+      "path": "src/main/resources/art/rooms/mess.png",
+      "sha256": "ae2b593b95475b7a74f0a9679b690e2bdaca4ff3c3cbaf4f03e817d5cda3febc"
+    },
+    {
+      "path": "src/main/resources/art/rooms/observatory.png",
+      "sha256": "99364cdb9b8d19a7c6db9b7146fa7339839569f51146103f9acf8d3b86baf4a9"
+    },
+    {
+      "path": "src/main/resources/art/rooms/reactor.png",
+      "sha256": "b073fff9c375075cbf32e79c39e68d9efb1273f0975bb1f35bc3ce3e5e262813"
+    },
+    {
+      "path": "src/main/resources/art/rooms/security.png",
+      "sha256": "d569c64ea8f23a7704cad62ea7c12feac1e629ab75f0eecbfac2d738adfde661"
+    },
+    {
+      "path": "src/main/resources/art/rooms/workshop.png",
+      "sha256": "01c4ef85a6326f5a607b8736c0902c9c17673b8fb08ddda4cd50dcf22f392a88"
+    },
+    {
+      "path": "src/main/resources/art/title-submarine.png",
+      "sha256": "90dbfa0862865dabde310f0776dfc03edbbfd8780d38b98bbf02bc56353a5a10"
+    },
+    {
+      "path": "src/main/resources/audio/ambience.wav",
+      "sha256": "ff035bd8dc97d1fc89b4d52a9abb68df268d046805d9b14533d64a1cf8289f53"
+    },
+    {
+      "path": "src/main/resources/audio/clear.wav",
+      "sha256": "d03cba5cc1081b52967cfe991e18cb27033ecac8a7e885107fd9e62802a91f82"
+    },
+    {
+      "path": "src/main/resources/audio/click.wav",
+      "sha256": "57bb05ceaa320d508bd411c82c4379cb395970751cbbf7f346a434174d40b3c8"
+    },
+    {
+      "path": "src/main/resources/audio/dash.wav",
+      "sha256": "852846d533116483589b1a1bf5dc417d20b7d66e456c523b26464347116e7c3f"
+    },
+    {
+      "path": "src/main/resources/audio/defeat.wav",
+      "sha256": "bcfa7c9e198134af76dc488b2b8627a18631959f2a81f597b4c7ac4dedb8185b"
+    },
+    {
+      "path": "src/main/resources/audio/down.wav",
+      "sha256": "6b26af0ed3c18674f0f6006d8f8a9e9d7b9c2dce4e720f69b0a63898e0b6daa8"
+    },
+    {
+      "path": "src/main/resources/audio/hit.wav",
+      "sha256": "52bf80ec5d347d8ce6ee7b62810c538b3661438554568d811e9a38c2dd876dba"
+    },
+    {
+      "path": "src/main/resources/audio/hurt.wav",
+      "sha256": "9e03f752964d9eff5c7845133a8951f05bbafa133ffb5d6f96f3edf4803a2ece"
+    },
+    {
+      "path": "src/main/resources/audio/jump.wav",
+      "sha256": "75f70fb9e50181df1bccc7098570231d909889a082b5d768d0ccd70f644db14f"
+    },
+    {
+      "path": "src/main/resources/audio/music.wav",
+      "sha256": "5b303244f0304e0c52e8f6aa072a06533fd51e6065589408ecadd62565660cf6"
+    },
+    {
+      "path": "src/main/resources/audio/pulse.wav",
+      "sha256": "7e5c30fd73a55b5223923ba9934cfce6456028220e558b8e54383510e60c0413"
+    },
+    {
+      "path": "src/main/resources/audio/shot.wav",
+      "sha256": "0c80c5a7c0143d47b3839243fe419385105fecd13594954121b299781935bf60"
+    },
+    {
+      "path": "src/main/resources/audio/swing.wav",
+      "sha256": "60f7bbee0e1b55c40bea7571320e95ed787d7220ec96ccdbcb81954722e449ba"
+    },
+    {
+      "path": "src/main/resources/audio/upgrade.wav",
+      "sha256": "3118d5a3546436660683a5216481c043a1c124c8bb57748484db38621e56863f"
+    },
+    {
+      "path": "src/main/resources/audio/victory.wav",
+      "sha256": "1b139d4646249b8156671220afb7ed585e405ec5db431c5006b7291cc17cb611"
+    },
+    {
+      "path": "src/main/resources/audio/warning.wav",
+      "sha256": "57668622b7a31ff360d262fc96937495cad0a62b76121a43fb6c94da9a99681a"
+    },
+    {
+      "path": "src/main/resources/fonts/Barlow-Medium.ttf",
+      "sha256": "f8906f762cb73dca441da034bc363b2d8e2e68bc10d5c05e58717646c20cc4b4"
+    },
+    {
+      "path": "src/main/resources/fonts/Barlow-Regular.ttf",
+      "sha256": "95aa02c7c43096e0dd44d787ba6216864a67157e402adab59b35572e0c1577ea"
+    },
+    {
+      "path": "src/main/resources/fonts/BarlowCondensed-SemiBold.ttf",
+      "sha256": "7b619d14bc2327509a9ef32b0890f709626f7ecc9ff61191c2a4314c5499d2d9"
+    },
+    {
+      "path": "src/main/resources/fonts/barlow-OFL.txt",
+      "sha256": "186d750eb496a4c17a76385f82be6aea2ac1cf2de074a811d63786cf374ea73f"
+    },
+    {
+      "path": "src/main/resources/fonts/barlowcondensed-OFL.txt",
+      "sha256": "186d750eb496a4c17a76385f82be6aea2ac1cf2de074a811d63786cf374ea73f"
+    },
+    {
+      "path": "src/main/resources/ui.css",
+      "sha256": "57a2640758828607d6036e95807c4ada183a053570cb626fa849d44487f804b1"
+    },
+    {
+      "path": "src/qa/java/ch/zhaw/abyss/qa/CampaignPilot.java",
+      "sha256": "f10862a0ba062940032e88cd7313e90ba85829082f2187f9fee1e0ce6a9522cb"
+    },
+    {
+      "path": "src/qa/java/ch/zhaw/abyss/qa/RenderDemo.java",
+      "sha256": "f29c7794d3ee5e4e748e6d852a77511b58998170ee43a4cfcb1d2323d1ee63fd"
+    },
+    {
+      "path": "src/qa/java/ch/zhaw/abyss/qa/RenderSoak.java",
+      "sha256": "881f69019746e157299de434816f07c1322f546feaf4130ca8f38cf2ed38726a"
+    },
+    {
+      "path": "src/qa/java/ch/zhaw/abyss/qa/UiSmoke.java",
+      "sha256": "9032e78a79e30a7ede81872fd731f3c2f09950c4b75907bc55c8d8da29092cbb"
+    },
+    {
+      "path": "src/test/java/ch/zhaw/abyss/application/GameServiceTest.java",
+      "sha256": "5a340ab763064934279a370aa39e29fcc4e6c98b46f817c177fa5282b7ccb5ab"
+    },
+    {
+      "path": "src/test/java/ch/zhaw/abyss/domain/CampaignSimulationTest.java",
+      "sha256": "0844c2a78e386e56375f4de69b241cd751d98e93432baf9576b00d5f091d3256"
+    },
+    {
+      "path": "src/test/java/ch/zhaw/abyss/domain/GameRunTest.java",
+      "sha256": "511ebcd38ce19378949325f59e39b3a7455e4309d02e9a38e34412104088ed87"
+    },
+    {
+      "path": "src/test/java/ch/zhaw/abyss/infrastructure/FileGameRepositoryTest.java",
+      "sha256": "2d3d48e9399d751421c6a426d5da54193651dcc180bb7dad6841bac8e7241744"
+    },
+    {
+      "path": "src/test/java/ch/zhaw/abyss/ui/InputControllerTest.java",
+      "sha256": "90dc802a05ef0f48c064b85b9d3e286d7c20be6b6b8c82e654ed6afb71ee05c2"
+    }
+  ],
+  "unpackedMacApp": {
+    "nativeLaunch": true,
+    "capturedFrames": 349,
+    "bundleJarMatchesOriginal": true,
+    "adHocSignatureVerified": true
+  },
+  "scope": "Local Apple Silicon Mac only. No human input or listening test."
+}
