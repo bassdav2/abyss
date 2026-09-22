@@ -26,6 +26,8 @@ Detaillierte Spielregeln und Grafikquellen stehen in EXPANSION.md. Die Spielspur
 
 Das neue App-Bundle wurde mit eigener Laufzeit gestartet; Signatur und 160 eingebettete Ressourcen wurden kontrolliert. Die Demo und Screenshots verwenden teilweise vorbereitete gültige QA-Spielstände. Bot-Zeiten sind keine menschlichen Spieldauern. Details und Grenzen: TESTSTRATEGIE.md, qa/test-summary.json und qa/release-check.json.
 
+Beide Version-0.2-ZIPs wurden separat entpackt. Das Quellprojekt bestand in einem frischen Projektverzeichnis alle 53 Tests, Formatprüfung und Javadoc; sieben Aufgaben wurden neu ausgeführt, mit bestehendem Gradle-Abhängigkeitscache. 212 Quell-/Build-/Ressourcendateien stimmen per SHA-256 überein. Die entpackte App startet mit eigener Laufzeit und gültiger ad-hoc Signatur. Der Test überschreibt keinen normalen Spielstand.
+
 ## Jetzt selbst spielen
 
 Der Desktop war gesperrt; deshalb stehen ein echter Maus-/Tastaturtest am Betriebssystem und die Hörprüfung noch aus. Besonders hilfreich sind zehn Minuten tatsächliches Spielen: Sind Dash, Fund, Q-Heilung und Schott verständlich? Sind die Bossvorwarnungen gut lesbar? Stimmen die Soundpegel? Automatische Tests beantworten diese Fragen nicht.
