@@ -22,17 +22,17 @@ class GameRunTest {
         for (long seed = 0; seed < 1000; seed++) {
             var first = new RoomGenerator(seed, 0);
             var second = new RoomGenerator(seed, 0);
-            for (int depth = 0; depth < 12; depth++) {
+            for (int depth = 0; depth < RoomGenerator.ROOM_COUNT; depth++) {
                 var choices = first.choices(depth);
                 assertEquals(choices, second.choices(depth));
                 assertFalse(choices.isEmpty());
                 for (var choice : choices) {
                     assertEquals(depth, choice.depth());
-                    assertEquals(depth / 4, choice.sector());
+                    assertEquals(depth / 6, choice.sector());
                     assertTrue(choice.enemies().size() <= 5);
                 }
             }
-            assertEquals(RoomPlan.Kind.BRIDGE, first.choices(11).getFirst().kind());
+            assertEquals(RoomPlan.Kind.BRIDGE, first.choices(17).getFirst().kind());
         }
     }
 
@@ -158,11 +158,11 @@ class GameRunTest {
     }
 
     @Test
-    void allTwelveRoomsEndInVictoryAndNextCyclePreservesBuild() {
+    void allEighteenRoomsEndInVictoryAndNextCyclePreservesBuild() {
         var run = run();
-        for (int depth = 0; depth < 12; depth++) {
+        for (int depth = 0; depth < RoomGenerator.ROOM_COUNT; depth++) {
             clear(run);
-            if (depth < 11) {
+            if (depth < RoomGenerator.ROOM_COUNT - 1) {
                 if (run.rewardAvailable() && !run.rewardOffers().isEmpty())
                     run.claimReward(run.rewardOffers().getFirst());
                 assertTrue(run.chooseNextRoom(0));
@@ -180,7 +180,7 @@ class GameRunTest {
     @Test
     void upgradeCapsAndRepairRulesPreventUnlimitedFarming() {
         var run = run();
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 5; i++) {
             clear(run);
             assertTrue(run.chooseNextRoom(0));
         }
@@ -312,6 +312,6 @@ class GameRunTest {
                         0,
                         java.util.List.of(1, 0));
         assertThrows(IllegalArgumentException.class, () -> GameRun.restore(impossible));
-        assertThrows(IllegalArgumentException.class, () -> new RoomGenerator(1, 0).room(3, 1));
+        assertThrows(IllegalArgumentException.class, () -> new RoomGenerator(1, 0).room(5, 1));
     }
 }

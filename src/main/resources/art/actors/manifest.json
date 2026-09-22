@@ -36,6 +36,18 @@
       "walk": 6,
       "attack": 4,
       "hurt": 2
+    },
+    "warden": {
+      "idle": 4,
+      "walk": 6,
+      "attack": 4,
+      "hurt": 2
+    },
+    "reactor": {
+      "idle": 4,
+      "walk": 6,
+      "attack": 4,
+      "hurt": 2
     }
   }
 }

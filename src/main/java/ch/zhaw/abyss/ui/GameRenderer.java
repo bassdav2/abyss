@@ -8,7 +8,9 @@ import ch.zhaw.abyss.domain.GameEvent;
 import ch.zhaw.abyss.domain.GameRun;
 import ch.zhaw.abyss.domain.Hazard;
 import ch.zhaw.abyss.domain.Projectile;
+import ch.zhaw.abyss.domain.RoomGenerator;
 import ch.zhaw.abyss.domain.RoomPlan;
+import ch.zhaw.abyss.domain.SupplyCrate;
 import ch.zhaw.abyss.domain.Upgrade;
 
 import javafx.scene.canvas.Canvas;
@@ -30,6 +32,7 @@ public final class GameRenderer {
     private final Canvas canvas;
     private final AssetCatalog assets;
     private final ParticleField particles = new ParticleField();
+    private final EnvironmentRenderer environment = new EnvironmentRenderer();
     private double clock, shake, pulseTime, pulseX, pulseY;
     private String toast = "";
     private double toastTime;
@@ -74,7 +77,8 @@ public final class GameRenderer {
         switch (event.type()) {
             case UPGRADE -> toast(event.text() + " installiert");
             case HEAL -> toast("Reserven aufgefüllt");
-            case BOSS_PHASE -> toast("DER LOTSE · Notfallprotokoll aktiviert");
+            case BOSS_PHASE -> toast(event.text().toUpperCase() + " · Notfallprotokoll");
+            case SUPPLY -> toast(event.text());
             case REINFORCEMENTS -> toast("VERSTÄRKUNG · Nächste Patrouille trifft ein");
             default -> {}
         }
@@ -95,8 +99,16 @@ public final class GameRenderer {
         if (shake > 0 && !settings.reducedMotion())
             g.translate(Math.sin(clock * 143) * shake, Math.cos(clock * 167) * shake * .5);
         var background = assets.room(run.room());
-        if (background != null) g.drawImage(background, 0, 0, 1600, 900);
+        if (background != null)
+            g.drawImage(
+                    background,
+                    -9 - environment.parallax(run, settings.reducedMotion()),
+                    0,
+                    1618,
+                    900);
         ambient(g, run.room().sector(), settings);
+        environment.behind(g, run, assets.roomKey(run.room()), clock, settings.reducedMotion());
+        for (SupplyCrate crate : run.crates()) drawCrate(g, crate);
         drawDoor(g, run);
         for (Hazard hazard : run.hazards())
             drawHazard(g, hazard, run.phase() == GameRun.Phase.RUNNING, settings.reducedMotion());
@@ -114,6 +126,7 @@ public final class GameRenderer {
             g.setLineWidth(4);
             g.strokeOval(pulseX - r, pulseY - r, r * 2, r * 2);
         }
+        environment.foreground(g, run, assets.roomKey(run.room()), clock, settings.reducedMotion());
         g.restore();
         vignette(g);
         if (chrome) {
@@ -160,7 +173,7 @@ public final class GameRenderer {
         text(g, "VOM HECK BIS ZUR BRÜCKE.", 79, 291, 31, AMBER, false);
         text(
                 g,
-                "Ein Boot. Zwölf Räume. Dein nächster Versuch.",
+                "Ein Boot. Achtzehn Räume. Dein nächster Versuch.",
                 80,
                 333,
                 22,
@@ -237,7 +250,7 @@ public final class GameRenderer {
 
     private void drawReward(GraphicsContext g, GameRun run) {
         boolean workshop = run.room().kind() == RoomPlan.Kind.WORKSHOP;
-        if (!run.rewardAvailable() && (!workshop || run.repaired())) return;
+        if (!run.rewardAvailable() && !workshop) return;
         double x = 800, y = GameRun.FLOOR;
         g.setFill(Color.rgb(10, 20, 22, .6));
         g.fillOval(x - 60, y - 5, 120, 16);
@@ -259,17 +272,19 @@ public final class GameRenderer {
         g.fillRect(x - 12, y - 32, 24, 5);
         g.setFill(Color.rgb(128, 224, 220, .12 + .06 * Math.sin(clock * 3)));
         g.fillOval(x - 60, y - 110, 120, 125);
-        text(
-                g,
-                workshop
-                        ? "WERKSTATT"
-                        : run.room().kind() == RoomPlan.Kind.CACHE ? "VORRÄTE" : "MODULFUND",
-                x,
-                y - 91,
-                19,
-                CYAN,
-                true);
-        if (Math.abs(run.player().x() - 800) < 165)
+        boolean nearby = Math.abs(run.player().x() - 800) < 165;
+        if (!nearby)
+            text(
+                    g,
+                    workshop
+                            ? "WERKSTATT"
+                            : run.room().kind() == RoomPlan.Kind.CACHE ? "VORRÄTE" : "MODULFUND",
+                    x,
+                    y - 91,
+                    19,
+                    CYAN,
+                    true);
+        if (nearby)
             prompt(
                     g,
                     "E",
@@ -366,10 +381,13 @@ public final class GameRenderer {
                                                     : pose.equals("idle") ? 4 : 12))
                             % Math.max(1, count);
         var sprite = assets.actor(key, pose, Math.max(0, frame));
-        double size = key.equals("captain") ? 235 : key.equals("sentinel") ? 177 : 155;
+        double size =
+                (key.equals("captain") || key.equals("warden") || key.equals("reactor"))
+                        ? 245
+                        : key.equals("sentinel") ? 177 : 155;
         double anchor = key.equals("drone") ? .68 : .944;
         g.setFill(Color.rgb(0, 0, 0, .40));
-        double shadow = key.equals("captain") ? 140 : 65;
+        double shadow = (actor instanceof Enemy e && e.kind().boss()) ? 145 : 65;
         g.fillOval(actor.x() - shadow / 2, GameRun.FLOOR - 7, shadow, 15);
         g.save();
         if (actor == run.player()
@@ -385,7 +403,7 @@ public final class GameRenderer {
         }
         g.restore();
         if (actor instanceof Enemy enemy
-                && enemy.kind() != EnemyKind.CAPTAIN
+                && !enemy.kind().boss()
                 && actor.health() < actor.maxHealth()) {
             double y = actor.y() - actor.height() - 18;
             g.setFill(Color.rgb(0, 0, 0, .7));
@@ -393,7 +411,7 @@ public final class GameRenderer {
             g.setFill(Color.web("#d69e66"));
             g.fillRoundRect(actor.x() - 30, y, 60 * actor.health() / actor.maxHealth(), 5, 2, 2);
         }
-        if (actor instanceof Enemy enemy && enemy.kind() == EnemyKind.CAPTAIN) {
+        if (actor instanceof Enemy enemy && enemy.kind().boss()) {
             g.setStroke(
                     enemy.armored() ? Color.rgb(117, 215, 237, .38) : Color.rgb(255, 205, 111, .8));
             g.setLineWidth(enemy.armored() ? 2 : 4);
@@ -406,20 +424,16 @@ public final class GameRenderer {
         double alpha = .18 + .09 * Math.sin(clock * 26);
         g.setStroke(Color.rgb(255, 126, 71, .8));
         g.setLineWidth(2);
-        if (e.kind() == EnemyKind.DRONE
-                || e.kind() == EnemyKind.CAPTAIN && e.attackPattern() == 1) {
+        if (e.kind() == EnemyKind.DRONE || e.kind().boss() && e.attackPattern() == 1) {
             g.setLineDashes(6, 8);
             g.strokeLine(e.x(), e.y() - e.height() * .55, e.targetX(), e.targetY());
             g.setLineDashes();
             g.strokeOval(e.targetX() - 17, e.targetY() - 17, 34, 34);
         } else {
-            double range =
-                    e.kind() == EnemyKind.CAPTAIN
-                            ? 330
-                            : e.kind() == EnemyKind.SENTINEL ? 180 : 290;
+            double range = e.kind().boss() ? 330 : e.kind() == EnemyKind.SENTINEL ? 180 : 290;
             g.setFill(Color.rgb(255, 111, 61, alpha));
             double x = e.facing() > 0 ? e.x() : e.x() - range;
-            if (e.kind() == EnemyKind.CAPTAIN && e.attackPattern() == 0) {
+            if (e.kind().boss() && e.attackPattern() == 0) {
                 x = 80;
                 range = 1440;
             }
@@ -491,151 +505,219 @@ public final class GameRenderer {
                         1,
                         true,
                         CycleMethod.NO_CYCLE,
-                        new Stop(0, Color.rgb(3, 14, 22, .96)),
-                        new Stop(1, Color.rgb(3, 14, 22, .0))));
+                        new Stop(0, Color.rgb(3, 14, 22, .98)),
+                        new Stop(1, Color.TRANSPARENT)));
         g.fillRect(0, 0, 1600, 155);
-        g.setStroke(Color.rgb(142, 187, 199, .25));
-        g.setLineWidth(1);
-        g.strokeLine(40, 114, 1560, 114);
-        text(g, "A B Y S S", 40, 37, 23, CYAN, false);
-        text(g, "INTEGRITÄT", 40, 63, 15, Color.web("#9fb5bc"), false);
-        bar(
-                g,
-                40,
-                74,
-                262,
-                11,
-                p.health() / p.maxHealth(),
-                p.health() / p.maxHealth() < .3 ? Color.web("#fb755c") : AMBER);
+        // Drei klar getrennte Bereiche: Ressourcen, Ort, Fortschritt.
+        text(g, "INTEGRITÄT", 32, 30, 14, Color.web("#a6bbc0"), false);
         text(
                 g,
                 Math.round(p.health()) + " / " + Math.round(p.maxHealth()),
-                313,
-                85,
-                17,
+                287,
+                30,
+                16,
                 TEXT,
                 false);
-        text(g, "ENERGIE", 410, 63, 15, Color.web("#9fb5bc"), false);
-        bar(g, 410, 74, 185, 7, p.energy() / p.maxEnergy(), CYAN);
-        text(g, run.room().sectorName(), 800, 34, 19, CYAN, true);
-        text(g, run.room().title(), 800, 77, 36, TEXT, true);
+        bar(
+                g,
+                32,
+                41,
+                330,
+                10,
+                p.health() / p.maxHealth(),
+                p.health() / p.maxHealth() < .3 ? Color.web("#fb755c") : AMBER);
+        text(g, "ENERGIE", 32, 77, 14, Color.web("#a6bbc0"), false);
+        bar(g, 111, 67, 251, 6, p.energy() / p.maxEnergy(), CYAN);
         text(
                 g,
-                "RAUM " + String.format("%02d", run.room().depth() + 1) + " / 12",
-                1310,
-                37,
-                23,
+                run.room().sectorName() + "  /  " + run.room().typeName().toUpperCase(),
+                800,
+                29,
+                16,
+                CYAN,
+                true);
+        text(g, run.room().title(), 800, 69, 34, TEXT, true);
+        text(
+                g,
+                String.format("%02d", run.room().depth() + 1) + " / " + RoomGenerator.ROOM_COUNT,
+                1410,
+                32,
+                25,
                 TEXT,
                 false);
-        text(g, "ZYKLUS " + String.format("%02d", run.cycle() + 1), 1439, 76, 17, CYAN, false);
-        text(g, p.salvage() + " SCHROTT", 1310, 76, 17, AMBER, false);
-        if (p.explorer()) text(g, "ENTDECKER", 40, 133, 15, AMBER, false);
-        if (run.phase() == GameRun.Phase.RUNNING && run.room().waveCount() > 1)
+        text(g, p.salvage() + " SCHROTT", 1270, 70, 17, AMBER, false);
+        text(g, "ZYKLUS " + (run.cycle() + 1L), 1430, 70, 17, CYAN, false);
+        for (int i = 0; i < RoomGenerator.ROOM_COUNT; i++) {
+            double x = 480 + i * 36;
+            g.setFill(i <= run.room().depth() ? AMBER : Color.rgb(130, 170, 183, .25));
+            if (RoomGenerator.bossDepth(i))
+                g.fillPolygon(new double[] {x, x + 5, x, x - 5}, new double[] {94, 99, 104, 99}, 4);
+            else g.fillRoundRect(x - 3, 96, 6, 6, 2, 2);
+        }
+        if (p.explorer()) text(g, "ENTDECKER", 32, 111, 14, AMBER, false);
+        if (run.room().waveCount() > 1 && run.phase() == GameRun.Phase.RUNNING)
             text(
                     g,
                     "PATROUILLE " + (run.wave() + 1) + " / " + run.room().waveCount(),
-                    800,
-                    132,
-                    16,
+                    1360,
+                    111,
+                    15,
                     Color.web("#a4bbc6"),
-                    true);
-        // Permanenter Wegweiser verhindert, dass ein neues Eingabeschema erraten werden muss.
-        g.setFill(Color.rgb(3, 14, 22, .82));
-        g.fillRect(0, 816, 1600, 84);
+                    false);
+        // Der untere Streifen zeigt den Build als wiedererkennbare Icons statt überlaufender Namen.
+        g.setFill(Color.rgb(3, 14, 22, .92));
+        g.fillRect(0, 798, 1600, 102);
         g.setStroke(Color.rgb(142, 187, 199, .22));
-        g.strokeLine(40, 816, 1560, 816);
+        g.setLineWidth(1);
+        g.strokeLine(32, 798, 1568, 798);
+        text(g, "A / D  BEWEGEN   ·   LEER  SPRINGEN", 32, 832, 17, Color.web("#b0c1c5"), false);
         text(
                 g,
-                "A / D  BEWEGEN   ·   LEER  SPRINGEN   ·   J / MAUS  ANGREIFEN",
-                40,
-                855,
-                18,
+                "J / MAUS  ANGREIFEN   ·   E  INTERAKTION",
+                32,
+                860,
+                17,
                 Color.web("#b0c1c5"),
                 false);
+        text(
+                g,
+                "Q  SET (" + p.repairKits() + ")   I  BUILD   M  KARTE   ESC  PAUSE",
+                32,
+                883,
+                14,
+                CYAN,
+                false);
+        int i = 0;
+        for (Upgrade u : Upgrade.values())
+            if (p.stacks(u) > 0) {
+                double x = 457 + (i % 6) * 52, y = 808 + (i / 6) * 44;
+                ItemGlyph.draw(g, u, x, y, 38, 1);
+                text(g, "" + p.stacks(u), x + 35, y + 36, 13, AMBER, false);
+                i++;
+            }
+        if (i == 0) text(g, "NOCH KEINE MODULE", 477, 856, 14, Color.web("#6f8f9d"), false);
+        g.setFill(Color.rgb(16, 37, 46, .9));
+        g.fillRoundRect(805, 814, 285, 66, 7, 7);
+        g.fillRoundRect(1110, 814, 455, 66, 7, 7);
         String dash =
                 p.dashCooldown() <= 0
                         ? "BEREIT"
                         : String.format(java.util.Locale.ROOT, "%.1f S", p.dashCooldown());
-        text(
-                g,
-                "SHIFT  AUSWEICHEN  /  " + dash,
-                690,
-                855,
-                18,
-                p.dashCooldown() <= 0 ? CYAN : Color.web("#8099a2"),
-                false);
+        text(g, "SHIFT  /  AUSWEICHEN", 823, 838, 15, Color.web("#9fb5bc"), false);
+        text(g, dash, 823, 865, 23, p.dashCooldown() <= 0 ? CYAN : Color.web("#8099a2"), false);
         String ability =
                 p.abilityCooldown() <= 0
                         ? (p.energy() >= p.module().cost() ? "BEREIT" : "ENERGIE FEHLT")
                         : String.format(java.util.Locale.ROOT, "%.1f S", p.abilityCooldown());
         text(
                 g,
-                "K  " + p.module().title().toUpperCase() + "  /  " + ability,
-                1110,
-                855,
-                18,
-                CYAN,
+                "K  /  " + p.module().title().toUpperCase(),
+                1130,
+                838,
+                15,
+                Color.web("#9fb5bc"),
                 false);
-        text(g, "E  INTERAKTION      ESC  PAUSE", 40, 883, 15, Color.web("#6f8f9d"), false);
-        int i = 0;
-        for (Upgrade u : Upgrade.values())
-            if (p.stacks(u) > 0) {
-                text(
-                        g,
-                        u.title() + " " + p.stacks(u),
-                        430 + i * 190,
-                        883,
-                        15,
-                        Color.web("#a9b6ad"),
-                        false);
-                i++;
-            }
-        if (run.room().depth() == 0 && run.roomTime() < 12) {
+        text(g, ability, 1130, 865, 23, CYAN, false);
+        bar(g, 1370, 854, 175, 4, 1 - p.abilityCooldown() / p.module().cooldown(), CYAN);
+        if (run.room().depth() == 0 && run.roomTime() < 12)
             text(
                     g,
-                    "Rote Markierung? Weiche aus. Nach dem Kampf: Modul bergen und zum rechten"
-                            + " Schott.",
+                    "Zerschlage Vorratskisten. Weiche roten Markierungen aus. E öffnet Funde und"
+                            + " Schotts.",
                     800,
-                    748,
-                    22,
+                    754,
+                    20,
                     TEXT,
                     true);
-        } else if (run.phase() == GameRun.Phase.ROOM_CLEARED) {
+        else if (run.phase() == GameRun.Phase.ROOM_CLEARED)
             text(
                     g,
                     run.rewardAvailable()
-                            ? "RAUM GESICHERT    ·    E am Modulbehälter, danach weiter zum rechten"
-                                    + " Schott."
-                            : "RAUM GESICHERT    ·    Gehe zum rechten Schott und wähle deine"
-                                    + " Route.",
+                            ? "RAUM GESICHERT  ·  E am Modulbehälter, danach zum rechten Schott."
+                            : "RAUM GESICHERT  ·  Das rechte Schott führt weiter.",
                     800,
-                    748,
-                    21,
+                    754,
+                    20,
                     CYAN,
                     true);
-        }
         for (Enemy enemy : run.enemies())
-            if (enemy.kind() == EnemyKind.CAPTAIN) {
+            if (enemy.kind().boss()) {
                 text(
                         g,
-                        "DER LOTSE" + (enemy.enraged() ? "  /  NOTFALLPROTOKOLL" : ""),
+                        enemy.kind().title().toUpperCase()
+                                + (enemy.enraged() ? " / NOTFALLPROTOKOLL" : ""),
                         800,
-                        237,
-                        20,
+                        229,
+                        21,
                         AMBER,
                         true);
-                bar(g, 520, 249, 560, 8, enemy.health() / enemy.maxHealth(), Color.web("#da8064"));
+                bar(g, 490, 244, 620, 9, enemy.health() / enemy.maxHealth(), Color.web("#da8064"));
                 text(
                         g,
                         enemy.armored()
-                                ? "PANZERUNG AKTIV · WEICHE DEM ANGRIFF AUS"
+                                ? "PANZERUNG AKTIV · LIES DEN ANGRIFF"
                                 : "KERN OFFEN · JETZT ANGREIFEN",
                         800,
-                        286,
-                        17,
+                        279,
+                        16,
                         enemy.armored() ? CYAN : AMBER,
                         true);
             }
+    }
+
+    private void drawCrate(GraphicsContext g, SupplyCrate crate) {
+        double x = crate.x(), y = GameRun.FLOOR;
+        Color c =
+                switch (crate.kind()) {
+                    case REPAIR -> Color.web("#afd18d");
+                    case ENERGY -> CYAN;
+                    case SALVAGE -> AMBER;
+                };
+        if (!crate.intact()) {
+            g.setFill(Color.rgb(79, 91, 88, .65));
+            g.fillPolygon(
+                    new double[] {x - 25, x - 3, x + 19, x + 31},
+                    new double[] {y - 3, y - 10, y - 7, y - 1},
+                    4);
+            return;
+        }
+        g.setFill(Color.rgb(0, 0, 0, .45));
+        g.fillOval(x - 40, y - 5, 80, 12);
+        g.setFill(
+                new LinearGradient(
+                        0,
+                        0,
+                        0,
+                        1,
+                        true,
+                        CycleMethod.NO_CYCLE,
+                        new Stop(0, Color.web("#4d5b5b")),
+                        new Stop(1, Color.web("#1c292f"))));
+        g.fillRoundRect(x - 27, y - 48, 54, 47, 4, 4);
+        g.setFill(Color.web("#19242b"));
+        g.fillRect(x - 22, y - 42, 44, 9);
+        g.fillRect(x - 25, y - 15, 50, 9);
+        g.setStroke(c.deriveColor(0, .6, .8, .8));
+        g.setLineWidth(2);
+        g.strokeRoundRect(x - 27, y - 48, 54, 47, 4, 4);
+        g.setStroke(c);
+        g.setLineWidth(3);
+        switch (crate.kind()) {
+            case REPAIR -> {
+                g.strokeLine(x - 8, y - 25, x + 8, y - 25);
+                g.strokeLine(x, y - 33, x, y - 17);
+            }
+            case ENERGY ->
+                    g.strokePolyline(
+                            new double[] {x + 4, x - 4, x + 3, x - 3},
+                            new double[] {y - 34, y - 24, y - 24, y - 16},
+                            4);
+            case SALVAGE -> {
+                g.strokeOval(x - 7, y - 32, 14, 14);
+                g.strokeLine(x - 8, y - 33, x + 8, y - 17);
+            }
+        }
+        text(g, "VORRAT", x, y - 60, 13, c, true);
     }
 
     private void vignette(GraphicsContext g) {

@@ -20,6 +20,7 @@ public final class GameRun {
     final List<Enemy> enemies = new ArrayList<>();
     final List<Projectile> projectiles = new ArrayList<>();
     final List<Hazard> hazards = new ArrayList<>();
+    final List<SupplyCrate> crates = new ArrayList<>();
     final List<GameEvent> events = new ArrayList<>();
     private final List<Integer> route = new ArrayList<>();
     private final long seed;
@@ -56,7 +57,9 @@ public final class GameRun {
                 || !Double.isFinite(saved.elapsed())
                 || saved.elapsed() < 0
                 || saved.salvage() < 0
-                || saved.salvage() > 9999)
+                || saved.salvage() > 9999
+                || saved.repairKits() < 0
+                || saved.repairKits() > 3)
             throw new IllegalArgumentException("Ungültiger Spielstand");
         var run = new GameRun(saved.seed(), saved.module(), saved.explorer());
         for (var entry : saved.upgrades().entrySet()) {
@@ -76,6 +79,7 @@ public final class GameRun {
         run.player.health = saved.health();
         run.player.energy = saved.energy();
         run.player.salvage = saved.salvage();
+        run.player.repairKits = saved.repairKits();
         run.kills = saved.kills();
         run.elapsed = saved.elapsed();
         run.route.clear();
@@ -137,6 +141,7 @@ public final class GameRun {
     }
 
     private void updatePlayer(double dt, InputFrame input) {
+        if (input.heal()) useRepairKit();
         player.attackCooldown = Math.max(0, player.attackCooldown - dt);
         player.attackTime = Math.max(0, player.attackTime - dt);
         player.dashCooldown = Math.max(0, player.dashCooldown - dt);
@@ -145,7 +150,10 @@ public final class GameRun {
         player.abilityCooldown = Math.max(0, player.abilityCooldown - dt);
         player.shieldTime = Math.max(0, player.shieldTime - dt);
         player.hurtTime = Math.max(0, player.hurtTime - dt);
-        player.energy = Math.min(player.maxEnergy(), player.energy + dt * 5.5);
+        player.energy =
+                Math.min(
+                        player.maxEnergy(),
+                        player.energy + dt * (5.5 + player.stacks(Upgrade.SIPHON)));
         int direction = (input.right() ? 1 : 0) - (input.left() ? 1 : 0);
         if (direction != 0 && player.dashTime <= 0) player.facing = direction;
         if (input.aimDirection() != 0
@@ -163,8 +171,10 @@ public final class GameRun {
         }
         player.vx =
                 player.dashTime > 0
-                        ? player.facing * 790
-                        : direction * (player.attackTime > .1 ? 215 : 300);
+                        ? player.facing * 790 * player.movementMultiplier()
+                        : direction
+                                * (player.attackTime > .1 ? 215 : 300)
+                                * player.movementMultiplier();
         player.x = clamp(player.x + player.vx * dt, 72, WIDTH - 72);
         player.vy += 1850 * dt;
         player.y = Math.min(FLOOR, player.y + player.vy * dt);
@@ -179,27 +189,31 @@ public final class GameRun {
 
     private void attack() {
         combo = (combo + 1) % 3;
-        player.attackCooldown = combo == 0 ? .48 : .36;
+        player.attackCooldown = (combo == 0 ? .48 : .36) * player.attackSpeedMultiplier();
         player.attackTime = .29;
         var reach =
                 new Bounds(
-                        player.facing > 0 ? player.x + 8 : player.x - 180,
+                        player.facing > 0 ? player.x + 8 : player.x - player.attackReach() - 8,
                         player.y - 136,
-                        172,
+                        player.attackReach(),
                         140);
         events.add(
                 GameEvent.at(GameEvent.Type.SWING, player.x + player.facing * 50, player.y - 60));
+        Enemy firstHit = null;
+        for (SupplyCrate crate : crates)
+            if (crate.intact()
+                    && reach.intersects(crate.bounds())
+                    && crate.hit(player.attackDamage())) collectCrate(crate);
         for (Enemy enemy : enemies) {
             if (enemy.alive() && reach.intersects(enemy.bounds())) {
+                if (firstHit == null) firstHit = enemy;
                 damageEnemy(enemy, player.attackDamage() * (combo == 0 ? 1.25 : 1));
                 enemy.x =
                         clamp(
-                                enemy.x
-                                        + player.facing
-                                                * (enemy.kind == EnemyKind.CAPTAIN ? 8 : 24),
+                                enemy.x + player.facing * (enemy.kind.boss() ? 8 : 24),
                                 70,
                                 WIDTH - 70);
-                if (enemy.kind != EnemyKind.CAPTAIN
+                if (!enemy.kind.boss()
                         && (enemy.state == Enemy.State.APPROACH
                                 || enemy.state == Enemy.State.RECOVER)) {
                     enemy.state = Enemy.State.STUNNED;
@@ -207,6 +221,37 @@ public final class GameRun {
                 }
             }
         }
+        if (combo == 0 && firstHit != null && player.stacks(Upgrade.ARC_COIL) > 0) {
+            Enemy origin = firstHit;
+            enemies.stream()
+                    .filter(e -> e != origin && e.alive() && Math.abs(e.x - origin.x) < 280)
+                    .min(java.util.Comparator.comparingDouble(e -> Math.abs(e.x - origin.x)))
+                    .ifPresent(
+                            e -> {
+                                damageEnemy(e, 15 * player.stacks(Upgrade.ARC_COIL));
+                                events.add(new GameEvent(GameEvent.Type.ARC, e.x, e.y - 65, 0, ""));
+                            });
+        }
+    }
+
+    private void collectCrate(SupplyCrate crate) {
+        String text;
+        switch (crate.kind()) {
+            case REPAIR -> {
+                player.heal(18);
+                text = "Reparaturgel · +18 Integrität";
+            }
+            case ENERGY -> {
+                player.energy = Math.min(player.maxEnergy(), player.energy + 30);
+                text = "Energiezelle · +30 Energie";
+            }
+            case SALVAGE -> {
+                player.salvage = Math.min(9999, player.salvage + 8);
+                text = "Ersatzteile · +8 Schrott";
+            }
+            default -> throw new IllegalStateException();
+        }
+        events.add(new GameEvent(GameEvent.Type.SUPPLY, crate.x(), FLOOR - 40, 0, text));
     }
 
     private void useAbility() {
@@ -218,7 +263,7 @@ public final class GameRun {
                 for (Enemy enemy : enemies)
                     if (enemy.alive() && Math.abs(enemy.x - player.x) < 290) {
                         damageEnemy(enemy, player.abilityDamage());
-                        if (enemy.kind != EnemyKind.CAPTAIN) {
+                        if (!enemy.kind.boss()) {
                             enemy.state = Enemy.State.STUNNED;
                             enemy.stateTime = 1.1;
                         }
@@ -251,7 +296,11 @@ public final class GameRun {
 
     void damageEnemy(Enemy enemy, double amount) {
         if (!enemy.alive()) return;
-        if (enemy.armored()) amount *= .22;
+        if (enemy.armored())
+            amount *=
+                    enemy.kind == EnemyKind.WARDEN
+                            ? .5
+                            : enemy.kind == EnemyKind.REACTOR ? .38 : .22;
         enemy.health = Math.max(0, enemy.health - amount);
         enemy.hurtTime = .12;
         events.add(
@@ -261,7 +310,10 @@ public final class GameRun {
             kills++;
             player.salvage =
                     Math.min(9999, player.salvage + (enemy.kind == EnemyKind.SENTINEL ? 5 : 3));
-            player.energy = Math.min(player.maxEnergy(), player.energy + 8);
+            player.energy =
+                    Math.min(
+                            player.maxEnergy(),
+                            player.energy + 8 + 4 * player.stacks(Upgrade.SIPHON));
             player.heal(player.stacks(Upgrade.RECOVERY) * 3);
             events.add(
                     GameEvent.at(GameEvent.Type.ENEMY_DOWN, enemy.x, enemy.y - enemy.height * .5));
@@ -320,6 +372,7 @@ public final class GameRun {
 
     private void clearRoom() {
         projectiles.clear();
+        player.heal(7 * player.stacks(Upgrade.REGEN));
         if (room.kind() == RoomPlan.Kind.BRIDGE) {
             phase = Phase.VICTORY;
             player.attackTime = 0;
@@ -363,9 +416,44 @@ public final class GameRun {
         if (phase != Phase.ROOM_CLEARED || !rewardAvailable || !rewardOffers.isEmpty())
             return false;
         player.heal(25);
+        player.energy = Math.min(player.maxEnergy(), player.energy + 35);
         player.salvage = Math.min(9999, player.salvage + 10);
         rewardAvailable = false;
         events.add(GameEvent.at(GameEvent.Type.HEAL, player.x, player.y));
+        return true;
+    }
+
+    public boolean useRepairKit() {
+        if ((phase != Phase.RUNNING && phase != Phase.ROOM_CLEARED)
+                || !player.alive()
+                || player.repairKits <= 0
+                || player.health >= player.maxHealth()) return false;
+        player.repairKits--;
+        player.heal(35);
+        events.add(
+                new GameEvent(
+                        GameEvent.Type.SUPPLY,
+                        player.x,
+                        player.y - 65,
+                        0,
+                        "Reparaturset · +35 Integrität"));
+        return true;
+    }
+
+    public boolean buyRepairKit() {
+        if (room.kind() != RoomPlan.Kind.WORKSHOP
+                || phase != Phase.ROOM_CLEARED
+                || player.salvage < 20
+                || player.repairKits >= 3) return false;
+        player.salvage -= 20;
+        player.repairKits++;
+        events.add(
+                new GameEvent(
+                        GameEvent.Type.SUPPLY,
+                        player.x,
+                        player.y - 65,
+                        0,
+                        "Reparaturset verstaut · Q zum Benutzen"));
         return true;
     }
 
@@ -411,6 +499,7 @@ public final class GameRun {
         enemies.clear();
         projectiles.clear();
         hazards.clear();
+        crates.clear();
         wave = 0;
         waveDelay = -1;
         rewardAvailable = false;
@@ -433,6 +522,18 @@ public final class GameRun {
         combo = 0;
         route.add(nextRoom.branch());
         spawnWave();
+        if (room.kind() != RoomPlan.Kind.BRIDGE
+                && room.kind() != RoomPlan.Kind.BOSS
+                && room.kind() != RoomPlan.Kind.WORKSHOP) {
+            var lootRandom =
+                    new Random(seed ^ room.depth() * 2917L ^ room.branch() * 333L ^ cycle * 717L);
+            crates.add(
+                    new SupplyCrate(
+                            room.variant() % 2 == 0 ? 355 : 1245,
+                            SupplyCrate.Kind.values()[lootRandom.nextInt(3)]));
+            if (room.kind() == RoomPlan.Kind.CACHE)
+                crates.add(new SupplyCrate(450, SupplyCrate.Kind.REPAIR));
+        }
         if (room.sector() > 0
                 && (room.kind() == RoomPlan.Kind.COMBAT || room.kind() == RoomPlan.Kind.ELITE))
             hazards.add(
@@ -455,7 +556,8 @@ public final class GameRun {
                         player.upgrades,
                         kills,
                         elapsed,
-                        route);
+                        route,
+                        player.repairKits);
         if (enemies.isEmpty()) clearRoom();
     }
 
@@ -464,7 +566,7 @@ public final class GameRun {
         boolean fromLeft = wave > 0 && player.x > WIDTH / 2;
         for (int i = 0; i < room.enemies().size(); i++) {
             var kind = room.enemies().get(i);
-            double x = kind == EnemyKind.CAPTAIN ? 1220 : fromLeft ? 180 + i * 108 : 940 + i * 118;
+            double x = kind.boss() ? 1220 : fromLeft ? 180 + i * 108 : 940 + i * 118;
             enemies.add(new Enemy(nextId++, kind, x, strength, 1.4 + i * .35));
         }
     }
@@ -479,6 +581,10 @@ public final class GameRun {
 
     public List<Projectile> projectiles() {
         return Collections.unmodifiableList(projectiles);
+    }
+
+    public List<SupplyCrate> crates() {
+        return Collections.unmodifiableList(crates);
     }
 
     public List<Hazard> hazards() {

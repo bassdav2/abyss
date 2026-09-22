@@ -17,6 +17,7 @@ public record RoomPlan(
         ELITE,
         WORKSHOP,
         CACHE,
+        BOSS,
         BRIDGE
     }
 
@@ -26,15 +27,15 @@ public record RoomPlan(
 
     public int waveCount() {
         return switch (kind) {
-            case COMBAT -> depth >= 4 ? 2 : 1;
+            case COMBAT -> depth >= 6 ? 2 : 1;
             case ELITE -> 3;
-            case BRIDGE -> 1;
+            case BOSS, BRIDGE -> 1;
             case CACHE, WORKSHOP -> 0;
         };
     }
 
     public int rewardRanks() {
-        return kind == Kind.ELITE ? 2 : 1;
+        return kind == Kind.ELITE || kind == Kind.BOSS ? 2 : 1;
     }
 
     public String sectorName() {
@@ -51,6 +52,7 @@ public record RoomPlan(
             case ELITE -> "Schwer bewacht";
             case WORKSHOP -> "Werkstatt";
             case CACHE -> "Versorgungsraum";
+            case BOSS -> "Sektorwächter";
             case BRIDGE -> "Brücke";
         };
     }

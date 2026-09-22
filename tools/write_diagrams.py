@@ -70,6 +70,7 @@ class Gegner {
 }
 class Projektil
 class Gefahr
+class Vorratskiste
 class "Aktives Modul" as Active
 class "Passives Modul" as Passive
 class "Installierte Modulstufe" as Stack {
@@ -82,9 +83,10 @@ Tauchgang "1" *-- "1" Spielfigur
 Tauchgang "1" --> "1" Raum : befindet sich in
 Raum "1" -- "0..*" Gegner : Begegnung
 Raum "1" -- "0..*" Gefahr
+Raum "1" -- "0..*" Vorratskiste
 Tauchgang "1" *-- "0..*" Projektil
 Spielfigur "1" --> "1" Active
-Spielfigur "1" *-- "0..6" Stack
+Spielfigur "1" *-- "0..12" Stack
 Stack "0..*" --> "1" Passive
 Spielerprofil "1" -- "1..3" Bauplan : kennt
 Bauplan "1" --> "1" Active : ermöglicht
@@ -101,6 +103,7 @@ package "ui" {
  [InputController]
  [GameRenderer]
  [AssetCatalog]
+ [EnvironmentRenderer / ItemGlyph]
 }
 package "application" {
  [GameService]
@@ -127,6 +130,8 @@ package "infrastructure" {
 [GameWindow] --> [AudioSystem] : Ereignisse
 [GameRenderer] --> [GameRun] : nur lesen
 [GameRenderer] --> [AssetCatalog]
+[GameRenderer] --> [EnvironmentRenderer / ItemGlyph]
+ [EnvironmentRenderer / ItemGlyph]
 [GameService] --> [GameRun]
 [GameService] --> GameRepository
 [GameService] --> [Profile / Settings]
@@ -183,6 +188,7 @@ class Player {
  + upgrades(): Map<Upgrade,Integer>
 }
 class Enemy
+class SupplyCrate
 class RunCheckpoint <<record>>
 class InputFrame <<record>>
 class GameEvent <<record>>
@@ -193,6 +199,7 @@ FileGameRepository ..|> GameRepository
 GameService --> GameRun
 GameRun *-- Player
 GameRun *-- "0..*" Enemy
+GameRun *-- "0..*" SupplyCrate
 GameRun --> RoomGenerator
 GameRun --> RunCheckpoint
 GameRun ..> InputFrame
@@ -340,7 +347,8 @@ STRIKE --> STUNNED : Impuls (kein Boss)
 STUNNED --> APPROACH : Betäubung endet
 note right of RECOVER
 Boss ist hier vollständig verwundbar.
-Sonst nur 22% Schaden.
+Sonst 50 / 38 / 22% Schaden,
+je nach Sektorwächter.
 Bei <50% Integrität kürzere Zeiten.
 end note
 ''',
@@ -351,6 +359,10 @@ Titel --> Spiel : Fortsetzen
 Titel --> Optionen
 Titel --> Hilfe
 Titel --> Archiv
+Spiel --> Inventar : I / Tab
+Inventar --> Spiel : Weiter / Esc
+Spiel --> Bootskarte : M
+Bootskarte --> Spiel : Weiter / Esc
 Spiel --> Pause : Esc / Fokusverlust
 Pause --> Spiel : Weiter
 Pause --> Optionen

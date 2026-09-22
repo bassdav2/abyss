@@ -40,9 +40,16 @@ public final class AssetCatalog {
                     "cooling",
                     "commandhall",
                     "observatory",
-                    "security"
+                    "security",
+                    "medbay",
+                    "hydroponics",
+                    "torpedo",
+                    "ballast"
                 }) image("art/rooms/" + room + ".png");
-        for (String actor : new String[] {"player", "scuttler", "drone", "sentinel", "captain"}) {
+        for (String actor :
+                new String[] {
+                    "player", "scuttler", "drone", "sentinel", "captain", "warden", "reactor"
+                }) {
             for (String pose : new String[] {"idle", "walk", "attack", "hurt", "dash"}) {
                 int count = frames(actor, pose);
                 for (int frame = 0; frame < count; frame++) actor(actor, pose, frame);
@@ -65,26 +72,39 @@ public final class AssetCatalog {
     }
 
     public Image room(RoomPlan plan) {
-        String name =
-                plan.kind() == RoomPlan.Kind.WORKSHOP
-                        ? "workshop"
-                        : plan.kind() == RoomPlan.Kind.CACHE
-                                ? "cargo"
-                                : switch (plan.depth()) {
-                                    case 0 -> "aft";
-                                    case 1 -> "cargo";
-                                    case 2 -> "mess";
-                                    case 4 -> "engine";
-                                    case 5 -> "cooling";
-                                    case 6 -> "reactor";
-                                    case 8 -> "observatory";
-                                    case 9 -> "commandhall";
-                                    case 10 -> "security";
-                                    case 11 -> "command";
-                                    default -> "aft";
-                                };
+        String name = roomKey(plan);
         var image = image("art/rooms/" + name + ".png");
         return image == null ? image("art/rooms/aft.png") : image;
+    }
+
+    public String roomKey(RoomPlan plan) {
+        if (plan.kind() == RoomPlan.Kind.WORKSHOP) return "workshop";
+        if (plan.kind() == RoomPlan.Kind.CACHE) return plan.depth() == 13 ? "hydroponics" : "cargo";
+        if (plan.branch() == 1 && plan.kind() == RoomPlan.Kind.ELITE)
+            return switch (plan.depth() % 4) {
+                case 0 -> "medbay";
+                case 1 -> "security";
+                case 2 -> "ballast";
+                default -> "torpedo";
+            };
+        return switch (plan.depth()) {
+            case 0 -> "aft";
+            case 1 -> "cargo";
+            case 2 -> "mess";
+            case 3 -> "torpedo";
+            case 4 -> "security";
+            case 6 -> "engine";
+            case 7 -> "cooling";
+            case 8 -> "ballast";
+            case 9, 10 -> "reactor";
+            case 12 -> "observatory";
+            case 13 -> "hydroponics";
+            case 14 -> "medbay";
+            case 15 -> "commandhall";
+            case 16 -> "security";
+            case 17 -> "command";
+            default -> "aft";
+        };
     }
 
     public int frames(String actor, String pose) {

@@ -8,7 +8,19 @@ public record InputFrame(
         boolean dash,
         boolean attack,
         boolean ability,
-        int aimDirection) {
+        int aimDirection,
+        boolean heal) {
+    public InputFrame(
+            boolean left,
+            boolean right,
+            boolean jump,
+            boolean dash,
+            boolean attack,
+            boolean ability,
+            int aimDirection) {
+        this(left, right, jump, dash, attack, ability, aimDirection, false);
+    }
+
     public InputFrame(
             boolean left,
             boolean right,

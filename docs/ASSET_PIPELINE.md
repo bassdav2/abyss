@@ -20,7 +20,7 @@ Logische Bühne: **1600 x 900**. Die Füße stehen auf **y = 620**. Raumplatten 
 
 ## Figurenkonsistenz
 
-Es gibt fünf gemeinsame Modellquellen: Spieler, Schrottläufer, Drohne, Schottwächter und Lotse. Die Modelle werden nicht für jedes Bild neu mit Bild-KI entworfen. Materialnamen, orthografische Kamera, Licht, Bildgröße und Fußanker bleiben gleich. Der Schrottläufer besitzt eine niedrige vierbeinige Silhouette, der Wächter Druckhelm und Schutzplatte, der Boss einen größeren Druckanzug mit Energiekern.
+Es gibt sieben gemeinsame Modellquellen: Spieler, Schrottläufer, Drohne, Schottwächter, Lotse, Schottmeister und Reaktorkern. Die Modelle werden nicht für jedes Bild neu mit Bild-KI entworfen. Materialnamen, orthografische Kamera, Licht, Bildgröße und Fußanker bleiben gleich. Der Schrottläufer besitzt eine niedrige vierbeinige Silhouette, der Wächter Druckhelm und Schutzplatte, der Boss einen größeren Druckanzug mit Energiekern.
 
 `art/actors/manifest.json` beschreibt Framezahl und Anker: normal `(0.5, 0.944)`. Die Drohne erhält in der Darstellung einen angepassten Anker für ihren schwebenden Körper. Der Renderer wählt Frames anhand fachlicher Zustände; der sichtbare Animationsframe entscheidet nicht über einen Treffer.
 
@@ -47,3 +47,7 @@ Die `.blend`-Dateien speichern den jeweiligen Ausgangszustand. Änderungen von H
 Eine neue Raumplatte zuerst mit der bestehenden Figur, einem Gegner, dem HUD und der Kollisionsspur im tatsächlichen Renderer prüfen. Nicht allein nach der Schönheit des Einzelbilds entscheiden. Lesen sich Figur, Schott und Gefahren bei kleinem Fenster? Ist die Spur frei? Stimmen Maßstab und Licht? Stimmen Hintergrundboden und Füße? Erst danach die Platte in AssetCatalog zuweisen und das Manifest aktualisieren.
 
 Die Hintergründe sind detaillierte Rasterplatten, Figuren sind vorgerenderte 3D-Modelle. Dieser Mischstil ist transparent dokumentiert und benötigt noch die Art-Abnahme des Teams. Es wird nicht behauptet, dass die Konzeptbilder bereits vollständig animierte Spielgrafik darstellen.
+
+## Erweiterung 0.2
+
+15 Raumplatten, 118 Figurenframes aus sieben .blend-Dateien und 19 WAV-Dateien. Vier zusätzliche Raum-Prompts sind vollständig in art-source/expansion-prompts.json erhalten. Die drei neuen Musikloops werden nach Sektion bzw. Bossstatus gewählt. ItemGlyph zeichnet zwölf eigene technische Symbole auf Canvas; EnvironmentRenderer ergänzt getrennte Licht-, Nebel- und Vordergrundebenen.

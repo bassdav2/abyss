@@ -54,4 +54,16 @@ class InputControllerTest {
         input.mouseAttack(false);
         assertEquals(0, input.frame(170).aimDirection());
     }
+
+    @org.junit.jupiter.api.Test
+    void repairKeyUsesRisingEdgeAndIgnoresOsAutoRepeat() {
+        var input = new InputController();
+        input.down(javafx.scene.input.KeyCode.Q);
+        assertTrue(input.frame(0).heal());
+        input.down(javafx.scene.input.KeyCode.Q);
+        assertFalse(input.frame(0).heal());
+        input.up(javafx.scene.input.KeyCode.Q);
+        input.down(javafx.scene.input.KeyCode.Q);
+        assertTrue(input.frame(0).heal());
+    }
 }

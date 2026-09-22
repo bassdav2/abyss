@@ -21,7 +21,7 @@ public record Profile(
         if (runs < 0
                 || wins < 0
                 || bestRoom < 0
-                || bestRoom > 12
+                || bestRoom > ch.zhaw.abyss.domain.RoomGenerator.ROOM_COUNT
                 || bestCycle < 0
                 || totalKills < 0
                 || !unlocked.contains(ActiveModule.PULSE)

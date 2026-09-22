@@ -50,7 +50,7 @@ Die Domäne erzeugt z.B. `HIT`, `DASH`, `ROOM_CLEAR` und `VICTORY`. Pro Darstell
 
 ### ADR-06 - Begrenzter Generator statt beliebiger Geometrie
 
-Die zwölf Raumpositionen folgen drei Sektionen. Werkstätten liegen fest an Position 4 und 8, die Brücke an 12. An acht Positionen gibt es zwei Routenangebote. Seed und Zweig bestimmen Begegnungen und Raumvariante; der zentrale Weg nach vorn bleibt immer vorhanden. Geometrie und Sektorreihenfolge werden nicht zufällig permutiert. Der Wiederspielwert kommt aus Gegnerzusammenstellung, Risiko-/Vorratswahl, Modulangeboten und Folgezyklen.
+Die achtzehn Raumpositionen folgen drei Sektionen. Sektorwächter liegen an 5 und 11, Werkstätten an 6 und 12, die Brücke an 18. An zwölf Positionen gibt es zwei Routenangebote. Seed und Zweig bestimmen Begegnungen und Raumvariante; der zentrale Weg nach vorn bleibt immer vorhanden. Geometrie und Sektorreihenfolge werden nicht zufällig permutiert. Der Wiederspielwert kommt aus Gegnerzusammenstellung, Risiko-/Vorratswahl, Modulangeboten und Folgezyklen.
 
 ### ADR-07 - Blender-Figuren und gerasterte Hintergrundplatten
 
@@ -73,3 +73,7 @@ Figuren werden aus editierbaren Blender-Modellen in transparente Animationsframe
 `GameRun` und `GameWindow` sind die grössten Klassen. Eine weitere Ausweitung um Waffen, Dialoge oder Plattformphysik sollte vorher eine gezielte Aufteilung in Kampf-/Raumsysteme bzw. Bildschirmklassen auslösen. Für den aktuellen begrenzten Umfang bleibt die zentrale Konsistenzgrenze verständlich. Der Renderer zeichnet in logischen 1600 x 900 Einheiten; das Fenster skaliert die Oberfläche. Gamepad, frei belegbare Tasten, Screenreader-Spielbedienung, Cloud-Saves und Netzwerkspiel sind nicht implementiert.
 
 Die Diagrammquellen unter `docs/diagrams/` gehören zum Stand. Ein konzeptuelles Domänenmodell und ein Design-Klassendiagramm sind absichtlich getrennt: Ersteres beschreibt Fachbegriffe, letzteres tatsächlich vorhandene Klassen.
+
+## Erweiterung 0.2
+
+`SupplyCrate` kapselt Inhalt, Treffer und einmalige Auszahlung. `EnvironmentRenderer` übernimmt rein visuelle Tiefenebenen; `ItemGlyph` liefert gemeinsame Icons für HUD, Inventar und Bergung. Beide verändern keine Spielregeln. Das Repository liest Version 1 und 2; neue Daten verwenden Version 2. Alte Raumpositionen werden sektortreu abgebildet und ursprüngliche Dateien vor dem Überschreiben gesichert.

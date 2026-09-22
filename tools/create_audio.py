@@ -89,3 +89,24 @@ for i, hz in enumerate(notes):
 music = fade(music, .4)
 write('music', np.stack([music, np.roll(music, 370)], axis=1))
 print(f'Created {len(list(OUT.glob("*.wav")))} original WAV assets.')
+
+# Erweiterung: eigene Motive pro Sektion und eine rhythmische Boss-Variation.
+# Periodische Hüllkurven und Frequenzen vermeiden Klicks an der Loop-Grenze.
+for name,root,pace,color in [('music_engine',73.416, .8, .0),('music_command',65.406,1.6,.35),('music_boss',73.416,.4,.65)]:
+    duration=25.6
+    t=time(duration)
+    track=np.zeros(len(t))
+    for i,ratio in enumerate([1,1.5,2,2.4]):
+        hz=round(root*ratio*duration)/duration
+        track += (.040/(i+1))*np.sin(2*np.pi*hz*t)*(.62+.38*np.sin(2*np.pi*t/duration+i)**2)
+    for beat in np.arange(0,duration,pace):
+        offset=(t-beat)%duration
+        track+=.12*np.sin(2*np.pi*(48*offset+3*(1-np.exp(-offset*25))))*np.exp(-offset*12)
+        if name=='music_boss':
+            track+=.027*np.sin(2*np.pi*440*offset)*np.exp(-offset*30)
+    for i,note in enumerate([2,2.4,3,2.25,2,3,2.6667,2.25]):
+        delta=(t-i*3.2)%duration
+        hz=round(root*note*duration)/duration
+        track+=(.035+color*.015)*np.sin(2*np.pi*hz*delta)*np.exp(-delta*1.3)*(1-np.exp(-delta*20))
+    write(name,np.stack([track,np.roll(track,500)],axis=1))
+print('Expanded audio library:',len(list(OUT.glob('*.wav'))))

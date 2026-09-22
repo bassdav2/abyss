@@ -30,7 +30,7 @@ public final class CampaignPilot {
                                                 && e.state() == Enemy.State.WINDUP
                                                 && e.stateTime() < .23
                                                 && (Math.abs(e.x() - player.x()) < 330
-                                                        || e.kind() == EnemyKind.CAPTAIN));
+                                                        || e.kind().boss()));
         boolean bolt =
                 run.projectiles().stream()
                         .anyMatch(q -> !q.friendly() && Math.abs(q.x() - player.x()) < 150);
@@ -38,8 +38,7 @@ public final class CampaignPilot {
                 run.hazards().stream()
                         .anyMatch(h -> h.warning() && Math.abs(h.x() - player.x()) < 110);
         boolean jump = (threatened || bolt || hazard) && player.grounded();
-        boolean dash =
-                threatened && player.dashCooldown() <= 0 && enemy.kind() != EnemyKind.CAPTAIN;
+        boolean dash = threatened && player.dashCooldown() <= 0 && !enemy.kind().boss();
         double range = player.module() == ActiveModule.ARC ? 900 : 270;
         boolean ability =
                 Math.abs(dx) < range
@@ -71,6 +70,12 @@ public final class CampaignPilot {
             case PLATING -> 80;
             case CAPACITOR -> 70;
             case COOLANT -> 55;
+            case REGEN -> player.stacks(Upgrade.REGEN) < 2 ? 92 : 60;
+            case LANCE -> 62;
+            case OVERCLOCK -> 78;
+            case THRUSTER -> 40;
+            case SIPHON -> 68;
+            case ARC_COIL -> 75;
         };
     }
 }

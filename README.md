@@ -1,8 +1,8 @@
 # ABYSS · Vom Heck bis zur Brücke
 
-Ein lokales 2D-Roguelite in Java/JavaFX: zwölf Räume vom Heck eines riesigen U-Boots bis zur Brücke, mit Kampf, Werkstätten, Ausrüstung und wiederholbaren Tauchzyklen.
+Ein lokales 2D-Roguelite in Java/JavaFX: 18 Räume vom Heck eines riesigen U-Boots bis zur Brücke, mit Kampf, Werkstätten, Ausrüstung und wiederholbaren Tauchzyklen.
 
-**Spielbarer Entwicklungsstand vom 22.09.2026.** Weitgehend mit Codex erstellt. Teamreview, menschliches Spielgefühl und fachliche Modulfreigabe stehen noch aus. Der komplette Nachtlauf ist unter `docs/` nachvollziehbar dokumentiert.
+**Spielbarer Entwicklungsstand 0.2 vom 22.09.2026.** Weitgehend mit Codex erstellt. Teamreview, menschliches Spielgefühl und fachliche Modulfreigabe stehen noch aus. Der komplette Nachtlauf ist unter `docs/` nachvollziehbar dokumentiert.
 
 ## Sofort spielen
 
@@ -21,6 +21,8 @@ Alternativ liegt das Mac-Paket als ZIP unter `release/`. Entpacken und `Abyss.ap
 | Ausweichen | Shift |
 | Aktives Modul | K oder rechte Maustaste |
 | Fund / Werkstatt / rechtes Schott | E in der Nähe |
+| Reparaturset | Q; +35 Integrität, bis zu drei Sets mitnehmbar |
+| Inventar / Bootskarte | I oder Tab / M; pausiert das Spiel |
 | Pause | Esc; automatisch bei Fokusverlust |
 | Vollbild | F11 |
 | Screenshot | F12, Datei auf dem Schreibtisch |
@@ -29,18 +31,22 @@ Rote Markierungen kündigen Angriffe an. Nach dem Kampf den Fund in der Raummitt
 
 ## Enthalten
 
-- Drei Sektionen, zwölf Raumpositionen und elf Hintergrundplatten.
-- Drei Gegnertypen, Boss mit drei Angriffsmustern und zweiter Phase.
-- Schildimpuls, Lichtbogen und Druckschild; sechs passive Module mit je drei Stufen.
+- Drei Sektionen, 18 Raumpositionen und 15 Hintergrundplatten.
+- Drei reguläre Gegnertypen und drei unterschiedliche Bosse: Schottmeister, Reaktorkern und Lotse.
+- Schildimpuls, Lichtbogen und Druckschild; zwölf passive Module mit je drei Stufen.
 - Mehrere Patrouillen, Dampf-/Stromgefahren, Werkstätten und Routenentscheidungen.
 - Lokale Bauplanfreischaltungen, Raum-Sicherung, Pause, Hilfe und Optionen.
-- Fünf editierbare Blender-Modelle, 86 Animationsframes und 16 eigene Klänge/Musikstücke.
+- Sieben editierbare Blender-Modelle, 118 Animationsframes und 19 eigene Klänge/Musikstücke.
+- Zerstörbare Vorratskisten, Inventar mit Item-Icons, Bootskarte und Raumbilder bei der Routenwahl.
+- Lichtkegel, Stirnlampe, Parallaxe, Vordergrundnebel und sektorspezifische Musik.
 
 Die Route kombiniert begrenzte Inhalte; Sektorreihenfolge und Werkstattpositionen bleiben fest. Eine menschliche Run-Dauer von 20-30 Minuten ist nicht belegt und für diesen kompakten Stand kein bestätigtes Ergebnis.
 
+Details zum Ausbau: `docs/EXPANSION.md`. Neue Bosse an Raum 5/11/18; Werkstätten an 6/12. Vorratskisten mit J zerschlagen.
+
 ## Speicherstände
 
-macOS: `~/Library/Application Support/Abyss`. Gesichert wird der **Raumeingang**. Nach Hauptmenü oder Neustart beginnst du dort erneut; Weiter aus der Pause erhält den aktuellen Kampf. Baupläne und Einstellungen bleiben separat erhalten. Vor dem Ersetzen beschädigter Dateien werden Originale als `.bak` kopiert.
+macOS: `~/Library/Application Support/Abyss`. Gesichert wird der **Raumeingang**. Nach Hauptmenü oder Neustart beginnst du dort erneut; Weiter aus der Pause erhält den aktuellen Kampf. Baupläne und Einstellungen bleiben separat erhalten. Vor dem Ersetzen beschädigter Dateien werden Originale als `.bak` kopiert. Ältere 12-Raum-Saves werden auf die längere Route migriert; ihre Originale bleiben beim nächsten Speichern ebenfalls als Backup erhalten.
 
 QA verwendet separate Verzeichnisse unter `build/` oder temporäre Verzeichnisse. Die mitgelieferten Demoaufnahmen und Screenshots verwenden teilweise vorbereitete QA-Spielstände; sie sind keine menschlichen Testergebnisse.
 
@@ -65,7 +71,7 @@ Oder `run.command` doppelklicken. Auf einem anderen Rechner `JAVA_HOME` auf ein 
 python3 tools/package_mac.py
 ```
 
-Derzeit 41 JUnit-Testfälle/-konfigurationen, darunter 144 Kampagnensimulationen. Zusätzlich 18 Prüfungen innerhalb von JavaFX. Ein 180-Sekunden-Render-Probelauf durchlief acht Runs ohne unbehandelte Ausnahme. Details und Grenzen: `docs/TESTSTRATEGIE.md`.
+Derzeit 53 JUnit-Testfälle/-konfigurationen, darunter 144 Kampagnensimulationen. Zusätzlich 23 Prüfungen innerhalb von JavaFX. Ein 180-Sekunden-Render-Probelauf durchlief mehrere vollständige Runs ohne unbehandelte Ausnahme. Details und Grenzen: `docs/TESTSTRATEGIE.md`.
 
 Weitere Werkzeuge:
 
@@ -96,7 +102,7 @@ Für Audio-/PDF-Werkzeuge optional eine Python-Umgebung mit `tools/requirements.
 | `art-source` / `tools` | Editierbare Assets und Produktionsskripte |
 | `docs` | Anforderungen, Architektur, KI-Einsatz, Risiken, Credits und zwölf UML-Quellen |
 | `output/pdf` | 21-seitiger technischer Bericht als Arbeitsfassung |
-| `output/video` | 82 Sekunden gekennzeichnete Gameplay-Demo |
+| `output/video` | 120 Sekunden gekennzeichnete Gameplay-Demo |
 | `build/docs/javadoc` | Generierte API-Dokumentation |
 | `release` | Mac-ZIP, Quellpaket mit Javadoc und Prüfsummen |
 

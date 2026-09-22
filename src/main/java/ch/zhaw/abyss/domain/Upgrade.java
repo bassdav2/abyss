@@ -26,6 +26,36 @@ public enum Upgrade {
             "Rückgewinnung",
             "+3 Integrität pro besiegtem Gegner",
             "Restenergie wird zu deiner Reserve.",
+            "green"),
+    LANCE(
+            "Teleskopstange",
+            "+25 Angriffsreichweite",
+            "Erreiche Drohnen und halte Abstand.",
+            "amber"),
+    OVERCLOCK(
+            "Übertakter",
+            "−8 % Zeit zwischen Schlägen",
+            "Der Werkzeugantrieb läuft über Nenndrehzahl.",
+            "red"),
+    THRUSTER(
+            "Strömungsantrieb",
+            "+10 % Lauf- und Dash-Tempo",
+            "Eine kleine Turbine verändert deinen Rhythmus.",
+            "blue"),
+    SIPHON(
+            "Energiesiphon",
+            "+4 Energie pro Gegner\n+1 Energie pro Sekunde",
+            "Speist das aktive Modul aus Restladung.",
+            "cyan"),
+    ARC_COIL(
+            "Teslaspule",
+            "Dritter Treffer: Kettenblitz\n15 Schaden pro Stufe",
+            "Springt auf einen zweiten Gegner in der Nähe.",
+            "cyan"),
+    REGEN(
+            "Reparaturschwarm",
+            "+7 Integrität nach jedem Raum",
+            "Kleine Wartungsdrohnen schliessen die Lecks.",
             "green");
 
     public static final int MAX_STACKS = 3;

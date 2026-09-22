@@ -92,10 +92,10 @@ def seq(title,name,caption):
     page(title,wide=True);para(caption,'small');diagram(name,420)
 
 page('Vom Heck bis zur Brücke.','ABYSS / PM3 / ENTWICKLUNGSSTAND')
-para('Ein lokales 2D-Roguelite in Java und JavaFX. Ein vollständiger Weg durch zwölf Räume, mit Ausrüstung, Werkstätten, Boss und wiederholbarem Tauchzyklus.','h2')
+para('Ein lokales 2D-Roguelite in Java und JavaFX. Ein vollständiger Weg durch achtzehn Räume, mit zwölf passiven Items, Werkstätten, drei Bossen und wiederholbarem Tauchzyklus.','h2')
 picture('docs/qa/screens/boss.png',300)
 para('**Technischer Bericht I - Arbeitsfassung**')
-para('Dieser Bericht beschreibt den tatsächlich implementierten Stand des autonomen Nachtlaufs vom 22.09.2026. Code und Entwürfe wurden weitgehend mit Codex erstellt. Automatisierte Tests und Layoutprüfungen sind vorhanden; das Team muss die Entscheidungen verstehen, prüfen und vor einer Übernahme selbst begründen.')
+para('Dieser Bericht beschreibt den tatsächlich implementierten Stand 0.2 mit der Erweiterung vom 22.09.2026. Code und Entwürfe wurden weitgehend mit Codex erstellt. Automatisierte Tests und Layoutprüfungen sind vorhanden; das Team muss die Entscheidungen verstehen, prüfen und vor einer Übernahme selbst begründen.')
 para('Keine abgegebene oder bewertete Modulleistung. Keine erfundenen Teamstunden, Testpersonen oder Freigaben.','small')
 
 page('Leseführung und fachlicher Rahmen')
@@ -137,7 +137,7 @@ table(['Stelle','Abweichung und erwartetes Verhalten'],[
  ['8a','Fund wird ausgelassen: keine nachträgliche Gutschrift.'],
  ['9a','Nur ein zulässiger Raum: genau dieses Angebot anzeigen.'],
  ['10a','Speicherfehler: Run weiter spielbar, fehlgeschlagene Sicherung wird gemeldet.']],[48,W-2*M-48])
-para('**Besondere Anforderungen:** Domäne im festen 1/120-s-Schritt; kein Schaden durch Render- oder Audioereignisse. Save beschreibt den Raumeingang. **Häufigkeit:** bis zu zwölf Räume pro Zyklus. **Offen:** menschliche Run-Dauer und endgültiges Balancing.','small')
+para('**Besondere Anforderungen:** Domäne im festen 1/120-s-Schritt; kein Schaden durch Render- oder Audioereignisse. Save beschreibt den Raumeingang. **Häufigkeit:** bis zu achtzehn Räume pro Zyklus. **Offen:** menschliche Run-Dauer und endgültiges Balancing.','small')
 
 page('1.3 / Weitere Benutzerziele')
 for title,body in [
@@ -145,27 +145,27 @@ for title,body in [
  ('UC-03 - Ausrüstung verbessern','Aus bis zu drei passiven Modulen wählen. Normale Funde geben eine Stufe, Elitefunde zwei bis maximal drei. Werkstattmodule kosten 15 Schrott. Maximal ausgebaute Module erscheinen nicht; doppelte Auswahl ist ausgeschlossen.'),
  ('UC-04 - Unterbrechen und fortsetzen','Esc pausiert. Weiter setzt den Kampf fort. Nach Hauptmenü oder Programmende beginnt Fortsetzen beim letzten Raumeingang. Änderungen innerhalb dieses Raums werden zurückgesetzt. Unlesbare Saves werden gemeldet und vor dem Ersetzen gesichert.'),
  ('UC-05 - Brücke und nächster Zyklus','Nach dem Boss erscheinen Ergebnis, Kills, Zeit und Zyklus. Hauptmenü beendet den Run. Ein nächster Zyklus behält den Build, heilt bis zu 50 Integrität, füllt Energie und erhöht die Gegnerstärke bis zu Obergrenzen.'),
- ('UC-06 bis UC-08 - Brief','Nach Niederlage mit neuem Seed erneut versuchen. Baupläne im Archiv ansehen: Raum 4 schaltet Lichtbogen, Raum 8 Druckschild frei. Hilfe und Optionen erlauben Lautstärke, Musik, reduzierte Bewegung, Vollbild und Entdecker-Vorgabe.')]:
+ ('UC-06 bis UC-11 - Brief','Nach Niederlage mit neuem Seed erneut versuchen. Baupläne im Archiv ansehen: Raum 6 schaltet Lichtbogen, Raum 12 Druckschild frei. Hilfe und Optionen erlauben Lautstärke, Musik, reduzierte Bewegung, Vollbild und Entdecker-Vorgabe. I/Tab zeigt die zwölf Items, M die Bootskarte. Kisten liefern Vorräte. Q verbraucht bei fehlender Integrität ein Reparaturset; Nachkauf in Werkstätten kostet 20 Schrott.')]:
     para(title,'h2');para(body)
 
 page('2 / Anforderungen und Spielregeln')
 table(['ID','Anforderung / Akzeptanz'],[
  ['F-01','Bewegung, Sprung, Nahkampf, Dash und Modul. Domain-, Input- und JavaFX-Komponententests.'],
- ['F-02','Drei Gegnertypen plus Boss mit Vorwarnungen. Zustandsmaschine, Screenshots und vollständige Runs.'],
- ['F-03','Zwölf erreichbare Raumpositionen, Werkstätten bei 4/8. Generator über 1000 Seeds geprüft.'],
- ['F-04','Sechs passive und drei aktive Module. Stufen-, Kosten-, Freischalt- und Energielimits.'],
+ ['F-02','Drei reguläre Gegnertypen und drei Bosse mit Vorwarnungen. Zustandsmaschine, Screenshots und vollständige Runs.'],
+ ['F-03','Achtzehn Raumpositionen, Werkstätten bei 6/12 und Bosse bei 5/11/18. Generator über 1000 Seeds geprüft.'],
+ ['F-04','Zwölf passive und drei aktive Module. Zusätzlich zerstörbare Vorräte und mitnehmbare Reparatursets (Q).'],
  ['F-05','Niederlage, Sieg, Neustart und Folgezyklus. Explizite Phasen und Anwendungstests.'],
  ['F-06','Lokale Raum-Sicherung und Profil. Dateiformat-, Roundtrip- und Fehlerfalltests.'],
  ['F-07','Pause, Hilfe, Optionen und Audio. Native Komponententests; Hör-/Geräteprüfung offen.']],[48,W-2*M-48])
 para('**Qualität:** reine Java-Domäne ohne Fenster; Speicherfehler dürfen den Start nicht verhindern; lesbares HUD bei minimalem Fenster; Ziel flüssiger Darstellung auf dem Ziel-Mac; nachvollziehbare Assets und KI-Verwendung.')
-para('**Regeln:** maximal drei Stufen je passivem Modul; 0,72 s Schutzzeit nach Schaden; Dash mit kurzer Unverwundbarkeit. Boss nimmt ausserhalb seiner Erholung 22 Prozent Schaden und beschleunigt unter 50 Prozent Integrität. Entdecker: 150 statt 100 Start-Integrität, 20 Prozent mehr Basisschaden.')
-para('**Begrenzt:** horizontale Kampfspur, keine Plattformrätsel oder Leitern, kein Multiplayer. Die frühere Zielzeit von 20-30 Minuten ist nicht bestätigt; der implementierte Run ist kompakter. Zwölf Positionen bedeuten keine unendlich neuen Geometrien.','small')
+para('**Regeln:** maximal drei Stufen je passivem Modul; 0,72 s Schutzzeit nach Schaden; Dash mit kurzer Unverwundbarkeit. Ausserhalb ihrer Erholung lassen Bosse 50 Prozent (Schottmeister), 38 Prozent (Reaktorkern) beziehungsweise 22 Prozent (Lotse) Schaden durch. Unter 50 Prozent Integrität werden sie aggressiver. Entdecker: 150 statt 100 Start-Integrität, 20 Prozent mehr Basisschaden.')
+para('**Begrenzt:** horizontale Kampfspur, keine Plattformrätsel oder Leitern, kein Multiplayer. Die frühere Zielzeit von 20-30 Minuten ist nicht bestätigt; der implementierte Run ist kompakter. Achtzehn Positionen bedeuten keine unendlich neuen Geometrien.','small')
 
 page('3 / Konzeptuelles Domänenmodell')
 diagram('02-domain',330)
 para('Das Modell beschreibt Fachbegriffe und Beziehungen, keine JavaFX-Klassen oder Methoden. Ein Run besitzt eine Figur, Projektile und einen aktuellen Raum; das Profil kennt permanente Baupläne.','small')
 table(['Begriff','Bedeutung'],[
- ['Run / Zyklus','Versuch vom Heck bis zur Brücke; erneuter Zwölf-Raum-Weg nach Sieg.'],
+ ['Run / Zyklus','Versuch vom Heck bis zur Brücke; erneuter Achtzehn-Raum-Weg nach Sieg.'],
  ['Build','Aktives Modul, installierte passive Stufen und Ressourcen des aktuellen Runs.'],
  ['Route / Seed','Gewählte Raumzweige; ganze Zahl für reproduzierbare Angebote.'],
  ['Integrität / Energie','Lebenspunkte; regenerierende Ressource für aktive Fähigkeiten.'],
@@ -178,7 +178,7 @@ table(['Einflussfaktor','Gewählte Lösung'],[
  ['Modulrahmen / Erklärbarkeit','Java-Domäne, JavaFX als UI-Bibliothek, keine Engine oder relationale Datenbank.'],
  ['Reaktiver Kampf','Feste 1/120-s-Simulation und separate JavaFX-Darstellung.'],
  ['Unterbruch / Reproduktion','Seed-basierte Räume und unveränderlicher Einstieg als Save.'],
- ['Begrenzter Umfang / Grafik','Zwölf Positionen, modulare Varianten, gemeinsame Blender-Figurenquelle.']],[155,W-2*M-155])
+ ['Begrenzter Umfang / Grafik','Achtzehn Positionen, modulare Varianten, gemeinsame Blender-Figurenquelle.']],[155,W-2*M-155])
 para('**ADR-01 / Canvas:** JavaFX übernimmt Fenster, Controls, Eingaben und Zeichnen. Eigene Regeln bleiben direkt testbar. Nachteil gegenüber einer Engine: Physik, Kampf und Animation müssen selbst gepflegt werden.')
 para('**ADR-02 / Fester Schritt:** Reale Framezeit wird gesammelt, die Domäne in kleinen Schritten aktualisiert. Einzelne lange Renderpausen werden auf 100 ms begrenzt. Dies ist keine universell deterministische Replay-Engine.')
 para('**ADR-03 / Raum-Checkpoint:** Gegner und Projektile werden beim Laden neu erzeugt. Das begrenzt Komplexität und erklärt den möglichen Verlust von Veränderungen innerhalb eines Raums.')
@@ -209,20 +209,20 @@ picture('docs/qa/screens/route.png',228)
 para('Tatsächlich gerenderte Routenwahl. Risiko und Belohnungsart werden vor dem Betreten genannt.','small')
 picture('docs/qa/screens/reward.png',220)
 para('Tatsächlich gerenderte Werkstatt. Reparatur ist getrennt vom kostenpflichtigen Modul. Bilder stammen aus isolierten QA-Profilen, nicht aus einem behaupteten menschlichen Testlauf.','small')
-para('Die UI umfasst Titel, Vorbereitung, Archiv, Hilfe, Optionen, Spiel, Pause, Route, Bergung und Ergebnis. Esc pausiert; Fokusverlust pausiert automatisch. Der Renderer arbeitet in 1600 x 900 logischen Einheiten und skaliert im Fenster.','small')
+para('Die UI umfasst Titel, Vorbereitung, Archiv, Hilfe, Optionen, Spiel, Pause, Inventar, Bootskarte, Route, Bergung und Ergebnis. Esc pausiert; Fokusverlust pausiert automatisch. Der Renderer arbeitet in 1600 x 900 logischen Einheiten und skaliert im Fenster.','small')
 
 page('6.1 / Assets, Build und Grenzen')
 manifest=json.loads((ROOT/'art-source/asset-manifest.json').read_text())
 assets=manifest['assets'];rooms=sum(a['path'].startswith('art/rooms/') for a in assets);actors=sum(a['path'].startswith('art/actors/') and a['path'].endswith('.png') for a in assets)
 table(['Bestand','Stand'],[
- ['Räume',f'{rooms} konsistente Hintergrundplatten für zwölf Raumpositionen; Werkstätten und Depots können wiederverwendet werden.'],
- ['Figuren',f'5 editierbare Blender-Modelle, {actors} transparente Animationsframes; gemeinsame Kamera und Materialien.'],
- ['Audio','16 eigene synthetische WAV-Dateien; keine fremden Samples.'],
- ['UI','Barlow / Barlow Condensed, lizenzierte Fonts mit OFL-Hinweisen; getrenntes HUD und Effekte.'],
+ ['Räume',f'{rooms} konsistente Hintergrundplatten für achtzehn Raumpositionen; Werkstätten und Depots können wiederverwendet werden.'],
+ ['Figuren',f'7 editierbare Blender-Modelle, {actors} transparente Animationsframes; gemeinsame Kamera und Materialien.'],
+ ['Audio','19 eigene synthetische WAV-Dateien; keine fremden Samples.'],
+ ['UI','Barlow / Barlow Condensed, lizenzierte Fonts mit OFL-Hinweisen; eigens gezeichnete Item-Icons, Inventar, Karte und getrennte Licht-/Nebelebenen.'],
  ['Runtime','Java 25, JavaFX 26.0.2; Gradle Wrapper 9.3.1. JUnit 6.0.3 nur für Tests.']],[105,W-2*M-105])
 para('**Konsistenz:** Boden y = 620 auf einer 1600 x 900 Bühne. Hintergrund enthält keine Figur oder UI. Interaktive Kisten, Gefahren, Schott-Hinweise und Trefferfeedback bleiben separat. Modellexporte haben denselben Fußanker und definierte Framezahlen.')
 para('**Build:** ./gradlew test checkJavaFormat javadoc; python3 tools/package_mac.py. Die Mac-App enthält eine eigene Java-/JavaFX-Laufzeit. Aus dem Quellcode genügt eine passende Java-25-Installation; JavaFX wird über Gradle geladen.')
-para('**Save:** macOS unter Library/Application Support/Abyss. Testprofile liegen separat unter build oder in temporären Verzeichnissen. Unlesbare Dateien bleiben vor dem Ersetzen als Backup erhalten.')
+para('**Save:** macOS unter Library/Application Support/Abyss. Testprofile liegen separat unter build oder in temporären Verzeichnissen. Unlesbare Dateien bleiben vor dem Ersetzen als Backup erhalten. Version-1-Saves werden auf die längere Route migriert; ihre Originale bleiben ebenfalls gesichert.')
 para('**Grenzen:** Nur Apple Silicon macOS wurde lokal gebaut. Keine Notarisierung, keine bestätigten Windows-/Linux-Pakete. Keine frei belegbaren Tasten oder Gamepad-Steuerung. Figuren sind vorgerenderte 3D-Modelle, Hintergründe detaillierte Rasterplatten; Art-Abnahme und menschliches Spielgefühl bleiben offen.','small')
 
 page('6.2 / Tests und beobachtete Ergebnisse')
@@ -232,12 +232,12 @@ for file in (ROOT/'build/test-results/test').glob('TEST-*.xml'):
 soak=json.loads((ROOT/'docs/qa/render-soak.json').read_text())
 table(['Ebene','Beobachteter Nachweis'],[
  ['JUnit',f'{test_count} Testfälle/-konfigurationen, {failures} Fehler. Kampfregeln, Generator, Persistenz, Anwendung und Eingabeflanken.'],
- ['Generator','1000 Seeds mit gültigen Angeboten über alle zwölf Positionen.'],
+ ['Generator','1000 Seeds mit gültigen Angeboten über alle achtzehn Positionen.'],
  ['Kampagnen','144 Runs: 3 Startmodule x 2 Schwierigkeiten x 2 Routenpräferenzen x 12 Seeds; alle erreichten im aufgezeichneten Lauf den Sieg.'],
- ['JavaFX-UI','18 Komponentenprüfungen: Seed, Start, Bewegung, Pause, Optionen, Hilfe, Werkstatt, Modul, Route, Save und Resume.'],
+ ['JavaFX-UI','23 Komponentenprüfungen: Seed, Start, Bewegung, Pause, Optionen, Hilfe, Werkstattkauf, Inventar, Karte, Route, Save und Resume.'],
  ['Render-Probelauf',f'{soak["seconds"]:.0f} s, {soak["frames"]} Frames, {soak["completedRuns"]} vollständige Runs, {soak["uncaughtErrors"]} unbehandelte Fehler. Simulation vierfach beschleunigt.'],
  ['CPU / Frame-Abstand',f'CPU-Zeichenkosten P95 {soak["updateAndDrawCpuMsP95"]:.3f} ms; Frame-Abstand P95 {soak["frameIntervalMsP95"]:.3f} ms. Keine GPU-Endzeitmessung.'],
- ['Audio','16 native Clips geladen und mit Lautstärke null aufgerufen. Kein Hörtest.']],[112,W-2*M-112])
+ ['Audio','19 native Clips geladen und mit Lautstärke null aufgerufen. Kein Hörtest.']],[112,W-2*M-112])
 para('Der Testspieler verwendet reguläre InputFrames; er erhält keine Unverwundbarkeit und tötet Gegner nicht direkt. Er reagiert aber exakt und überspringt menschliche Lese- und Laufpausen zwischen Räumen. Seine Dauer ist deshalb keine gemessene menschliche Run-Zeit.')
 para('Offen: echter Erstnutzertest, Kampfgefühl, Audioabmischung, Betriebssystem-Eingaben, Vollbild-/Monitorwechsel und andere Geräte. Der Desktop war im Nachtlauf gesperrt; Komponententests wurden innerhalb von JavaFX ausgeführt.','small')
 

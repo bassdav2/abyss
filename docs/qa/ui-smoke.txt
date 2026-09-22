@@ -1,6 +1,9 @@
 PASS Titel -> Vorbereitung
 PASS Ungültiger Seed startet keinen Run
 PASS Seed-Eingabe und Start-Button
+PASS I öffnet Build-Inventar
+PASS Inventar enthält zwölf Item-Karten
+PASS Bootskarte enthält achtzehn Räume
 PASS JavaFX-KeyEvent bewegt Spielfigur
 PASS Pause stoppt Simulation
 PASS Hilfe aus Pause
@@ -9,6 +12,8 @@ PASS Weiter nach Pause
 PASS Fortsetzen rekonstruiert gespeicherten Raum
 PASS Werkstatt-Interaktion repariert
 PASS Werkstatt öffnet Modulauswahl
+PASS Werkstatt kauft ein mitnehmbares Reparaturset
+PASS Reparaturset kostet genau 20 Schrott
 PASS Modulkarte verändert Build
 PASS Werkstatt zieht genau 15 Schrott ab (inkl. Raumlohn)
 PASS Rechtes Schott öffnet Navigation

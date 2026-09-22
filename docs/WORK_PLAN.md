@@ -37,3 +37,13 @@ Basis: PM3-Kick-off HS26, insbesondere physische PDF-Seiten 17/19, M2-Auftrag Se
 - 02:04: 21-seitige technische Arbeitsfassung erzeugt. Elf Raumplatten und überarbeitete Gegnersilhouetten im neuen Mac-Bundle. Alle PDF-Seiten visuell geprüft; eine unschöne Tabellenüberschrift korrigiert.
 - 02:07: 82-Sekunden-Gameplay-Demo erstellt und anhand mehrerer Frames geprüft. 41 JUnit-Testfälle/-konfigurationen bestanden. Bundle-Ressourcen per SHA-256 gegen 121 Inventareinträge geprüft; ad-hoc Codesign-Verifikation erfolgreich.
 - 02:12: Lokalen Git-Stand gesichert; Git-LFS-Prüfung erfolgreich. Mac- und Quell-ZIP erstellt und separat entpackt. Frisches Quellprojekt besteht alle 41 Tests, Formatprüfung und Javadoc; sieben Aufgaben tatsächlich ausgeführt. Entpackte App startet mit eigener Laufzeit, Signatur gültig. Abschlussstand und manuelle Restprüfungen in MORGEN.md.
+
+## Beauftragter Ausbau 0.2
+
+Der Nachtstand oben bleibt als historisches Journal erhalten. David beauftragte anschliessend ausdrücklich mehr Inhalt, Items, Bosskämpfe, eine überarbeitete UI und dichtere Atmosphäre. Zwischen abgeschlossenem Nachtstand und diesem Folgeauftrag wurde keine durchgehende Arbeitszeit behauptet.
+
+- 12:17: Neues aktives Ziel begonnen, vorhandenen Stand und Quellen geprüft.
+- 12:39: 18-Raum-Route mit drei Bossen, zwölf passiven Items, zerstörbaren Kisten, Inventar und Bootskarte integriert. Vier neue Raumplatten, zwei weitere Blender-Modelle und drei Musik-Loops erstellt. Erste Layoutfehler bei Karte, Inventar und kleinen HUD-Buttons korrigiert.
+- 12:43: Reparatursets mit Q, Kapazität drei und Werkstattkauf ergänzt. 53 JUnit-Testfälle/-konfigurationen sowie 23 JavaFX-Komponentenprüfungen erfolgreich; 144 simulierte Kampagnen gewonnen.
+- 12:47: Finale 120-Sekunden-Demo und 180-Sekunden-Renderlauf fertig. 21.547 Frames, fünf vollständige Runs, 29 Raum-/Abzweigvarianten und null unbehandelte Fehler. 19 native Audioclips stumm initialisiert. Neues Mac-Bundle gebaut; 160 Ressourcen stimmen per SHA-256 überein.
+- 12:50: Neues Bundle mit eigener Laufzeit und isoliertem QA-Profil gestartet, gerenderten Screenshot erhalten. Desktop weiterhin gesperrt; echte Betriebssystem-Bedienung und Hörprüfung bleiben offen.

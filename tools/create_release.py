@@ -6,8 +6,8 @@ OUT=ROOT/'release';OUT.mkdir(exist_ok=True)
 APP=ROOT/'dist/Abyss.app'
 assert (APP/'Contents/MacOS/Abyss').is_file()
 assert (ROOT/'build/docs/javadoc/index.html').is_file()
-source=OUT/'Abyss_Source_2026-09-22.zip'
-mac=OUT/'Abyss_macOS_AppleSilicon_2026-09-22.zip'
+source=OUT/'Abyss_v0.2_Source_2026-09-22.zip'
+mac=OUT/'Abyss_v0.2_macOS_AppleSilicon_2026-09-22.zip'
 if mac.exists():mac.unlink()
 subprocess.run(['/usr/bin/ditto','-c','-k','--sequesterRsrc','--keepParent',str(APP),str(mac)],check=True)
 tracked=subprocess.check_output(['git','ls-files','-z'],cwd=ROOT).decode().split('\0')

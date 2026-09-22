@@ -325,11 +325,68 @@ def robot(kind, pose, frame, count):
         box("Bridge authority crest", (-.12, -.57, body_z + .2), (.24, .05, .10), M["cyan"], .01)
 
 
+def boss_machine(kind, pose, frame, count):
+    t=frame/count*math.tau
+    attack=pose=="attack"
+    bob=math.sin(t)*.025
+    if kind=="warden":
+        # Unverwechselbare niedrige Raupen, breiter Druckpanzer und Rammschild.
+        for side in [-1,1]:
+            for i in range(5):
+                x=-.68+i*.30
+                ball("Track roller",(x,side*.38,.22),(.22,.12,.22),M["dark"])
+                ring("Roller hub",(x,side*.51,.22),.12,.022,M["copper"])
+            box("Tracked running gear",(-.05,side*.38,.11),(1.70,.27,.17),M["boot"],.06)
+            for i in range(11):
+                x=-.78+i*.145
+                box("Track shoe",(x,side*.38,.05),(.095,.33,.085),M["steel"],.012)
+        ball("Pressure iron shell",(-.08,0,1.05+bob),(.69,.48,.72),M["copper"])
+        box("Shell shoulder armor",(-.12,0,1.47+bob),(1.39,1.08,.23),M["dark"],.09)
+        ball("Observation dome",(.14,0,1.91+bob),(.33,.30,.30),M["steel"])
+        ball("Armored visor",(.43,-.10,1.92+bob),(.085,.245,.15),M["red"])
+        for i in range(3):
+            link("Exhaust stack",(-.63+i*.16,.17,1.52),(-.63+i*.16,.17,1.91),.07,M["dark"])
+        extension=.18*math.sin(t) if attack else 0
+        link("Ram piston",(.4,-.35,.89),(1.00+extension,-.35,.80),.13,M["steel"])
+        box("Massive breach shield",(1.04+extension,-.30,.92),(.21,.90,1.41),M["dark"],.08)
+        for z in [.42,.72,1.02,1.32]:
+            box("Warning armor",(1.16+extension,-.32,z),(.04,.86,.11),M["yellow"],.02)
+        ring("Exposed hydraulic gauge",(-.08,-.50,1.15),.24,.04,M["steel"])
+        ball("Warm pressure glass",(-.08,-.535,1.15),(.185,.020,.185),M["red"])
+    else:
+        # Reaktorspinne: sechs bewegliche Stützen statt humanoider Beine.
+        core_z=1.38+bob
+        for side in [-1,1]:
+            for i in range(3):
+                phase=t+i*2.1+side
+                x=-.55+i*.52
+                foot_x=x+(-.40 if i==0 else .40 if i==2 else .12)
+                lift=max(0,math.sin(phase))*.13 if pose=="walk" else 0
+                knee=(foot_x,side*.65,.60+lift)
+                link("Spider upper strut",(x,side*.25,1.00),knee,.07,M["steel"])
+                ball("Hydraulic knuckle",knee,(.14,)*3,M["copper"])
+                link("Spider lower strut",knee,(foot_x+.14,side*.82,.10+lift),.06,M["steel"])
+                box("Magnetic claw",(foot_x+.20,side*.82,.08+lift),(.34,.18,.12),M["dark"],.035)
+        ball("Reactor containment body",(0,0,core_z),(.72,.42,.68),M["dark"])
+        ring("Main reactor collar",(0,-.39,core_z),.52,.10,M["copper"])
+        ball("Luminous reactor sphere",(0,-.49,core_z),(.38,.10,.38),M["cyan"])
+        ring("Core retainer",(0,-.57,core_z),.33,.035,M["steel"])
+        for i in range(8):
+            angle=i*math.tau/8+(t*.12 if attack else 0)
+            x=math.cos(angle)*.62;z=core_z+math.sin(angle)*.62
+            box("Segmented heat armor",(x,-.14,z),(.23,.52,.22),M["steel"],.035)
+        for x in [-.5,.5]:
+            link("Arc cannon barrel",(x,-.1,1.8),(x,-.1,2.27),.095,M["dark"])
+            ball("Arc emitter",(x,-.1,2.28),(.12,.12,.09),M["red"] if attack else M["cyan"])
+        for i in range(3):
+            link("Cooling conduit",(-.45+i*.44,.36,1.12),(-.45+i*.44,.36,1.84),.07,M["teal"])
+
+
 def main():
     counts = {"idle": 4, "walk": 8, "attack": 6, "dash": 2, "hurt": 2}
     manifest = {"format": 1, "frame_size": 256, "anchor": [.5, .944], "actors": {}}
     wanted=set(sys.argv[sys.argv.index("--")+1:]) if "--" in sys.argv else set()
-    for kind in ["player", "scuttler", "drone", "sentinel", "captain"]:
+    for kind in ["player", "scuttler", "drone", "sentinel", "captain", "warden", "reactor"]:
         if wanted and kind not in wanted: continue
         folder = OUT / kind
         folder.mkdir(exist_ok=True)
@@ -337,10 +394,12 @@ def main():
         manifest["actors"][kind] = poses
         for pose, count in poses.items():
             for frame in range(count):
-                scale = 3.6 if kind == "captain" else 2.6
+                scale = 3.6 if kind in ("captain","warden","reactor") else 2.6
                 init_scene(scale)
                 if kind == "player":
                     human(pose, frame, count)
+                elif kind in ("warden","reactor"):
+                    boss_machine(kind, pose, frame, count)
                 else:
                     robot(kind, pose, frame, count)
                 scene = bpy.context.scene

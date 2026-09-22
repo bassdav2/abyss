@@ -53,9 +53,9 @@ class GameServiceTest {
             if (run.phase() == GameRun.Phase.ROOM_CLEARED) {
                 assertTrue(CampaignPilot.advance(run, 0));
                 service.saveRoom();
-                if (run.room().depth() >= 3)
+                if (run.room().depth() >= 5)
                     assertTrue(service.profile().unlocked().contains(ActiveModule.ARC));
-                if (run.room().depth() >= 7)
+                if (run.room().depth() >= 11)
                     assertTrue(service.profile().unlocked().contains(ActiveModule.AEGIS));
             } else run.update(1.0 / 120, CampaignPilot.input(run));
             run.drainEvents();

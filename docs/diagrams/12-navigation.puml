@@ -22,6 +22,10 @@ Titel --> Spiel : Fortsetzen
 Titel --> Optionen
 Titel --> Hilfe
 Titel --> Archiv
+Spiel --> Inventar : I / Tab
+Inventar --> Spiel : Weiter / Esc
+Spiel --> Bootskarte : M
+Bootskarte --> Spiel : Weiter / Esc
 Spiel --> Pause : Esc / Fokusverlust
 Pause --> Spiel : Weiter
 Pause --> Optionen

@@ -111,8 +111,8 @@ public final class GameService {
         int reached =
                 run.phase() == GameRun.Phase.DEFEAT ? run.room().depth() : run.room().depth() + 1;
         var unlocked = EnumSet.copyOf(profile.unlocked());
-        if (reached >= 4) unlocked.add(ActiveModule.ARC);
-        if (reached >= 8) unlocked.add(ActiveModule.AEGIS);
+        if (reached >= 6) unlocked.add(ActiveModule.ARC);
+        if (reached >= 12) unlocked.add(ActiveModule.AEGIS);
         int newKills = Math.max(0, run.kills() - accountedKills);
         accountedKills = run.kills();
         profile =

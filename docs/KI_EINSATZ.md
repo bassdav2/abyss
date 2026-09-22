@@ -25,3 +25,7 @@ Grundlage für diese Tabelle: lokaler PM3-Kursbestand, **Verwendung von KI im PM
 ## Konkreter Lern-/Review-Vorschlag
 
 Jedes Teammitglied kann einen klar abgegrenzten Teil übernehmen: Eingaben/Spielschleife, Domain-Kampf, Gegner/Generator, Persistenz, Darstellung/Assets oder Teststrategie. Für den eigenen Teil zunächst Ablauf erklären, eine Änderung selbst umsetzen und den zugehörigen Test begründen. Zuordnung und tatsächlichen Aufwand muss das Team selbst festhalten; hier werden keine Namen oder erledigten Teamleistungen erfunden.
+
+## Fortsetzung 0.2
+
+David beauftragte nach Sichtung des ersten Spiels ausdrücklich mehr Items, UI-Überarbeitung, Atmosphäre, Räume und Bosskämpfe. Codex setzte 18 Räume, drei Bosse, zwölf passive Items, Vorratskisten, Inventar/Karte und Save-Migration um. Vier neue ImageGen-Platten, zwei weitere Blender-Modelle, eigene Canvas-Icons und drei synthetische Musikloops ergänzen die Assets. Tests, Code, Grafiken und Dokumentation bleiben überwiegend KI-gestützt erstellt; keine neue Teamabnahme wird behauptet.

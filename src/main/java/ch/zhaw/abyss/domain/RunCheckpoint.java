@@ -17,7 +17,27 @@ public record RunCheckpoint(
         Map<Upgrade, Integer> upgrades,
         int kills,
         double elapsed,
-        List<Integer> route) {
+        List<Integer> route,
+        int repairKits) {
+    public RunCheckpoint(
+            long seed,
+            int cycle,
+            int depth,
+            int branch,
+            ActiveModule module,
+            boolean explorer,
+            double health,
+            double energy,
+            int salvage,
+            Map<Upgrade, Integer> upgrades,
+            int kills,
+            double elapsed,
+            List<Integer> route) {
+        this(
+                seed, cycle, depth, branch, module, explorer, health, energy, salvage, upgrades,
+                kills, elapsed, route, 1);
+    }
+
     public RunCheckpoint {
         upgrades = Map.copyOf(upgrades);
         route = List.copyOf(route);

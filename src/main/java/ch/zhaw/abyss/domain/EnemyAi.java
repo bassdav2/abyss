@@ -13,11 +13,11 @@ final class EnemyAi {
         enemy.vx = 0;
         if (enemy.kind == EnemyKind.DRONE)
             enemy.y = GameRun.FLOOR - 78 + Math.sin(run.elapsed() * 2.4 + enemy.id) * 12;
-        if (enemy.kind == EnemyKind.CAPTAIN
-                && !enemy.enraged
-                && enemy.health < enemy.maxHealth * .5) {
+        if (enemy.kind.boss() && !enemy.enraged && enemy.health < enemy.maxHealth * .5) {
             enemy.enraged = true;
-            run.events.add(GameEvent.at(GameEvent.Type.BOSS_PHASE, enemy.x, enemy.y));
+            run.events.add(
+                    new GameEvent(
+                            GameEvent.Type.BOSS_PHASE, enemy.x, enemy.y, 0, enemy.kind.title()));
         }
         if (enemy.state == Enemy.State.STUNNED || enemy.state == Enemy.State.RECOVER) {
             enemy.stateTime -= dt;
@@ -41,6 +41,8 @@ final class EnemyAi {
                     case DRONE -> 550;
                     case SCUTTLER -> 250;
                     case SENTINEL -> 140;
+                    case WARDEN -> 280;
+                    case REACTOR -> 520;
                     case CAPTAIN -> 440;
                 };
         if (distance > range) {
@@ -58,12 +60,21 @@ final class EnemyAi {
                         case DRONE -> .7;
                         case SCUTTLER -> .65;
                         case SENTINEL -> .8;
+                        case WARDEN -> enemy.enraged ? .75 : 1.0;
+                        case REACTOR -> enemy.enraged ? .75 : 1.1;
                         case CAPTAIN -> enemy.enraged ? .8 : 1.0;
                     };
             enemy.targetX = run.player.x;
             enemy.targetY = run.player.y - 65;
             enemy.strikeHit = false;
-            enemy.attackPattern = enemy.kind == EnemyKind.CAPTAIN ? enemy.attacks % 3 : 0;
+            enemy.attackPattern =
+                    enemy.kind == EnemyKind.CAPTAIN
+                            ? enemy.attacks % 3
+                            : enemy.kind == EnemyKind.WARDEN
+                                    ? (enemy.attacks % 2 == 0 ? 2 : 0)
+                                    : enemy.kind == EnemyKind.REACTOR
+                                            ? (enemy.attacks % 3 == 0 ? 0 : 1)
+                                            : 0;
             run.events.add(GameEvent.at(GameEvent.Type.TELEGRAPH, enemy.x, enemy.y));
         }
     }
@@ -71,14 +82,13 @@ final class EnemyAi {
     private static void beginStrike(Enemy enemy, GameRun run) {
         enemy.state = Enemy.State.STRIKE;
         enemy.stateTime =
-                enemy.kind == EnemyKind.SCUTTLER
-                                || enemy.kind == EnemyKind.CAPTAIN && enemy.attackPattern == 2
+                enemy.kind == EnemyKind.SCUTTLER || enemy.kind.boss() && enemy.attackPattern == 2
                         ? .34
                         : .16;
         double damage = run.enemyDamage();
         if (enemy.kind == EnemyKind.DRONE) {
             shootAt(enemy, run, 0, 610, 9 * damage);
-        } else if (enemy.kind == EnemyKind.CAPTAIN) {
+        } else if (enemy.kind.boss()) {
             if (enemy.attackPattern == 0) {
                 for (int sign : new int[] {-1, 1})
                     run.addProjectile(
@@ -93,7 +103,14 @@ final class EnemyAi {
                             4);
                 run.events.add(new GameEvent(GameEvent.Type.PULSE, enemy.x, enemy.y, -1, ""));
             } else if (enemy.attackPattern == 1) {
-                for (int i = -1; i <= 1; i++) shootAt(enemy, run, i * .16, 490, 12 * damage);
+                int spread = enemy.kind == EnemyKind.REACTOR ? (enemy.enraged ? 3 : 2) : 1;
+                for (int i = -spread; i <= spread; i++)
+                    shootAt(
+                            enemy,
+                            run,
+                            i * .17,
+                            enemy.kind == EnemyKind.REACTOR ? 380 : 490,
+                            10 * damage);
             }
         }
     }
@@ -116,13 +133,11 @@ final class EnemyAi {
     }
 
     private static void strike(Enemy enemy, GameRun run, double dt) {
-        double reach =
-                enemy.kind == EnemyKind.SENTINEL ? 175 : enemy.kind == EnemyKind.CAPTAIN ? 135 : 78;
+        double reach = enemy.kind == EnemyKind.SENTINEL ? 175 : enemy.kind.boss() ? 150 : 78;
         boolean charging =
-                enemy.kind == EnemyKind.SCUTTLER
-                        || enemy.kind == EnemyKind.CAPTAIN && enemy.attackPattern == 2;
+                enemy.kind == EnemyKind.SCUTTLER || enemy.kind.boss() && enemy.attackPattern == 2;
         if (charging) {
-            enemy.vx = enemy.facing * (enemy.kind == EnemyKind.CAPTAIN ? 620 : 680);
+            enemy.vx = enemy.facing * (enemy.kind.boss() ? 620 : 680);
             enemy.x = GameRun.clamp(enemy.x + enemy.vx * dt, 90, GameRun.WIDTH - 90);
         }
         boolean melee =
@@ -134,9 +149,7 @@ final class EnemyAi {
                 && delta * enemy.facing > -50
                 && run.player.y > GameRun.FLOOR - (enemy.kind == EnemyKind.SENTINEL ? 125 : 75)) {
             run.damagePlayer(
-                    (enemy.kind == EnemyKind.CAPTAIN
-                                    ? 20
-                                    : enemy.kind == EnemyKind.SENTINEL ? 14 : 10)
+                    (enemy.kind.boss() ? 20 : enemy.kind == EnemyKind.SENTINEL ? 14 : 10)
                             * run.enemyDamage(),
                     enemy.x);
             enemy.strikeHit = true;
@@ -144,7 +157,10 @@ final class EnemyAi {
         enemy.stateTime -= dt;
         if (enemy.stateTime <= 0) {
             enemy.state = Enemy.State.RECOVER;
-            enemy.stateTime = enemy.kind == EnemyKind.CAPTAIN ? (enemy.enraged ? 1.45 : 1.9) : .8;
+            enemy.stateTime =
+                    enemy.kind.boss()
+                            ? (enemy.kind == EnemyKind.WARDEN ? 2.2 : enemy.enraged ? 1.45 : 1.9)
+                            : .8;
             enemy.actionCooldown = enemy.kind == EnemyKind.DRONE ? 1.7 : .9;
             enemy.attacks++;
         }

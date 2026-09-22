@@ -57,6 +57,6 @@ public final class Enemy extends Actor {
     }
 
     public boolean armored() {
-        return kind == EnemyKind.CAPTAIN && state != State.RECOVER;
+        return kind.boss() && state != State.RECOVER;
     }
 }

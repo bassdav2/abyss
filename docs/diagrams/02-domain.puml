@@ -36,6 +36,7 @@ class Gegner {
 }
 class Projektil
 class Gefahr
+class Vorratskiste
 class "Aktives Modul" as Active
 class "Passives Modul" as Passive
 class "Installierte Modulstufe" as Stack {
@@ -48,9 +49,10 @@ Tauchgang "1" *-- "1" Spielfigur
 Tauchgang "1" --> "1" Raum : befindet sich in
 Raum "1" -- "0..*" Gegner : Begegnung
 Raum "1" -- "0..*" Gefahr
+Raum "1" -- "0..*" Vorratskiste
 Tauchgang "1" *-- "0..*" Projektil
 Spielfigur "1" --> "1" Active
-Spielfigur "1" *-- "0..6" Stack
+Spielfigur "1" *-- "0..12" Stack
 Stack "0..*" --> "1" Passive
 Spielerprofil "1" -- "1..3" Bauplan : kennt
 Bauplan "1" --> "1" Active : ermöglicht

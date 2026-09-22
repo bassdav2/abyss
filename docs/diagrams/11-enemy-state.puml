@@ -27,7 +27,8 @@ STRIKE --> STUNNED : Impuls (kein Boss)
 STUNNED --> APPROACH : Betäubung endet
 note right of RECOVER
 Boss ist hier vollständig verwundbar.
-Sonst nur 22% Schaden.
+Sonst 50 / 38 / 22% Schaden,
+je nach Sektorwächter.
 Bei <50% Integrität kürzere Zeiten.
 end note
 

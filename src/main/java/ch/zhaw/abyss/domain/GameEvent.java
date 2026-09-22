@@ -20,6 +20,7 @@ public record GameEvent(Type type, double x, double y, double amount, String tex
         DEFEAT,
         VICTORY,
         BOSS_PHASE,
+        SUPPLY,
         REINFORCEMENTS
     }
 

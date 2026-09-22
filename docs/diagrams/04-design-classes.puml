@@ -57,6 +57,7 @@ class Player {
  + upgrades(): Map<Upgrade,Integer>
 }
 class Enemy
+class SupplyCrate
 class RunCheckpoint <<record>>
 class InputFrame <<record>>
 class GameEvent <<record>>
@@ -67,6 +68,7 @@ FileGameRepository ..|> GameRepository
 GameService --> GameRun
 GameRun *-- Player
 GameRun *-- "0..*" Enemy
+GameRun *-- "0..*" SupplyCrate
 GameRun --> RoomGenerator
 GameRun --> RunCheckpoint
 GameRun ..> InputFrame

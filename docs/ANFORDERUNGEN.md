@@ -59,13 +59,13 @@ Primärer Akteur: Spieler/in. Das lokale Dateisystem ist ein technisches Nachbar
 - 6a: Alle passiven Module sind maximiert. Das System bietet Vorräte an.
 - 7a: In der Werkstatt reicht der Schrott nicht. Kauf ist deaktiviert; Reparatur und Weiterreise bleiben möglich.
 - 8a: Die Person verlässt den Raum ohne Fund. Der nicht genommene Fund wird nicht nachträglich gutgeschrieben.
-- 9a: Nur ein nächster Raum ist zulässig (Werkstatt oder Brücke). Das System zeigt genau diesen Weg.
+- 9a: Nur ein nächster Raum ist zulässig (Werkstatt, Sektorwächter oder Brücke). Das System zeigt genau diesen Weg.
 - 10a: Speichern schlägt fehl. Der aktuelle Run kann weitergespielt werden; die UI meldet, dass die neue Sicherung nicht verlässlich auf dem Datenträger liegt.
 - 4b: Der Raum ist die Brücke. Nach dem Boss endet der Run mit Sieg; UC-05 folgt statt normaler Routenwahl.
 
 **Besondere Anforderungen:** Maximal 1/30 s je Domain-Aufruf, im Spiel 1/120 s. Kein Schaden durch reine Render- oder Audioereignisse. Raum-Sicherung stellt einen Einstieg wieder her, keinen beliebigen Kampfzeitpunkt. Hindernisse im Hintergrund sind Dekoration; die Spielspur ist horizontal.
 
-**Häufigkeit:** Einmal je Raum, bis zu zwölfmal pro Zyklus. **Offene Punkte:** Menschliche Spieldauer, gewünschter Schwierigkeitsgrad und finale Modulnamen müssen mit dem Team erprobt werden.
+**Häufigkeit:** Einmal je Raum, bis zu achtzehnmal pro Zyklus. **Offene Punkte:** Menschliche Spieldauer, gewünschter Schwierigkeitsgrad und finale Modulnamen müssen mit dem Team erprobt werden.
 
 ## Weitere Use Cases
 
@@ -75,7 +75,7 @@ Die Person öffnet die Vorbereitung, wählt ein freigeschaltetes aktives Modul u
 
 ### UC-03 - Ausrüstung verbessern
 
-Nach einer Begegnung wählt die Person aus höchstens drei passiven Modulen. Ein normales Angebot installiert eine Stufe, ein Elitefund zwei bis zur Obergrenze drei. Maximal ausgebaute Module werden nicht angeboten. Werkstätten verlangen 15 Schrott für ein Modul. Eine Auswahl kann nicht doppelt abgerechnet werden. Im aktuellen Run verfügbare Ressourcen sind immer sichtbar.
+Nach einer Begegnung wählt die Person aus höchstens drei passiven Modulen. Ein normales Angebot installiert eine Stufe, ein Elite- oder Sektorwächterfund zwei bis zur Obergrenze drei. Maximal ausgebaute Module werden nicht angeboten. Werkstätten verlangen 15 Schrott für ein Modul. Eine Auswahl kann nicht doppelt abgerechnet werden. Im aktuellen Run verfügbare Ressourcen sind immer sichtbar.
 
 ### UC-04 - Unterbrechen und fortsetzen
 
@@ -88,7 +88,7 @@ Nach dem letzten Gegner zeigt das System Sieg, erreichte Räume, Kills, Tauchzei
 ### UC-06 bis UC-08 - Brief
 
 - **UC-06:** Niederlage -> Ergebnis -> erneuter Versuch mit neuem Seed und dem letzten aktiven Modul. Keine alten passiven Upgrades; gesicherte Baupläne bleiben.
-- **UC-07:** Im Archiv Freischaltungen prüfen. Raum 4 schaltet Lichtbogen frei, Raum 8 Druckschild. Diese bieten Alternativen für neue Starts.
+- **UC-07:** Im Archiv Freischaltungen prüfen. Raum 6 schaltet Lichtbogen frei, Raum 12 Druckschild. Diese bieten Alternativen für neue Starts.
 - **UC-08:** Gesamtlautstärke, Musik, reduzierte Bewegung, Vollbild und Entdecker-Vorgabe einstellen. Steuerung jederzeit aus dem Hauptmenü oder der Pause nachlesen.
 
 ## Funktionale Anforderungen und Akzeptanz
@@ -96,9 +96,9 @@ Nach dem letzten Gegner zeigt das System Sieg, erreichte Räume, Kills, Tauchzei
 | ID | Anforderung | Akzeptanzbeleg |
 |---|---|---|
 | F-01 | Bewegung, Sprung, Nahkampf, Dash und Modul | Domain- und Input-Tests; JavaFX-Komponententest |
-| F-02 | Drei Gegnertypen und Boss mit angekündigten Angriffen | Zustandsmaschine; Kampagnensimulation; Screenshots |
-| F-03 | Zwölf erreichbare Räume, feste Werkstätten, Routenwahl | Generator-Test über 1000 Seeds; vollständige Runs |
-| F-04 | Sechs passive Module, drei aktive Startmodule | Stack-/Energie-/Freischaltregeln und UI |
+| F-02 | Drei reguläre Gegnertypen und drei Bosse mit angekündigten Angriffen | Zustandsmaschine; Kampagnensimulation; Screenshots |
+| F-03 | Achtzehn erreichbare Räume, feste Werkstätten, Routenwahl | Generator-Test über 1000 Seeds; vollständige Runs |
+| F-04 | Zwölf passive Module, drei aktive Startmodule | Stack-/Energie-/Freischaltregeln und UI |
 | F-05 | Tod, Sieg, erneuter Versuch und Folgezyklus | Phasen-Tests und Ergebnisanzeige |
 | F-06 | Lokale Raum-Sicherung und permanentes Profil | Repository-Roundtrip, Fehlerfälle, UI-Fortsetzen |
 | F-07 | Audio, Pause, Hilfe, Optionen und Vollbild | Native Clip-Ladung, JavaFX-Menütest; manuelle Hör-/Vollbildprüfung offen |
@@ -114,6 +114,14 @@ Nach dem letzten Gegner zeigt das System Sieg, erreichte Räume, Kills, Tauchzei
 
 ## Spielregeln und Scope
 
-Maximal drei Stufen je passivem Modul. Integrität und Energie werden begrenzt; Treffer haben 0,72 s Schutzzeit gegen Mehrfachschaden. Ein Dash schützt kurz und hat eine Abklingzeit. Der Boss nimmt ausserhalb seiner Erholungsphase nur 22 Prozent Schaden. Nach der Hälfte seiner Integrität wird sein Angriffstempo erhöht. Der Entdecker-Modus beginnt mit 150 statt 100 Integrität und erhöht Basisschaden um 20 Prozent.
+Maximal drei Stufen je passivem Modul. Integrität und Energie werden begrenzt; Treffer haben 0,72 s Schutzzeit gegen Mehrfachschaden. Ein Dash schützt kurz und hat eine Abklingzeit. Die Bosse nehmen ausserhalb ihrer Erholung nur 50 (Schottmeister), 38 (Reaktorkern) bzw. 22 Prozent (Lotse) Schaden. Nach der Hälfte seiner Integrität wird sein Angriffstempo erhöht. Der Entdecker-Modus beginnt mit 150 statt 100 Integrität und erhöht Basisschaden um 20 Prozent.
 
-Der ursprüngliche Wunsch nach 20-30 Minuten je Run ist weiterhin eine Planungsannahme und derzeit nicht durch menschliche Tests bestätigt. Der implementierte Stand ist kompakter. Es gibt zwölf Raumpositionen, nicht zwölf beliebig prozedural erzeugte Geometrien. Plattformrätsel, Leitern, Mehrspieler, Storydialogsystem, Inventarverwaltung und frei belegbare Tasten gehören nicht zum aktuellen Stand.
+Der ursprüngliche Wunsch nach 20-30 Minuten je Run ist weiterhin eine Planungsannahme und derzeit nicht durch menschliche Tests bestätigt. Der implementierte Stand ist kompakter. Es gibt achtzehn Raumpositionen, nicht achtzehn beliebig prozedural erzeugte Geometrien. Plattformrätsel, Leitern, Mehrspieler, Storydialogsystem und frei belegbare Tasten gehören nicht zum aktuellen Stand.
+
+## Ergänzungen 0.2
+
+- **UC-09:** I/Tab öffnet das Inventar mit zwölf Itemtypen, aktuellen Stufen und Charakterwerten. M öffnet die 18-Raum-Karte mit bisheriger Route und Bosspositionen. Beide halten den Run an.
+- **UC-10:** Normale Werkzeugschläge zerstören Vorratskisten; der Inhalt wird genau einmal gutgeschrieben. Reparaturgel und Energiezellen respektieren Maximalwerte.
+- **F-08:** Alte Save-Version 1 wird auf Format 2 übertragen, mit unverändertem Original als Backup vor dem ersten Überschreiben.
+
+- **UC-11:** Reparaturset mit Q einsetzen, nur wenn Integrität fehlt und ein Set vorhanden ist. Bis maximal drei Sets; Werkstattkauf kostet 20 Schrott und wird genau einmal abgerechnet. Raum-Checkpoints erhalten den Vorrat.

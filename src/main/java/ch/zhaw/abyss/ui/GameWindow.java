@@ -4,7 +4,9 @@ import ch.zhaw.abyss.application.GameService;
 import ch.zhaw.abyss.application.Settings;
 import ch.zhaw.abyss.domain.ActiveModule;
 import ch.zhaw.abyss.domain.GameRun;
+import ch.zhaw.abyss.domain.RoomGenerator;
 import ch.zhaw.abyss.domain.RoomPlan;
+import ch.zhaw.abyss.domain.Upgrade;
 import ch.zhaw.abyss.infrastructure.AudioSystem;
 
 import javafx.animation.AnimationTimer;
@@ -12,6 +14,7 @@ import javafx.animation.PauseTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.geometry.Pos;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Cursor;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -22,6 +25,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextField;
+import javafx.scene.image.ImageView;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -55,6 +59,8 @@ public final class GameWindow implements AutoCloseable {
         SETTINGS,
         ARCHIVE,
         HELP,
+        INVENTORY,
+        MAP,
         OUTCOME
     }
 
@@ -150,6 +156,11 @@ public final class GameWindow implements AutoCloseable {
                                     showOutcome();
                             }
                         } else accumulator = 0;
+                        audio.context(
+                                run,
+                                screen == Screen.TITLE
+                                        || screen == Screen.LOADOUT
+                                        || screen == Screen.ARCHIVE);
                         renderer.update(dt);
                         renderer.render(
                                 run,
@@ -173,6 +184,12 @@ public final class GameWindow implements AutoCloseable {
                 case "archive" -> showArchive();
                 case "settings" -> showSettings(run != null);
                 case "help" -> showHelp(run != null);
+                case "inventory" -> {
+                    if (run != null) showInventory();
+                }
+                case "map" -> {
+                    if (run != null) showMap();
+                }
                 case "pause" -> {
                     if (run != null) showPause();
                 }
@@ -229,7 +246,9 @@ public final class GameWindow implements AutoCloseable {
                         if (screen == Screen.PLAY) showPause();
                         else if (screen == Screen.PAUSE
                                 || screen == Screen.ROUTE
-                                || screen == Screen.REWARD) play();
+                                || screen == Screen.REWARD
+                                || screen == Screen.INVENTORY
+                                || screen == Screen.MAP) play();
                         else if (screen == Screen.SETTINGS || screen == Screen.HELP) {
                             if (modalFromGame) showPause();
                             else showTitle();
@@ -238,7 +257,10 @@ public final class GameWindow implements AutoCloseable {
                         return;
                     }
                     if (screen == Screen.PLAY) {
-                        if (event.getCode() == KeyCode.E) interact();
+                        if (event.getCode() == KeyCode.I || event.getCode() == KeyCode.TAB)
+                            showInventory();
+                        else if (event.getCode() == KeyCode.M) showMap();
+                        else if (event.getCode() == KeyCode.E) interact();
                         else input.down(event.getCode());
                         event.consume();
                     } else if (screen == Screen.ROUTE && event.getCode().isDigitKey()) {
@@ -413,6 +435,8 @@ public final class GameWindow implements AutoCloseable {
 
     private void play() {
         setScreen(Screen.PLAY, false);
+        button("I", 1397, 126, 46, 41, "quiet", this::showInventory).setFocusTraversable(false);
+        button("M", 1456, 126, 46, 41, "quiet", this::showMap).setFocusTraversable(false);
         button("Ⅱ", 1515, 126, 46, 41, "quiet", this::showPause).setFocusTraversable(false);
         canvas.setFocusTraversable(true);
         canvas.requestFocus();
@@ -428,8 +452,10 @@ public final class GameWindow implements AutoCloseable {
             return;
         }
         if (Math.abs(run.player().x() - 800) < 165) {
-            if (run.room().kind() == RoomPlan.Kind.WORKSHOP) run.repair();
-            if (run.rewardAvailable()) showReward();
+            if (run.room().kind() == RoomPlan.Kind.WORKSHOP) {
+                run.repair();
+                showReward();
+            } else if (run.rewardAvailable()) showReward();
             else renderer.toast("Alles geborgen. Weiter zum rechten Schott.");
         } else renderer.toast("E am Modulbehälter oder am rechten Schott.");
     }
@@ -447,21 +473,28 @@ public final class GameWindow implements AutoCloseable {
             var room = choices.get(i);
             final int index = i;
             double x = choices.size() == 1 ? 480 : 155 + i * 670;
-            pane(x, 363, 620, 285, "card");
+            pane(x, 353, 620, 330, "card");
+            var picture = new ImageView(assets.room(room));
+            picture.setViewport(new Rectangle2D(0, 220, picture.getImage().getWidth(), 310));
+            picture.setFitWidth(618);
+            picture.setFitHeight(111);
+            picture.setLayoutX(x + 1);
+            picture.setLayoutY(354);
+            overlay.getChildren().add(picture);
             label(
                     "0" + (i + 1) + "   /   " + room.typeName().toUpperCase(),
                     x + 30,
-                    389,
+                    475,
                     560,
                     30,
                     18,
                     "eyebrow");
-            label(room.title(), x + 30, 436, 560, 50, 43, "title");
-            label(room.description(), x + 30, 500, 540, 62, 24, "muted");
+            label(room.title(), x + 30, 507, 560, 48, 36, "title");
+            label(room.description(), x + 30, 554, 540, 60, 21, "muted");
             button(
                     "DIESEN WEG NEHMEN  →",
                     x + 30,
-                    581,
+                    625,
                     560,
                     44,
                     "primary",
@@ -470,7 +503,7 @@ public final class GameWindow implements AutoCloseable {
         label(
                 "RAUM "
                         + String.format("%02d", run.room().depth() + 2)
-                        + " / 12   ·   SEED "
+                        + " / 18   ·   SEED "
                         + run.seed(),
                 155,
                 705,
@@ -482,10 +515,10 @@ public final class GameWindow implements AutoCloseable {
     }
 
     private void drawRouteLine() {
-        for (int i = 0; i < 12; i++) {
-            double x = 201 + i * 108;
-            if (i < 11) {
-                var line = new Line(x, 290, x + 108, 290);
+        for (int i = 0; i < RoomGenerator.ROOM_COUNT; i++) {
+            double x = 171 + i * 74;
+            if (i < RoomGenerator.ROOM_COUNT - 1) {
+                var line = new Line(x, 290, x + 74, 290);
                 line.setStroke(Color.web(i < run.room().depth() ? "#eaba72" : "#29424d"));
                 line.setStrokeWidth(2);
                 overlay.getChildren().add(line);
@@ -494,11 +527,142 @@ public final class GameWindow implements AutoCloseable {
                     new Circle(
                             x,
                             290,
-                            i == run.room().depth() ? 11 : 7,
+                            i == run.room().depth() ? 10 : RoomGenerator.bossDepth(i) ? 8 : 5,
                             Color.web(i <= run.room().depth() ? "#eaba72" : "#284550"));
             overlay.getChildren().add(node);
-            label("" + (i + 1), x - 14, 312, 35, 24, 17, "muted");
+            label(
+                    RoomGenerator.bossDepth(i) ? "◆" : "" + (i + 1),
+                    x - 14,
+                    307,
+                    35,
+                    24,
+                    16,
+                    RoomGenerator.bossDepth(i) ? "accent" : "muted");
         }
+    }
+
+    private void showInventory() {
+        setScreen(Screen.INVENTORY, true);
+        heading(
+                "AUSRÜSTUNG",
+                "Dein Build. Deine Spielweise.",
+                "Jedes Fundstück bleibt für diesen Tauchgang und weitere Zyklen. Maximal drei"
+                        + " Stufen je Modul.");
+        var p = run.player();
+        label(
+                String.format(
+                        java.util.Locale.ROOT,
+                        "WERKZEUG %.0f    /    REICHWEITE %.0f    /    MODUL %.0f    /   "
+                                + " INTEGRITÄT %.0f",
+                        p.attackDamage(),
+                        p.attackReach(),
+                        p.abilityDamage(),
+                        p.maxHealth()),
+                130,
+                745,
+                1320,
+                30,
+                20,
+                "accent");
+        int i = 0;
+        for (Upgrade u : Upgrade.values()) {
+            int level = p.stacks(u);
+            double x = 130 + (i % 4) * 340, y = 291 + (i / 4) * 153;
+            Pane card = pane(x, y, 322, 137, "card" + (level > 0 ? " selected" : ""));
+            card.setOpacity(level > 0 ? 1 : .54);
+            var icon = ItemGlyph.node(u, 43);
+            place(icon, x + 16, y + 17, 43, 43);
+            label(u.title(), x + 73, y + 14, 235, 32, 23, "title");
+            label(
+                    level == 0 ? "NICHT GEFUNDEN" : "STUFE " + level + " / 3",
+                    x + 73,
+                    y + 47,
+                    230,
+                    22,
+                    13,
+                    level == 0 ? "muted" : "eyebrow");
+            label(u.effect(), x + 16, y + 78, 290, 49, 17, "muted").setAlignment(Pos.TOP_LEFT);
+            i++;
+        }
+        button("WEITERSPIELEN  →", 1050, 789, 380, 58, "primary", this::play);
+        label(
+                "DIE WERTE AUF DEN KARTEN GELTEN PRO STUFE.  ·  I / TAB ÖFFNET DAS INVENTAR.",
+                130,
+                801,
+                880,
+                30,
+                15,
+                "muted");
+    }
+
+    private void showMap() {
+        setScreen(Screen.MAP, true);
+        heading(
+                "BOOTSKARTE",
+                "Achtzehn Schotts. Ein Ziel.",
+                "Grundroute durch drei Sektionen. Alternative Abzweige wählst du am Schott. Das"
+                        + " Spiel ist pausiert.");
+        var generator = new RoomGenerator(run.seed(), run.cycle());
+        for (int sector = 0; sector < 3; sector++) {
+            double y = 326 + sector * 158;
+            label(
+                    switch (sector) {
+                        case 0 -> "01 / HECKSEKTION";
+                        case 1 -> "02 / MASCHINENDECK";
+                        default -> "03 / KOMMANDODECK";
+                    },
+                    130,
+                    y - 32,
+                    800,
+                    28,
+                    17,
+                    "eyebrow");
+            for (int n = 0; n < 6; n++) {
+                int depth = sector * 6 + n;
+                int branch = depth < run.route().size() ? run.route().get(depth) : 0;
+                var room = generator.room(depth, branch);
+                double x = 130 + n * 224;
+                Pane card =
+                        pane(
+                                x,
+                                y,
+                                211,
+                                111,
+                                "card" + (depth == run.room().depth() ? " selected" : ""));
+                card.setOpacity(depth > run.room().depth() ? .62 : 1);
+                label(
+                        String.format("%02d", depth + 1)
+                                + " / "
+                                + (depth < run.room().depth()
+                                        ? "PASSIERT"
+                                        : depth == run.room().depth()
+                                                ? "DU BIST HIER"
+                                                : RoomGenerator.bossDepth(depth)
+                                                        ? "BOSS"
+                                                        : "SIGNAL"),
+                        x + 12,
+                        y + 10,
+                        191,
+                        21,
+                        12,
+                        RoomGenerator.bossDepth(depth) ? "accent" : "eyebrow");
+                label(room.title(), x + 12, y + 37, 187, 43, 23, "title");
+                label(room.typeName(), x + 12, y + 84, 187, 19, 13, "muted");
+            }
+        }
+        label(
+                "ZYKLUS "
+                        + (run.cycle() + 1L)
+                        + "    /    SEED "
+                        + run.seed()
+                        + "    /    SPIEL PAUSIERT",
+                130,
+                797,
+                870,
+                32,
+                17,
+                "muted");
+        button("WEITERSPIELEN  →", 1050, 789, 380, 58, "primary", this::play);
     }
 
     private void chooseRoute(int index) {
@@ -510,7 +674,7 @@ public final class GameWindow implements AutoCloseable {
     }
 
     private void showReward() {
-        if (run.rewardOffers().isEmpty()) {
+        if (run.rewardOffers().isEmpty() && run.room().kind() != RoomPlan.Kind.WORKSHOP) {
             run.claimSupplies();
             play();
             return;
@@ -531,7 +695,9 @@ public final class GameWindow implements AutoCloseable {
         for (var upgrade : run.rewardOffers()) {
             final int index = i;
             double x = 130 + i * 450;
-            pane(x, 315, 430, 365, "card");
+            pane(x, 315, 430, 375, "card");
+            var glyph = ItemGlyph.node(upgrade, 62);
+            place(glyph, x + 338, 337, 62, 62);
             label(
                     "0"
                             + (i + 1)
@@ -541,12 +707,12 @@ public final class GameWindow implements AutoCloseable {
                             + Math.min(3, run.player().stacks(upgrade) + run.room().rewardRanks()),
                     x + 28,
                     342,
-                    375,
+                    292,
                     27,
                     17,
                     "eyebrow");
-            label(upgrade.title(), x + 28, 392, 375, 56, 36, "title");
-            label(upgrade.effect(), x + 28, 460, 375, 80, 25, "accent").setAlignment(Pos.TOP_LEFT);
+            label(upgrade.title(), x + 28, 407, 375, 50, 34, "title");
+            label(upgrade.effect(), x + 28, 465, 375, 79, 24, "accent").setAlignment(Pos.TOP_LEFT);
             label(upgrade.description(), x + 28, 547, 375, 60, 20, "muted");
             button(
                             workshop ? "INSTALLIEREN · 15 SCHROTT" : "INSTALLIEREN",
@@ -556,8 +722,29 @@ public final class GameWindow implements AutoCloseable {
                             42,
                             "primary",
                             () -> chooseReward(index))
-                    .setDisable(workshop && run.player().salvage() < 15);
+                    .setDisable(!run.rewardAvailable() || workshop && run.player().salvage() < 15);
             i++;
+        }
+        if (workshop) {
+            button(
+                            "REPARATURSET KAUFEN · 20 SCHROTT",
+                            535,
+                            744,
+                            560,
+                            60,
+                            "secondary",
+                            () -> {
+                                if (run.buyRepairKit()) showReward();
+                            })
+                    .setDisable(run.player().salvage() < 20 || run.player().repairKits() >= 3);
+            label(
+                    "SETS " + run.player().repairKits() + " / 3   ·   Q: +35 INTEGRITÄT",
+                    535,
+                    813,
+                    570,
+                    30,
+                    16,
+                    "muted");
         }
         button("SPÄTER ENTSCHEIDEN", 130, 744, 330, 60, "quiet", this::play);
     }
@@ -678,8 +865,8 @@ public final class GameWindow implements AutoCloseable {
                     unlocked
                             ? module.description()
                             : module == ActiveModule.ARC
-                                    ? "Erreiche die erste Werkstatt (Raum 4)."
-                                    : "Erreiche die zweite Werkstatt (Raum 8).",
+                                    ? "Erreiche die erste Werkstatt (Raum 6)."
+                                    : "Erreiche die zweite Werkstatt (Raum 12).",
                     x + 28,
                     458,
                     375,
@@ -694,7 +881,7 @@ public final class GameWindow implements AutoCloseable {
                         + profile.wins()
                         + " BRÜCKEN EROBERT     /     BESTER RAUM "
                         + profile.bestRoom()
-                        + " / 12",
+                        + " / 18",
                 130,
                 655,
                 1330,
@@ -719,11 +906,12 @@ public final class GameWindow implements AutoCloseable {
             {"SHIFT", "Ausweichen · kurz unverwundbar"},
             {"K oder rechte Maustaste", "Aktives Modul · verbraucht Energie"},
             {"E", "Modul bergen, Werkstatt nutzen, Schott öffnen"},
+            {"Q / I / M", "Reparaturset / Inventar / Bootskarte"},
             {"ESC / F11 / F12", "Pause / Vollbild / Screenshot auf dem Schreibtisch"}
         };
         for (int i = 0; i < controls.length; i++) {
-            label(controls[i][0], 240, 285 + i * 61, 490, 44, 26, "accent");
-            label(controls[i][1], 735, 285 + i * 61, 665, 44, 24, "muted");
+            label(controls[i][0], 240, 267 + i * 58, 490, 44, 26, "accent");
+            label(controls[i][1], 735, 267 + i * 58, 665, 44, 24, "muted");
         }
         button(
                 "VERSTANDEN",
@@ -750,10 +938,10 @@ public final class GameWindow implements AutoCloseable {
                         : "Dein Run endet hier. Entdeckte Baupläne bleiben im Archiv.");
         pane(220, 332, 1160, 230, "card");
         String[] values = {
-            String.format("%02d / 12", run.room().depth() + 1),
+            String.format("%02d / 18", run.room().depth() + 1),
             "" + run.kills(),
             formatTime(run.elapsed()),
-            "" + (run.cycle() + 1)
+            "" + (run.cycle() + 1L)
         };
         String[] names = {"ERREICHTER RAUM", "GEGNER BESIEGT", "TAUCHZEIT", "ZYKLUS"};
         for (int i = 0; i < 4; i++) {
@@ -846,6 +1034,7 @@ public final class GameWindow implements AutoCloseable {
                     audio.play("click");
                     action.run();
                 });
+        if (w < 70) button.setStyle(button.getStyle() + "-fx-padding:0;");
         place(button, x, y, w, h);
         return button;
     }

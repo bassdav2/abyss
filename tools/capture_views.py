@@ -16,17 +16,17 @@ env=dict(os.environ,JAVA_HOME=JAVA,PATH=JAVA+'/bin:'+os.environ['PATH'])
 
 def fixture(folder,depth):
     folder.mkdir(parents=True,exist_ok=True)
-    folder.joinpath('profile.properties').write_text('version=1\nruns=7\nwins=1\nbestRoom=12\nbestCycle=1\nkills=124\nunlocked=PULSE,ARC,AEGIS\nvolume=0\nmusic=0\n')
+    folder.joinpath('profile.properties').write_text('version=2\nruns=7\nwins=1\nbestRoom=18\nbestCycle=1\nkills=124\nunlocked=PULSE,ARC,AEGIS\nvolume=0\nmusic=0\n')
     folder.joinpath('checkpoint.properties').write_text(
-        f'version=1\nseed=73419\ncycle=0\ndepth={depth}\nbranch=0\nmodule=PULSE\nexplorer=false\n'
+        f'version=2\nseed=73419\ncycle=0\ndepth={depth}\nbranch=0\nmodule=PULSE\nexplorer=false\n'
         'health=140\nenergy=120\nsalvage=45\nkills=23\nelapsed=420\n'
-        'upgrade.SERVO=2\nupgrade.MEDICAL=2\nupgrade.RECOVERY=1\nupgrade.PLATING=1\nupgrade.CAPACITOR=1\n'
+        'upgrade.LANCE=1\nupgrade.ARC_COIL=1\nupgrade.OVERCLOCK=1\nupgrade.THRUSTER=1\nupgrade.SIPHON=1\nupgrade.REGEN=1\nupgrade.COOLANT=1\nupgrade.SERVO=2\nupgrade.MEDICAL=2\nupgrade.RECOVERY=1\nupgrade.PLATING=1\nupgrade.CAPACITOR=1\n'
         'route='+','.join('0' for _ in range(depth+1))+'\n')
 
 
 views=[('title',None,None),('loadout','loadout',None),('archive','archive',None),('settings','settings',None),
-       ('help','help',None),('pause','pause',0),('route','route',3),('reward','reward',3),
-       ('reactor',None,6),('boss',None,11)]
+       ('help','help',None),('pause','pause',0),('route','route',5),('reward','reward',5),
+       ('reactor',None,9),('boss',None,17),('warden',None,4),('core',None,10),('garden',None,13),('medbay',None,14),('ballast',None,8),('torpedo',None,3),('inventory','inventory',8),('map','map',8)]
 if len(sys.argv)>1:
     chosen=set(sys.argv[1:]);views=[v for v in views if v[0] in chosen]
 for name,screen,depth in views:

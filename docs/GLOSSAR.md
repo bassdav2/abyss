@@ -21,3 +21,8 @@
 | Profil | Dauerhafte Baupläne, Statistik und Einstellungen |
 | Der Lotse | Automatischer Wächter der Brücke und Abschlussgegner |
 | Entdecker | Zugänglicherer Spielmodus mit mehr Start-Integrität und höherem Basisschaden |
+
+- **Schottmeister:** erster Sektorwächter, Raum 5.
+- **Reaktorkern:** zweiter Sektorwächter, Raum 11.
+- **Vorratskiste:** zerstörbarer Fund mit Reparaturgel, Energiezelle oder Ersatzteilen.
+- **Bootskarte:** pausierende Übersicht der 18 Raumpositionen; Hauptweg-Vorschau und bisherige eigene Route.

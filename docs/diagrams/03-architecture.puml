@@ -21,6 +21,7 @@ package "ui" {
  [InputController]
  [GameRenderer]
  [AssetCatalog]
+ [EnvironmentRenderer / ItemGlyph]
 }
 package "application" {
  [GameService]
@@ -47,6 +48,8 @@ package "infrastructure" {
 [GameWindow] --> [AudioSystem] : Ereignisse
 [GameRenderer] --> [GameRun] : nur lesen
 [GameRenderer] --> [AssetCatalog]
+[GameRenderer] --> [EnvironmentRenderer / ItemGlyph]
+ [EnvironmentRenderer / ItemGlyph]
 [GameService] --> [GameRun]
 [GameService] --> GameRepository
 [GameService] --> [Profile / Settings]

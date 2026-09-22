@@ -54,6 +54,13 @@ public final class FileGameRepository implements GameRepository {
         if (!Files.exists(path)) return Profile.fresh();
         try {
             var p = read(path);
+            if ("1".equals(p.getProperty("version"))) {
+                preserveBeforeReplace.add(path);
+                int old = integer(p, "bestRoom", 0);
+                if (old < 0 || old > 12)
+                    throw new IllegalArgumentException("Ungültiger alter Fortschritt");
+                p.setProperty("bestRoom", "" + (old == 0 ? 0 : legacyDepth(old - 1) + 1));
+            }
             var unlocked = EnumSet.of(ActiveModule.PULSE);
             for (String key : p.getProperty("unlocked", "PULSE").split(","))
                 unlocked.add(ActiveModule.valueOf(key));
@@ -85,6 +92,10 @@ public final class FileGameRepository implements GameRepository {
         if (!Files.exists(path)) return Optional.empty();
         try {
             var p = read(path);
+            if ("1".equals(p.getProperty("version"))) {
+                migrateCheckpoint(p);
+                preserveBeforeReplace.add(path);
+            }
             var upgrades = new EnumMap<Upgrade, Integer>(Upgrade.class);
             for (Upgrade upgrade : Upgrade.values()) {
                 int count = integer(p, "upgrade." + upgrade.name(), 0);
@@ -108,7 +119,8 @@ public final class FileGameRepository implements GameRepository {
                             upgrades,
                             integer(p, "kills", 0),
                             number(p, "elapsed", 0),
-                            route);
+                            route,
+                            integer(p, "repairKits", 1));
             GameRun.restore(checkpoint);
             return Optional.of(checkpoint);
         } catch (IllegalArgumentException | NullPointerException | IOException e) {
@@ -155,6 +167,7 @@ public final class FileGameRepository implements GameRepository {
         p.setProperty("health", "" + c.health());
         p.setProperty("energy", "" + c.energy());
         p.setProperty("salvage", "" + c.salvage());
+        p.setProperty("repairKits", "" + c.repairKits());
         p.setProperty("kills", "" + c.kills());
         p.setProperty("elapsed", "" + c.elapsed());
         p.setProperty(
@@ -175,7 +188,7 @@ public final class FileGameRepository implements GameRepository {
             throw new IOException("Spielstand ist unerwartet gross.");
         var p = new Properties();
         p.load(new StringReader(Files.readString(path, StandardCharsets.UTF_8)));
-        if (!"1".equals(p.getProperty("version")))
+        if (!"1".equals(p.getProperty("version")) && !"2".equals(p.getProperty("version")))
             throw new IOException("Unbekannte Spielstand-Version.");
         return p;
     }
@@ -193,7 +206,7 @@ public final class FileGameRepository implements GameRepository {
             }
             preserveBeforeReplace.remove(target);
         }
-        p.setProperty("version", "1");
+        p.setProperty("version", "2");
         var text = new StringWriter();
         p.store(text, "ABYSS local save");
         Path temporary = Files.createTempFile(directory, ".abyss-", ".tmp");
@@ -211,6 +224,35 @@ public final class FileGameRepository implements GameRepository {
         } finally {
             Files.deleteIfExists(temporary);
         }
+    }
+
+    private static int legacyDepth(int depth) {
+        int[] mapping = {0, 1, 2, 5, 6, 7, 8, 11, 12, 13, 16, 17};
+        if (depth < 0 || depth >= mapping.length)
+            throw new IllegalArgumentException("Ungültige alte Raumtiefe");
+        return mapping[depth];
+    }
+
+    private static void migrateCheckpoint(Properties p) {
+        int oldDepth = integer(p, "depth", 0), branch = integer(p, "branch", 0);
+        var oldRoute =
+                Arrays.stream(p.getProperty("route", "0").split(","))
+                        .map(Integer::parseInt)
+                        .toList();
+        if (oldRoute.size() != oldDepth + 1 || oldRoute.getLast() != branch)
+            throw new IllegalArgumentException("Ungültige alte Route");
+        var route =
+                new java.util.ArrayList<Integer>(
+                        java.util.Collections.nCopies(legacyDepth(oldDepth) + 1, 0));
+        for (int i = 0; i < oldRoute.size(); i++) {
+            int value = oldRoute.get(i);
+            if (value < 0 || value > 1 || value == 1 && (i == 0 || i == 3 || i == 7 || i == 11))
+                throw new IllegalArgumentException("Ungültiger alter Abzweig");
+            route.set(legacyDepth(i), value);
+        }
+        p.setProperty("depth", "" + legacyDepth(oldDepth));
+        p.setProperty(
+                "route", route.stream().map(String::valueOf).collect(Collectors.joining(",")));
     }
 
     private static int integer(Properties p, String key, int fallback) {

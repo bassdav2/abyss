@@ -63,7 +63,10 @@ public final class RenderSoak extends Application {
                     "pulse",
                     "warning",
                     "ambience",
-                    "music"
+                    "music",
+                    "music_engine",
+                    "music_command",
+                    "music_boss"
                 }) {
             var clip =
                     new AudioClip(
@@ -116,6 +119,7 @@ public final class RenderSoak extends Application {
                 }
                 roomsSeen.add(run.room().depth() + ":" + run.room().branch());
                 modulesSeen.add(run.player().module());
+                audio.context(run, false);
                 renderer.update(dt);
                 renderer.render(run, settings, false, true);
                 double cost = (System.nanoTime() - started) / 1e6;
@@ -135,7 +139,7 @@ public final class RenderSoak extends Application {
                                           "seconds": %.2f, "simulationSpeed": %.1f,
                                           "frames": %d, "completedRuns": %d, "wins": %d, "losses": %d,
                                           "distinctRoomBranches": %d, "modules": %d, "eventTypes": %d,
-                                          "nativeAudioClipsLoadedAndInvokedAtZeroVolume": 16,
+                                          "nativeAudioClipsLoadedAndInvokedAtZeroVolume": 19,
                                           "updateAndDrawCpuMsP50": %.3f, "updateAndDrawCpuMsP95": %.3f,
                                           "frameIntervalMsP50": %.3f, "frameIntervalMsP95": %.3f,
                                           "uncaughtErrors": %d,

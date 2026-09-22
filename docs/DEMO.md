@@ -1,15 +1,18 @@
-# Gameplay-Demo
+# Gameplay-Demo 0.2
 
-`output/video/Abyss_Gameplay_Demo.mp4` ist ein 82-Sekunden-Video mit tatsächlich durch den JavaFX-Renderer gezeichnetem Gameplay. Der Testspieler verwendet reguläre Spieleingaben. Maschinenraum und Boss starten aus vorbereiteten, gültigen QA-Checkpoints mit passiven Upgrades. Zwei Menübilder stammen aus echten JavaFX-Screenshots. Eine permanente Einblendung benennt den automatisierten Charakter der Aufnahme.
+`output/video/Abyss_Gameplay_Demo.mp4` ist ein 120-Sekunden-Video aus dem tatsächlichen JavaFX-Renderer. Der Testspieler verwendet reguläre Eingaben. Bossbegegnungen und Garten starten aus vorbereiteten gültigen QA-Checkpoints mit Upgrades; die Menübilder stammen aus echten JavaFX-Screenshots. Die dauerhafte Einblendung kennzeichnet dies als automatisierte Demo.
 
 | Zeit | Inhalt |
 |---|---|
-| 0-3 s | Titel / Konzept des langen Boots |
-| 3-21 s | Start im Heck, Bewegung, Nahkampf und Ausweichen |
-| 21-26 s | Werkstatt und Modulentscheidung |
-| 26-44 s | Maschinenbereich mit Lichtbogen und Raumgefahren |
-| 44-49 s | Routenwahl |
-| 49-79 s | Brückenboss und Panzerungsfenster |
-| 79-82 s | Abschlussbild |
+| 0-3 s | Titel |
+| 3-18 s | Heck und erster Kampf |
+| 18-23 s | Inventar mit zwölf Itemtypen |
+| 23-42 s | Schottmeister, erster Boss |
+| 42-47 s | 18-Raum-Bootskarte |
+| 47-66 s | Reaktorkern, zweiter Boss |
+| 66-77 s | Sauerstoffgarten |
+| 77-83 s | Werkstatt und neue Bergungskarten |
+| 83-115 s | Lotse, Brückenboss |
+| 115-120 s | Abschlussbild |
 
-Die Tonspur verwendet die eigene synthetische Musik. Sie ist kein Mitschnitt der während des Tests hörbaren Ausgabe; die automatischen Tests liefen stumm. Erzeugen: `./gradlew renderDemo` (FFmpeg erforderlich). Die Aufnahme ersetzt keinen menschlichen Spieltest.
+Die Tonspur ist die eigene synthetische Boss-Musik. Sie ist kein Mitschnitt einer gehörten Testausgabe. Erzeugen: `./gradlew renderDemo` (FFmpeg erforderlich). Die Aufnahme ersetzt keinen menschlichen Spieltest.

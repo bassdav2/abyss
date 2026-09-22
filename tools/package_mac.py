@@ -49,7 +49,7 @@ out.mkdir(exist_ok=True)
 app=out/'Abyss.app'
 if app.exists(): shutil.rmtree(app)
 # macOS/jpackage verlangt eine positive erste Versionskomponente.
-run(JAVA/'bin/jpackage','--type','app-image','--name','Abyss','--app-version','1.0.0',
+run(JAVA/'bin/jpackage','--type','app-image','--name','Abyss','--app-version','1.0.1',
     '--description','Vom Heck bis zur Brücke. Ein Tiefsee-Roguelite.',
     '--vendor','Abyss Project','--input',staging,'--main-jar','abyss.jar',
     '--main-class','ch.zhaw.abyss.Launcher','--runtime-image',runtime,'--dest',out,

@@ -43,7 +43,8 @@ final class InputController {
                         pressed.contains(KeyCode.SHIFT),
                         held.contains(KeyCode.J) || mouseAttack,
                         pressed.contains(KeyCode.K) || mouseAbility,
-                        mouseAttack || mouseAbility ? (pointerX >= playerX ? 1 : -1) : 0);
+                        mouseAttack || mouseAbility ? (pointerX >= playerX ? 1 : -1) : 0,
+                        pressed.contains(KeyCode.Q));
         pressed.clear();
         mouseAbility = false;
         return result;

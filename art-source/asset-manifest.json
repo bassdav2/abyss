@@ -268,8 +268,8 @@
     },
     {
       "path": "art/actors/manifest.json",
-      "bytes": 575,
-      "sha256": "64cd95d06258388e619fd10bee2f13af20d4d60aac492c99c72e92523b6309e8"
+      "bytes": 760,
+      "sha256": "77c25dc0f22883d058b80cd2dfb4c3ef6a19487c3f3686d266e50edb1cdf5d50"
     },
     {
       "path": "art/actors/player/attack-00.png",
@@ -443,6 +443,134 @@
       "path": "art/actors/player/walk-07.png",
       "bytes": 55574,
       "sha256": "a9f5b01a629d869cd395e0227a5a09c5d7bbfe0c9f5c8bb29d8e54fcff797d68",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/attack-00.png",
+      "bytes": 54703,
+      "sha256": "1b9e870dc4cb91585ab585cdf5c6cc1acd2e87f6b650f874b2a3c300df6a10f0",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/attack-01.png",
+      "bytes": 54819,
+      "sha256": "2a824130b4224dd038dd82823bc24909c4d13c374100ce9259122b74300d69e2",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/attack-02.png",
+      "bytes": 54962,
+      "sha256": "8726ff6a08be8387b5e6155470f757b7b968bd6c0c6e515f55b16245789972a0",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/attack-03.png",
+      "bytes": 54820,
+      "sha256": "480da42b7037046c4b35f3ef23e567a6e670ec2cdda730735d40f198039c8019",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/hurt-00.png",
+      "bytes": 54595,
+      "sha256": "712b2568a6c8b7e4b8133c60d6f299cbb99f600934077f11d25f39097cc08c11",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/hurt-01.png",
+      "bytes": 54595,
+      "sha256": "837c864ee36245fac03ae959b0e0b6b672ba0b41490a8bb2f6c9f1f8fa2b8b4a",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/idle-00.png",
+      "bytes": 54594,
+      "sha256": "b10e99e3c28dde7ee2ae5b20b01ce95359d2a0d6f0b8ff7625475d697685c375",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/idle-01.png",
+      "bytes": 54695,
+      "sha256": "c36cb902b44ae2e93736ce0ce931dd4a059598290bf3fa03eea0435e2ea150ae",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/idle-02.png",
+      "bytes": 54595,
+      "sha256": "efdb75abbeeb535bed72f5756f9488eb194ee8518b90c8404772e9bb61ea8b00",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/idle-03.png",
+      "bytes": 54590,
+      "sha256": "31fa5251585521b5ac0b6092dfb6b0471b9117b93d94a1266ae1b1d98ed15358",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/walk-00.png",
+      "bytes": 55759,
+      "sha256": "89c136096ae88c7c848799490d5c42fca497e7217761661b88f8f6688be45e18",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/walk-01.png",
+      "bytes": 55711,
+      "sha256": "869d106863dd9d1c58ff71210b3634fc5c8e3c905122571d6a37c58d98cc030c",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/walk-02.png",
+      "bytes": 55992,
+      "sha256": "47534f7fc3525aa96673e88102e892b394217d3bafb6428f048293e39ff3053c",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/walk-03.png",
+      "bytes": 56110,
+      "sha256": "cfa0ca955faf4522ec4555f1d01ec4bb56ac29d78ca735370f74944f30947aaf",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/walk-04.png",
+      "bytes": 55761,
+      "sha256": "f80dc6c6ae97b5967854bd64eb850583007909eddac7744f073fa0a83081a174",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/reactor/walk-05.png",
+      "bytes": 55702,
+      "sha256": "7f22e3abef6bdcb2475f0a558518d33c1d71d8d864cd020b3605165e93b3aef8",
       "width": 256,
       "height": 256,
       "source": "Blender; tools/render_actors.py"
@@ -704,9 +832,145 @@
       "source": "Blender; tools/render_actors.py"
     },
     {
+      "path": "art/actors/warden/attack-00.png",
+      "bytes": 59059,
+      "sha256": "7c93b49c41c8826359a02cde319302ef40af357fd5c72fac24113bc4fd68c6c3",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/attack-01.png",
+      "bytes": 59760,
+      "sha256": "728218ce690a98fdea497f366230778fdec8be62a14fef3320ad9332c70a945b",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/attack-02.png",
+      "bytes": 59057,
+      "sha256": "bc3440941b256f08f0a67e9beceb41d2e926aaa3d44225d22748c3603cb289db",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/attack-03.png",
+      "bytes": 58344,
+      "sha256": "47f71f698b33d10cbbf0ccd6081d7bc295ae0855b7a58a2d85be248b0f43dbbb",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/hurt-00.png",
+      "bytes": 59058,
+      "sha256": "c1c990aa44a6ebd2996701a3e6ce39235c52daf47e76c1f524ea5b2674d5f942",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/hurt-01.png",
+      "bytes": 59058,
+      "sha256": "948d9230688cba737663adfbbb808eeea723a28b3a2a4a7b9b2dfabe354209a9",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/idle-00.png",
+      "bytes": 59057,
+      "sha256": "c523333af49365d1208088d193cc0dd85b4065ed3c3c21e6564d25904e39cf98",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/idle-01.png",
+      "bytes": 59127,
+      "sha256": "1876694e827b2f940f97d875190eccda19c2658ff024d6ba73645c90300fe3c9",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/idle-02.png",
+      "bytes": 59059,
+      "sha256": "45a30f0a90c230ae03513d5a68a0f3136a756a4c9e57e2359d6e66c1a82997d0",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/idle-03.png",
+      "bytes": 59031,
+      "sha256": "eaf5a5a257b208306c9be8ab888d3e2273dc68080d5abb8b8ee1a0e4b0637fbc",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/walk-00.png",
+      "bytes": 59057,
+      "sha256": "c2034aefdd5c26b552af8e6b89f87be88c9cc83009872ffdb492649f8a3c62a5",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/walk-01.png",
+      "bytes": 59052,
+      "sha256": "bc50941aa4d0205d7462f674cedd3ced6514be4ade1a1a93d1f421baef330830",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/walk-02.png",
+      "bytes": 59052,
+      "sha256": "cb8fb001a32058391a860f875508d9b3c26a75eb524bfe4ca16eeaa2c98aa084",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/walk-03.png",
+      "bytes": 59057,
+      "sha256": "ae4ad82d789e8f8f5a2878c669a407e1748f8f88f6e4ad4dedca2ecdd5957327",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/walk-04.png",
+      "bytes": 58858,
+      "sha256": "05b8dc503d7616da55e2657322d45174399078a274038f10933520c332714039",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
+      "path": "art/actors/warden/walk-05.png",
+      "bytes": 58858,
+      "sha256": "ed974607777d39b4138fe2226608e2a1556ed0b929423f25b018820f40e537da",
+      "width": 256,
+      "height": 256,
+      "source": "Blender; tools/render_actors.py"
+    },
+    {
       "path": "art/rooms/aft.png",
       "bytes": 2200732,
       "sha256": "43d29be5b90f2689d8cf902f0d9049abd8e114ad845545327d6e5ddf46260a42",
+      "width": 1672,
+      "height": 941,
+      "source": "OpenAI Imagegen; docs/ART_PROMPTS.md"
+    },
+    {
+      "path": "art/rooms/ballast.png",
+      "bytes": 2255845,
+      "sha256": "2a5d7a56754637e455bae02ec7fa0d2d70e7ed075cbccbade0677f5c85e69986",
       "width": 1672,
       "height": 941,
       "source": "OpenAI Imagegen; docs/ART_PROMPTS.md"
@@ -752,6 +1016,22 @@
       "source": "OpenAI Imagegen; docs/ART_PROMPTS.md"
     },
     {
+      "path": "art/rooms/hydroponics.png",
+      "bytes": 2250255,
+      "sha256": "b0196b9a8a9394c225a24f3c3f6518e86057e59c05747b403520b05b47e429a9",
+      "width": 1672,
+      "height": 941,
+      "source": "OpenAI Imagegen; docs/ART_PROMPTS.md"
+    },
+    {
+      "path": "art/rooms/medbay.png",
+      "bytes": 2193663,
+      "sha256": "2ff29fe1fd8a953332adc6e9d9a46c1f4ce0c3c51240859898aa1480d29bab89",
+      "width": 1672,
+      "height": 941,
+      "source": "OpenAI Imagegen; docs/ART_PROMPTS.md"
+    },
+    {
       "path": "art/rooms/mess.png",
       "bytes": 2207225,
       "sha256": "ae2b593b95475b7a74f0a9679b690e2bdaca4ff3c3cbaf4f03e817d5cda3febc",
@@ -779,6 +1059,14 @@
       "path": "art/rooms/security.png",
       "bytes": 2109886,
       "sha256": "d569c64ea8f23a7704cad62ea7c12feac1e629ab75f0eecbfac2d738adfde661",
+      "width": 1672,
+      "height": 941,
+      "source": "OpenAI Imagegen; docs/ART_PROMPTS.md"
+    },
+    {
+      "path": "art/rooms/torpedo.png",
+      "bytes": 2081669,
+      "sha256": "298218bef569e3fc4f986e84c6da69e205c6ae91de5141f19a8d000df97491b5",
       "width": 1672,
       "height": 941,
       "source": "OpenAI Imagegen; docs/ART_PROMPTS.md"
@@ -897,6 +1185,36 @@
       "sampleRate": 44100,
       "sampleWidth": 2,
       "duration": 32.0,
+      "source": "Original synthesis; tools/create_audio.py"
+    },
+    {
+      "path": "audio/music_boss.wav",
+      "bytes": 4515884,
+      "sha256": "5a52f262d631ec1def6f92145b6a03c5575b65f6956e9ec6f0c2df546f2a7f68",
+      "channels": 2,
+      "sampleRate": 44100,
+      "sampleWidth": 2,
+      "duration": 25.6,
+      "source": "Original synthesis; tools/create_audio.py"
+    },
+    {
+      "path": "audio/music_command.wav",
+      "bytes": 4515884,
+      "sha256": "2e15dea24abdd0e33de5a4b74347e8ca2ce39eb9a6853cad68b345a00565df86",
+      "channels": 2,
+      "sampleRate": 44100,
+      "sampleWidth": 2,
+      "duration": 25.6,
+      "source": "Original synthesis; tools/create_audio.py"
+    },
+    {
+      "path": "audio/music_engine.wav",
+      "bytes": 4515884,
+      "sha256": "10200599833a86b77f0b71280666458acc862433a59af2e85045cee7887eb2d4",
+      "channels": 2,
+      "sampleRate": 44100,
+      "sampleWidth": 2,
+      "duration": 25.6,
       "source": "Original synthesis; tools/create_audio.py"
     },
     {

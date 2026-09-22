@@ -51,6 +51,17 @@ public final class UiSmoke extends Application {
                     seed.setText("8123");
                     button("TAUCHGANG STARTEN  →").fire();
                     check(service.run().seed() == 8123, "Seed-Eingabe und Start-Button");
+                    key(KeyCode.I, true);
+                    check(button("WEITERSPIELEN  →") != null, "I öffnet Build-Inventar");
+                    check(
+                            stage.getScene().getRoot().lookupAll(".card").size() == 12,
+                            "Inventar enthält zwölf Item-Karten");
+                    key(KeyCode.ESCAPE, true);
+                    key(KeyCode.M, true);
+                    check(
+                            stage.getScene().getRoot().lookupAll(".card").size() == 18,
+                            "Bootskarte enthält achtzehn Räume");
+                    button("WEITERSPIELEN  →").fire();
                     key(KeyCode.D, true);
                     later(
                             .5,
@@ -103,7 +114,7 @@ public final class UiSmoke extends Application {
                 new RunCheckpoint(
                         73419,
                         0,
-                        3,
+                        5,
                         0,
                         ActiveModule.PULSE,
                         false,
@@ -113,7 +124,7 @@ public final class UiSmoke extends Application {
                         Map.of(),
                         5,
                         30,
-                        List.of(0, 0, 0, 0)));
+                        List.of(0, 0, 0, 0, 0, 0)));
         service = new GameService(repository);
         window =
                 new GameWindow(
@@ -135,12 +146,19 @@ public final class UiSmoke extends Application {
                     check(
                             button("INSTALLIEREN · 15 SCHROTT") != null,
                             "Werkstatt öffnet Modulauswahl");
+                    button("REPARATURSET KAUFEN · 20 SCHROTT").fire();
+                    check(
+                            service.run().player().repairKits() == 2,
+                            "Werkstatt kauft ein mitnehmbares Reparaturset");
+                    check(
+                            service.run().player().salvage() == 31,
+                            "Reparaturset kostet genau 20 Schrott");
                     button("INSTALLIEREN · 15 SCHROTT").fire();
                     check(
                             service.run().player().upgrades().size() == 1,
                             "Modulkarte verändert Build");
                     check(
-                            service.run().player().salvage() == 36,
+                            service.run().player().salvage() == 16,
                             "Werkstatt zieht genau 15 Schrott ab (inkl. Raumlohn)");
                     key(KeyCode.D, true);
                     until(
@@ -153,17 +171,18 @@ public final class UiSmoke extends Application {
                                         "Rechtes Schott öffnet Navigation");
                                 button("DIESEN WEG NEHMEN  →").fire();
                                 check(
-                                        service.run().room().depth() == 4,
+                                        service.run().room().depth() == 6,
                                         "Routenkarte wechselt Raum");
                                 check(
-                                        repository.loadCheckpoint().orElseThrow().depth() == 4,
+                                        repository.loadCheckpoint().orElseThrow().depth() == 6,
                                         "Raumwechsel persistiert Sicherung");
                                 key(KeyCode.ESCAPE, true);
                                 button("ZUM HAUPTMENÜ").fire();
                                 button("FORTSETZEN  →").fire();
                                 check(
-                                        service.run().room().depth() == 4
-                                                && service.run().player().upgrades().size() == 1,
+                                        service.run().room().depth() == 6
+                                                && service.run().player().upgrades().size() == 1
+                                                && service.run().player().repairKits() == 2,
                                         "Hauptmenü -> Fortsetzen erhält Build");
                                 key(KeyCode.ESCAPE, true);
                                 stage.setWidth(960);

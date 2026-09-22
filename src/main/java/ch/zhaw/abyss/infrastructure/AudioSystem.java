@@ -2,6 +2,8 @@ package ch.zhaw.abyss.infrastructure;
 
 import ch.zhaw.abyss.application.Settings;
 import ch.zhaw.abyss.domain.GameEvent;
+import ch.zhaw.abyss.domain.GameRun;
+import ch.zhaw.abyss.domain.RoomPlan;
 
 import javafx.scene.media.AudioClip;
 
@@ -15,6 +17,7 @@ public final class AudioSystem implements AutoCloseable {
     private Settings settings = Settings.DEFAULT;
     private boolean enabled = true;
     private AudioClip ambience, music;
+    private String musicKey = "music";
 
     public AudioSystem() {
         if (Boolean.getBoolean("abyss.silent")) {
@@ -48,6 +51,33 @@ public final class AudioSystem implements AutoCloseable {
                 music.play(settings.masterVolume() * settings.musicVolume() * .6);
         } catch (RuntimeException error) {
             enabled = false;
+        }
+    }
+
+    /** Wechsel erfolgt nur beim Kontextwechsel, nie bei jedem Renderframe. */
+    public void context(GameRun run, boolean title) {
+        if (!enabled) return;
+        String next =
+                title || run == null
+                        ? "music"
+                        : (run.room().kind() == RoomPlan.Kind.BOSS
+                                                || run.room().kind() == RoomPlan.Kind.BRIDGE)
+                                        && run.phase() == GameRun.Phase.RUNNING
+                                ? "music_boss"
+                                : run.room().sector() == 1
+                                        ? "music_engine"
+                                        : run.room().sector() == 2 ? "music_command" : "music";
+        if (next.equals(musicKey)) return;
+        try {
+            if (music != null) music.stop();
+            music = load(next);
+            musicKey = next;
+            if (music != null) {
+                music.setCycleCount(AudioClip.INDEFINITE);
+                music.play(settings.masterVolume() * settings.musicVolume() * .6);
+            }
+        } catch (RuntimeException error) {
+            System.err.println("Music unavailable: " + next);
         }
     }
 
@@ -87,7 +117,7 @@ public final class AudioSystem implements AutoCloseable {
                     case SHOT -> "shot";
                     case TELEGRAPH -> "warning";
                     case ROOM_CLEAR -> "clear";
-                    case UPGRADE, HEAL -> "upgrade";
+                    case UPGRADE, HEAL, SUPPLY -> "upgrade";
                     case DEFEAT -> "defeat";
                     case VICTORY -> "victory";
                     case BOSS_PHASE -> "pulse";

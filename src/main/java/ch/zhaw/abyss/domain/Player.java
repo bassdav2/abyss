@@ -8,6 +8,7 @@ public final class Player extends Actor {
     double attackCooldown, attackTime, dashCooldown, dashTime, invulnerableTime;
     double abilityCooldown, shieldTime;
     int salvage;
+    int repairKits = 1;
     final ActiveModule module;
     final EnumMap<Upgrade, Integer> upgrades = new EnumMap<>(Upgrade.class);
     final boolean explorer;
@@ -50,6 +51,10 @@ public final class Player extends Actor {
         return invulnerableTime;
     }
 
+    public int repairKits() {
+        return repairKits;
+    }
+
     public int salvage() {
         return salvage;
     }
@@ -68,6 +73,18 @@ public final class Player extends Actor {
 
     public Map<Upgrade, Integer> upgrades() {
         return Map.copyOf(upgrades);
+    }
+
+    public double attackReach() {
+        return 172 + 25 * stacks(Upgrade.LANCE);
+    }
+
+    public double attackSpeedMultiplier() {
+        return 1 - .08 * stacks(Upgrade.OVERCLOCK);
+    }
+
+    public double movementMultiplier() {
+        return 1 + .10 * stacks(Upgrade.THRUSTER);
     }
 
     public double attackDamage() {

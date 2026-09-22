@@ -24,7 +24,7 @@ import java.util.*;
  * QA-Einstiegen.
  */
 public final class RenderDemo extends Application {
-    private static final int FPS = 30, TOTAL = 82 * FPS;
+    private static final int FPS = 30, TOTAL = 120 * FPS;
     private int frame, chapter = -1;
     private GameRun run;
     private double clearedTime;
@@ -53,7 +53,7 @@ public final class RenderDemo extends Application {
                                 "-stream_loop",
                                 "-1",
                                 "-i",
-                                "src/main/resources/audio/music.wav",
+                                "src/main/resources/audio/music_boss.wav",
                                 "-c:v",
                                 "libx264",
                                 "-preset",
@@ -81,6 +81,8 @@ public final class RenderDemo extends Application {
         var renderer = new GameRenderer(canvas, assets);
         var reward = new Image(Path.of("docs/qa/screens/reward.png").toUri().toString());
         var route = new Image(Path.of("docs/qa/screens/route.png").toUri().toString());
+        var inventory = new Image(Path.of("docs/qa/screens/inventory.png").toUri().toString());
+        var map = new Image(Path.of("docs/qa/screens/map.png").toUri().toString());
         var scene = new Scene(new StackPane(canvas), 1280, 720);
         stage.setScene(scene);
         stage.setTitle("ABYSS · Offline-Demo-Export");
@@ -96,25 +98,41 @@ public final class RenderDemo extends Application {
                         int next =
                                 seconds < 3
                                         ? 0
-                                        : seconds < 21
+                                        : seconds < 18
                                                 ? 1
-                                                : seconds < 26
+                                                : seconds < 23
                                                         ? 2
-                                                        : seconds < 44
+                                                        : seconds < 42
                                                                 ? 3
-                                                                : seconds < 49
+                                                                : seconds < 47
                                                                         ? 4
-                                                                        : seconds < 79 ? 5 : 6;
+                                                                        : seconds < 66
+                                                                                ? 5
+                                                                                : seconds < 77
+                                                                                        ? 6
+                                                                                        : seconds
+                                                                                                        < 83
+                                                                                                ? 7
+                                                                                                : seconds
+                                                                                                                < 115
+                                                                                                        ? 8
+                                                                                                        : 9;
                         if (next != chapter) {
                             chapter = next;
                             clearedTime = 0;
                             renderer.clearEffects();
                             if (chapter == 1) run = new GameRun(0, ActiveModule.PULSE, false);
-                            if (chapter == 3) run = fixture(6, ActiveModule.ARC);
-                            if (chapter == 5) run = fixture(11, ActiveModule.PULSE);
+                            if (chapter == 3) run = fixture(4, ActiveModule.PULSE);
+                            if (chapter == 5) run = fixture(10, ActiveModule.ARC);
+                            if (chapter == 6) run = fixture(13, ActiveModule.AEGIS);
+                            if (chapter == 8) run = fixture(17, ActiveModule.PULSE);
                             System.out.println("DEMO_CHAPTER " + chapter + " at " + seconds);
                         }
-                        if (chapter == 1 || chapter == 3 || chapter == 5) {
+                        if (chapter == 1
+                                || chapter == 3
+                                || chapter == 5
+                                || chapter == 6
+                                || chapter == 8) {
                             for (int step = 0; step < 4; step++) {
                                 if (run.phase() == GameRun.Phase.ROOM_CLEARED) {
                                     clearedTime += 1.0 / 120;
@@ -128,11 +146,12 @@ public final class RenderDemo extends Application {
                             }
                         }
                         renderer.update(1.0 / FPS);
-                        renderer.render(run, settings, chapter == 0 || chapter == 6, true);
+                        renderer.render(run, settings, chapter == 0 || chapter == 9, true);
                         var g = canvas.getGraphicsContext2D();
-                        if (chapter == 2) g.drawImage(reward, 0, 0, 1600, 900);
-                        if (chapter == 4) g.drawImage(route, 0, 0, 1600, 900);
-                        if (chapter == 5 && run.phase() == GameRun.Phase.VICTORY) {
+                        if (chapter == 2) g.drawImage(inventory, 0, 0, 1600, 900);
+                        if (chapter == 4) g.drawImage(map, 0, 0, 1600, 900);
+                        if (chapter == 7) g.drawImage(reward, 0, 0, 1600, 900);
+                        if (chapter == 8 && run.phase() == GameRun.Phase.VICTORY) {
                             g.setFill(Color.rgb(3, 14, 22, .82));
                             g.fillRoundRect(380, 290, 840, 160, 12, 12);
                             g.setTextAlign(TextAlignment.CENTER);
@@ -143,7 +162,7 @@ public final class RenderDemo extends Application {
                             g.setFont(assets.text(25));
                             g.fillText("Ein nächster, schwererer Zyklus ist möglich.", 800, 414);
                         }
-                        if (chapter == 6) {
+                        if (chapter == 9) {
                             g.setTextAlign(TextAlignment.CENTER);
                             g.setFill(GameRenderer.AMBER);
                             g.setFont(assets.display(48));
@@ -153,23 +172,26 @@ public final class RenderDemo extends Application {
                                 switch (chapter) {
                                     case 0 -> "ABYSS · VOM HECK BIS ZUR BRÜCKE";
                                     case 1 -> "01 / HECK · BEWEGUNG, AUSWEICHEN, KAMPF";
-                                    case 2 -> "02 / WERKSTATT · DEIN BUILD ENTSTEHT IM RUN";
-                                    case 3 -> "03 / MASCHINENDECK · LICHTBOGEN UND GEFAHREN";
-                                    case 4 -> "04 / NAVIGATION · SICHERHEIT ODER MEHR RISIKO";
-                                    case 5 -> "05 / DIE BRÜCKE · DER LOTSE";
+                                    case 2 -> "02 / INVENTAR · ZWÖLF ITEMS, DEIN BUILD";
+                                    case 3 -> "03 / ERSTER BOSS · DER SCHOTTMEISTER";
+                                    case 4 -> "04 / BOOTSKARTE · ACHTZEHN RÄUME";
+                                    case 5 -> "05 / ZWEITER BOSS · DER REAKTORKERN";
+                                    case 6 -> "06 / SAUERSTOFFGARTEN · ATMOSPHÄRE UND KAMPF";
+                                    case 7 -> "07 / BERGUNG · NEUE ITEM-EFFEKTE";
+                                    case 8 -> "08 / DIE BRÜCKE · DER LOTSE";
                                     default -> "JAVA + JAVAFX · LOKALE MAC-APP";
                                 };
                         g.setGlobalAlpha(1);
                         g.setFill(Color.rgb(2, 10, 16, .88));
-                        g.fillRect(0, 766, 1600, 48);
+                        g.fillRect(0, 850, 1600, 50);
                         g.setTextAlign(TextAlignment.LEFT);
                         g.setFont(assets.text(19));
                         g.setFill(GameRenderer.AMBER);
-                        g.fillText(label, 32, 797);
+                        g.fillText(label, 32, 883);
                         g.setTextAlign(TextAlignment.RIGHT);
                         g.setFont(assets.text(15));
                         g.setFill(GameRenderer.TEXT);
-                        g.fillText("AUTOMATISIERTE DEMO · VORBEREITETE SPIELSTÄNDE", 1568, 797);
+                        g.fillText("AUTOMATISIERTE DEMO · VORBEREITETE SPIELSTÄNDE", 1568, 883);
                         canvas.snapshot(null, snapshot);
                         snapshot.getPixelReader()
                                 .getPixels(

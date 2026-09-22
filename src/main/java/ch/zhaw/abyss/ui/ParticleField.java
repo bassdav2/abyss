@@ -45,6 +45,7 @@ final class ParticleField {
         int count =
                 switch (event.type()) {
                     case HIT -> 13;
+                    case SUPPLY -> 18;
                     case ENEMY_DOWN -> 34;
                     case PLAYER_HIT -> 18;
                     case PULSE, ARC -> 32;
