@@ -1,0 +1,43 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #355863
+skinparam classBackgroundColor #EAF3F2
+skinparam classBorderColor #355863
+skinparam participantBackgroundColor #EAF3F2
+skinparam participantBorderColor #355863
+skinparam sequenceLifeLineBorderColor #7A979C
+skinparam noteBackgroundColor #FFF2DA
+skinparam noteBorderColor #D8AA64
+skinparam packageBackgroundColor #F5F8F7
+skinparam packageBorderColor #6E8B91
+hide empty members
+participant GameWindow as UI
+participant InputController as Input
+participant GameRun as Run
+participant Player
+participant Enemy
+participant GameRenderer as Renderer
+participant AudioSystem as Audio
+UI -> Input : frame(playerX)
+Input --> UI : InputFrame
+UI -> Run : update(1/120, input)
+Run -> Player : Bewegung / Cooldowns
+alt Angriff zulässig und Treffer in Reichweite
+ Run -> Enemy : Schaden anwenden
+ Run -> Run : HIT / ENEMY_DOWN sammeln
+end
+Run -> Run : Gegnerzustände, Projektile, Gefahren\nund Raumabschluss aktualisieren
+UI -> Run : drainEvents()
+Run --> UI : List<GameEvent>
+UI -> Renderer : event(event, settings)
+UI -> Audio : event(event)
+UI -> Renderer : render(run, settings, ...)
+note over Renderer,Audio
+Feedback verändert keine Spielregeln.
+end note
+
+@enduml

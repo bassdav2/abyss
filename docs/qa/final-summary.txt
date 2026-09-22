@@ -1,0 +1,42 @@
+{
+  "verifiedUtc": "2026-09-22T00:09:31.562474+00:00",
+  "junit": {
+    "tests": 41,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  "suites": [
+    {
+      "name": "ch.zhaw.abyss.application.GameServiceTest",
+      "tests": 2
+    },
+    {
+      "name": "ch.zhaw.abyss.domain.CampaignSimulationTest",
+      "tests": 12
+    },
+    {
+      "name": "ch.zhaw.abyss.domain.GameRunTest",
+      "tests": 18
+    },
+    {
+      "name": "ch.zhaw.abyss.infrastructure.FileGameRepositoryTest",
+      "tests": 6
+    },
+    {
+      "name": "ch.zhaw.abyss.ui.InputControllerTest",
+      "tests": 3
+    }
+  ],
+  "campaigns": {
+    "runs": 144,
+    "wins": 144,
+    "note": "InputFrame bot; not a human playtime or usability measurement"
+  },
+  "javafxComponentChecks": 18,
+  "bundleResourceHashesMatched": 121,
+  "bundleJarSha256": "d313e8a0134872a90f1fd1e228fb85fa5cb0e9b77445fa3749474c5ab44979e7",
+  "macCodeSignature": "ad-hoc signature verifies; not notarized",
+  "humanOsInputAndListeningTest": "not performed; desktop locked",
+  "pdf": "21 pages; rendered and visually inspected"
+}

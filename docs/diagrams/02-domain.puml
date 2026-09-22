@@ -1,0 +1,64 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #355863
+skinparam classBackgroundColor #EAF3F2
+skinparam classBorderColor #355863
+skinparam participantBackgroundColor #EAF3F2
+skinparam participantBorderColor #355863
+skinparam sequenceLifeLineBorderColor #7A979C
+skinparam noteBackgroundColor #FFF2DA
+skinparam noteBorderColor #D8AA64
+skinparam packageBackgroundColor #F5F8F7
+skinparam packageBorderColor #6E8B91
+hide empty members
+class Tauchgang {
+ Seed
+ Zyklus
+ Zustand
+}
+class Spielfigur {
+ Integrität
+ Energie
+ Schrott
+}
+class Raum {
+ Position
+ Sektion
+ Typ
+}
+class Gegner {
+ Integrität
+ Angriffszustand
+}
+class Projektil
+class Gefahr
+class "Aktives Modul" as Active
+class "Passives Modul" as Passive
+class "Installierte Modulstufe" as Stack {
+ Stufe: 1..3
+}
+class Bauplan
+class "Raum-Einstieg" as Save
+class Spielerprofil
+Tauchgang "1" *-- "1" Spielfigur
+Tauchgang "1" --> "1" Raum : befindet sich in
+Raum "1" -- "0..*" Gegner : Begegnung
+Raum "1" -- "0..*" Gefahr
+Tauchgang "1" *-- "0..*" Projektil
+Spielfigur "1" --> "1" Active
+Spielfigur "1" *-- "0..6" Stack
+Stack "0..*" --> "1" Passive
+Spielerprofil "1" -- "1..3" Bauplan : kennt
+Bauplan "1" --> "1" Active : ermöglicht
+Tauchgang "1" --> "1" Save : gesicherter Einstieg
+note bottom of Save
+Konzeptuelles Modell:
+keine UI-Klassen, keine Methoden,
+keine Dateiformate.
+end note
+
+@enduml

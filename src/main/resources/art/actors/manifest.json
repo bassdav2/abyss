@@ -1,0 +1,41 @@
+{
+  "format": 1,
+  "frame_size": 256,
+  "anchor": [
+    0.5,
+    0.944
+  ],
+  "actors": {
+    "player": {
+      "idle": 4,
+      "walk": 8,
+      "attack": 6,
+      "dash": 2,
+      "hurt": 2
+    },
+    "scuttler": {
+      "idle": 4,
+      "walk": 6,
+      "attack": 4,
+      "hurt": 2
+    },
+    "drone": {
+      "idle": 4,
+      "walk": 6,
+      "attack": 4,
+      "hurt": 2
+    },
+    "sentinel": {
+      "idle": 4,
+      "walk": 6,
+      "attack": 4,
+      "hurt": 2
+    },
+    "captain": {
+      "idle": 4,
+      "walk": 6,
+      "attack": 4,
+      "hurt": 2
+    }
+  }
+}

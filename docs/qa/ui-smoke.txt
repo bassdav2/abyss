@@ -1,0 +1,19 @@
+PASS Titel -> Vorbereitung
+PASS Ungültiger Seed startet keinen Run
+PASS Seed-Eingabe und Start-Button
+PASS JavaFX-KeyEvent bewegt Spielfigur
+PASS Pause stoppt Simulation
+PASS Hilfe aus Pause
+PASS Optionen gespeichert
+PASS Weiter nach Pause
+PASS Fortsetzen rekonstruiert gespeicherten Raum
+PASS Werkstatt-Interaktion repariert
+PASS Werkstatt öffnet Modulauswahl
+PASS Modulkarte verändert Build
+PASS Werkstatt zieht genau 15 Schrott ab (inkl. Raumlohn)
+PASS Rechtes Schott öffnet Navigation
+PASS Routenkarte wechselt Raum
+PASS Raumwechsel persistiert Sicherung
+PASS Hauptmenü -> Fortsetzen erhält Build
+PASS Layout bei minimaler Fensterbreite
+PASS

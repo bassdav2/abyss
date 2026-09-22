@@ -1,0 +1,12 @@
+.gradle/
+build/
+dist/
+.DS_Store
+.idea/
+.venv*/
+*.blend1
+*.log
+art-source/render-work/
+docs/qa/*.png
+docs/qa/*.mp4
+release/

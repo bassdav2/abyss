@@ -1,0 +1,23 @@
+.root { -fx-font-family: 'Barlow'; -fx-font-smoothing-type: gray; }
+.label { -fx-text-fill: #eaf0ec; }
+.title { -fx-text-fill: #eef0e8; }
+.muted { -fx-text-fill: #a4bac4; }
+.eyebrow { -fx-text-fill: #80e0dc; }
+.accent { -fx-text-fill: #eaba72; }
+.card { -fx-background-color: linear-gradient(to bottom right, rgba(22,45,55,.97), rgba(8,25,35,.98)); -fx-border-color: #39515b; -fx-border-width: 1; -fx-background-radius: 8; -fx-border-radius: 8; }
+.card.selected { -fx-border-color: #eaba72; -fx-border-width: 2; }
+.button { -fx-cursor: hand; -fx-background-radius: 3; -fx-border-radius: 3; -fx-border-width: 1; -fx-padding: 8 18; -fx-font-family: 'Barlow'; -fx-text-fill: #dce9e8; -fx-background-insets: 0; }
+.button.primary { -fx-background-color: #eaba72; -fx-text-fill: #15232a; -fx-border-color: #f6d5a1; }
+.button.primary:hover { -fx-background-color: #ffdb9d; }
+.button.secondary { -fx-background-color: rgba(15,37,49,.94); -fx-border-color: #4c6a76; }
+.button.secondary:hover { -fx-background-color: #254954; -fx-border-color: #80e0dc; }
+.button.quiet { -fx-background-color: rgba(8,25,35,.45); -fx-border-color: transparent; -fx-text-fill: #a9c1ca; }
+.button.quiet:hover { -fx-background-color: #19333f; -fx-text-fill: #e5efec; }
+.button:focused { -fx-border-color: #d9fffa; -fx-border-width: 2; -fx-effect: dropshadow(gaussian, rgba(128,224,220,.3), 12, .2, 0, 0); }
+.button:disabled { -fx-opacity: .4; }
+.check-box { -fx-text-fill: #c1d2d7; -fx-font-size: 23; -fx-cursor: hand; }
+.check-box .box { -fx-background-color: #0a202d; -fx-border-color: #668491; -fx-border-radius: 2; -fx-padding: 6; }
+.check-box:selected .mark { -fx-background-color: #eaba72; }
+.slider .track { -fx-background-color: #34515e; -fx-pref-height: 5; }
+.slider .thumb { -fx-background-color: #eaba72; -fx-pref-width: 20; -fx-pref-height: 20; }
+.text-field { -fx-background-color: #0b2230; -fx-text-fill: #e7eeeb; -fx-prompt-text-fill: #6e919f; -fx-border-color: #476773; -fx-border-radius: 3; -fx-font-size: 21; -fx-padding: 8 14; }

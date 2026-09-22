@@ -1,0 +1,34 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #355863
+skinparam classBackgroundColor #EAF3F2
+skinparam classBorderColor #355863
+skinparam participantBackgroundColor #EAF3F2
+skinparam participantBorderColor #355863
+skinparam sequenceLifeLineBorderColor #7A979C
+skinparam noteBackgroundColor #FFF2DA
+skinparam noteBorderColor #D8AA64
+skinparam packageBackgroundColor #F5F8F7
+skinparam packageBorderColor #6E8B91
+hide empty members
+[*] --> APPROACH
+APPROACH --> WINDUP : in Reichweite / Angriff bereit
+WINDUP --> STRIKE : Vorwarnzeit endet
+STRIKE --> RECOVER : Angriffszeit endet
+RECOVER --> APPROACH : Erholung endet
+APPROACH --> STUNNED : Treffer / Impuls (kein Boss)
+RECOVER --> STUNNED : Treffer / Impuls (kein Boss)
+WINDUP --> STUNNED : Impuls (kein Boss)
+STRIKE --> STUNNED : Impuls (kein Boss)
+STUNNED --> APPROACH : Betäubung endet
+note right of RECOVER
+Boss ist hier vollständig verwundbar.
+Sonst nur 22% Schaden.
+Bei <50% Integrität kürzere Zeiten.
+end note
+
+@enduml

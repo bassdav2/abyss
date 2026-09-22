@@ -1,0 +1,38 @@
+@startuml
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam defaultFontSize 15
+skinparam shadowing false
+skinparam roundcorner 8
+skinparam ArrowColor #355863
+skinparam classBackgroundColor #EAF3F2
+skinparam classBorderColor #355863
+skinparam participantBackgroundColor #EAF3F2
+skinparam participantBorderColor #355863
+skinparam sequenceLifeLineBorderColor #7A979C
+skinparam noteBackgroundColor #FFF2DA
+skinparam noteBorderColor #D8AA64
+skinparam packageBackgroundColor #F5F8F7
+skinparam packageBorderColor #6E8B91
+hide empty members
+actor "Spieler/in" as Player
+participant ":ABYSS" as System
+loop Bis letzter Gegner besiegt
+ Player -> System : bewegen(richtung), springen(),\nangreifen(), ausweichen(), modulAktivieren()
+ System --> Player : Position, Ressourcen,\nGefahren und Trefferfeedback
+end
+System --> Player : Raum gesichert, Fund und Schott verfügbar
+Player -> System : interagieren(Fund)
+System --> Player : Modulangebote
+Player -> System : modulWählen(index)
+System --> Player : aktualisierter Build
+Player -> System : interagieren(Schott)
+System --> Player : nächste Raumangebote
+Player -> System : routeWählen(index)
+System --> Player : neuer Raum, gesicherter Einstieg
+note over System
+Blackbox-Sicht: keine internen Klassen.
+Systemoperationen sind fachlich benannt.
+end note
+
+@enduml

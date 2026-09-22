@@ -1,0 +1,11 @@
+{
+  "kind": "automated JavaFX render test; no human input",
+  "seconds": 180.01, "simulationSpeed": 4.0,
+  "frames": 21583, "completedRuns": 8, "wins": 8, "losses": 0,
+  "distinctRoomBranches": 19, "modules": 3, "eventTypes": 17,
+  "nativeAudioClipsLoadedAndInvokedAtZeroVolume": 16,
+  "updateAndDrawCpuMsP50": 0.269, "updateAndDrawCpuMsP95": 0.605,
+  "frameIntervalMsP50": 8.327, "frameIntervalMsP95": 10.284,
+  "uncaughtErrors": 0,
+  "renderTimingNote": "CPU command submission; not GPU completion. Locked desktop can throttle frames."
+}
