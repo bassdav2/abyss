@@ -1,53 +1,44 @@
-# Art Direction und Asset-Pipeline
+# Art Direction und Asset-Pipeline · Version 1.0
 
-## Verbindliche Grundlage dieses Stands
+## Stil
 
-Die Spielwelt ist ein horizontaler Querschnitt eines alten, sehr langen U-Boots. Hinten dominieren abgenutztes Metall und Amberlicht, vorne kühles Blau und kontrollierte Räume. Palette: fast schwarzes Blau `#06131c`, Cyan `#80e0dc`, Amber `#eaba72`, helles Grau `#edf0e9`. Die Figur trägt eine gelbe Arbeitsjacke, dunkle Hose, Atemflaschen und eine Lampe.
+ABYSS 1.0 ist ein Pixel-Art-Spiel in nativer Auflösung **480 × 270**. Die Welt ist ein seitlicher Längsschnitt durch ein altes, sehr langes U-Boot. Jede Sektion hat eine eigene Farbstimmung: Hecksektion Rost und Amber, Maschinendeck Grün und Türkis, Forschungsdeck Violett und Biolumineszenz, Kommandodeck kühles Blau. Figuren tragen eine einpixelige dunkle Kontur und leuchtende Akzente (Visier, Augen, Lampen), die in der Dunkelheit sichtbar bleiben.
 
-Logische Bühne: **1600 x 900**. Die Füße stehen auf **y = 620**. Raumplatten werden auf diese Bühne skaliert; ihre Gehspur liegt bei rund 69 Prozent der Bildhöhe. Zwischen x = 72 und 1528 ist die Laufspur frei. Linke und rechte Schotte behalten ihre Lage. Keine Perspektivkorridore oder eingebrannten Figuren/UI in Hintergrundplatten.
+Grundpalette: `ui/art/Pal.java` (Tinte/Meer, Stahl, Rost/Messing, Türkis, Gefahr, Grün/Violett, Helltöne). Welteinheiten werden mit 0,3 in Pixel umgerechnet; der Boden liegt bei Pixelzeile 186.
 
-## Quellen und Exporte
+## Alles prozedural
 
-| Typ | Quelle | Reproduzierbarer Export / Prüfung |
+| Grafik | Quelle | Technik |
 |---|---|---|
-| Hintergrundplatten | Imagegen, Prompts und Referenzen in ART_PROMPTS.md | PNG; gleiche Kamera/Bodenhöhe visuell prüfen. KI-Ausgaben selbst sind nicht pixelidentisch reproduzierbar. |
-| Protagonist und Gegner | tools/render_actors.py, gespeicherte art-source/*.blend | Orthografische Kamera, transparente RGBA-Frames, gemeinsame Materialien |
-| Animation | Pose-Funktionen im Blender-Skript | Je Figur idle, walk, attack, hurt; Spieler zusätzlich dash |
-| Interaktive Effekte | GameRenderer / ParticleField | Kisten, Gefahren, Warnungen, Partikel und HUD separat von Hintergrundbildern |
-| Klänge/Musik | tools/create_audio.py | 44,1 kHz, 16-Bit-PCM-WAV; Synthese ohne externe Samples |
-| Typografie | Barlow / Barlow Condensed | Mitgelieferte TTF-Dateien und OFL-Lizenzen |
-| App-Icon | tools/MakeIcon.java | PNG -> ICNS beim Paketieren |
+| Spielfigur | `DiverArt` | Skelett-Posen (Hüfte, Hände, Füsse), Knie/Ellbogen per Zweigelenk-Kinematik, Kugelschattierung, Kontur; 15 Animationen; Garderobe als Farb-/Formparameter; Klassen-Accessoires |
+| Waffen | `DiverArt.weapon` | kleine Bitmaps, per inverser Abbildung lückenlos gedreht |
+| Gegner und Bosse | `EnemyArt`, `BossArt` | Grundformen mit Schattierung, Animation über Gliedmassenpositionen; 6 Animationen je Art |
+| Räume (33 Abteilungen) | `RoomArt` | Wandplatten mit Raster, Rumpfrippen, Deckenrohre, Bullaugen/Panoramafenster (transparent zum Meer), themenspezifische Requisiten, Laufstege, Bodengitter, Schablonenschrift, Rost/Algen; liefert Lichter, animierte Elemente und Vordergrund |
+| Meer | `Ocean` | Farbverlauf mit Bayer-Raster, Lichtschächte, Felsnadeln, Tang, Fischschwärme, Leuchtwesen, Leviathan, Meeresschnee – alles mit Parallaxe |
+| Objekte | `PropArt` | Kisten, Bergungskapsel, Händlerin, Kapelle, Werkbank, Schott, Beute, Geschosse |
+| Symbole | `IconArt` | 16 × 16 für 41 Module, 7 Waffen, 8 Fähigkeiten, Ressourcen, Raumarten |
+| Titel und Karte | `SubmarineScene` | Boot im Längsschnitt mit 24 beleuchteten Räumen; Auftakt und Siegesszene |
+| Raumtechnik | `MachinePainter` | Förderband mit laufenden Pfeilen, Dampfdüse mit Glühring, Turbinenrad, Presse mit Stempel und Warnzone, Laser-Emitter mit Leuchtstrahl, Konsole mit Bildschirm und Ladebalken |
+| Menüs | `ui.gui.Gui` | Schottplatten mit Nieten, Terminals mit Zeilenraster, Tasten mit Druckeffekt, Hologramm-Karten mit Zielrahmen, Pegelregler, Kippschalter, Pixel-Mauszeiger |
+| Effekte | `Effects` | Partikel (Funken, Glut, Rauch, Staub, Blasen, Trümmer, Schleim, Eis, Sterne, Dampf, Flammen), Ringe, Blitze, Explosionen, Nachbilder, Bodenflecken |
+| Schrift | `pixel/font.txt` | eigene Bitmap-Schrift inkl. Umlauten |
 
-## Figurenkonsistenz
+Die Leuchtebene jedes Sprites (Grossbuchstaben-Pixel beim Malen) wird additiv in einen eigenen Puffer gezeichnet, bleibt von der Lichtkarte unberührt und speist den Bloom.
 
-Es gibt sieben gemeinsame Modellquellen: Spieler, Schrottläufer, Drohne, Schottwächter, Lotse, Schottmeister und Reaktorkern. Die Modelle werden nicht für jedes Bild neu mit Bild-KI entworfen. Materialnamen, orthografische Kamera, Licht, Bildgröße und Fußanker bleiben gleich. Der Schrottläufer besitzt eine niedrige vierbeinige Silhouette, der Wächter Druckhelm und Schutzplatte, der Boss einen größeren Druckanzug mit Energiekern.
+## Licht und Nachbearbeitung
 
-`art/actors/manifest.json` beschreibt Framezahl und Anker: normal `(0.5, 0.944)`. Die Drohne erhält in der Darstellung einen angepassten Anker für ihren schwebenden Körper. Der Renderer wählt Frames anhand fachlicher Zustände; der sichtbare Animationsframe entscheidet nicht über einen Treffer.
+`LightMap` addiert Grundlicht, Deckenlampen (ruhig, flackernd, pulsierend, defekt), Lichtkegel, Fensterlicht, Stirnlampe, Gegneraugen, Geschosse und Explosionen in halber Auflösung. Beim Anwenden wird das Licht in neun Stufen quantisiert und mit einer 4×4-Bayer-Matrix gerastert – daher die gestuften Lichtkegel. `PostProcess` ergänzt Bloom, Farbstimmung pro Sektion, Vignette (rot pulsierend bei niedriger Integrität), chromatische Aberration bei Treffern und Blitze. Der optionale Röhrenfilter zeichnet in `PixelView` feine Zeilen über das skalierte Bild.
 
-## Änderungen ausführen
+## Prüfen und ändern
 
 ```sh
-# Alle Figuren neu rendern
-/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/render_actors.py
-
-# Nur bestimmte Figuren neu rendern
-/Applications/Blender.app/Contents/MacOS/Blender --background --python tools/render_actors.py -- scuttler sentinel captain
-
-# Originalklänge neu erzeugen
-python3 tools/create_audio.py
-
-# Echtes Gameplay und Menü-Layouts prüfen
-python3 tools/capture_views.py
+./gradlew artSheet     # build/art/diver.png, enemies.png, bosses.png
+./gradlew sceneShot    # build/scenes/scene-XX.png aus echten Spielszenen
+./gradlew uiSmoke --args="--capture=docs/qa/screens"
 ```
 
-Die `.blend`-Dateien speichern den jeweiligen Ausgangszustand. Änderungen von Hand an einer `.blend`-Datei werden vom prozeduralen Komplett-Render nicht automatisch zurück in das Python-Skript übernommen. Für dauerhafte, reproduzierbare Änderungen zuerst die Modellierungsquelle anpassen oder eine bewusst neue manuell gepflegte Quelldatei einführen.
+Neue Grafik zuerst im Übersichtsbogen, dann in einer echten Szene mit Licht prüfen: Liest sich die Silhouette vor dem Hintergrund? Ist die Vorwarnung sichtbar? Stimmt die Grösse zur Trefferzone (Welteinheiten × 0,3)?
 
-## Freigaberegel für neue Grafiken
+## Historische Quellen
 
-Eine neue Raumplatte zuerst mit der bestehenden Figur, einem Gegner, dem HUD und der Kollisionsspur im tatsächlichen Renderer prüfen. Nicht allein nach der Schönheit des Einzelbilds entscheiden. Lesen sich Figur, Schott und Gefahren bei kleinem Fenster? Ist die Spur frei? Stimmen Maßstab und Licht? Stimmen Hintergrundboden und Füße? Erst danach die Platte in AssetCatalog zuweisen und das Manifest aktualisieren.
-
-Die Hintergründe sind detaillierte Rasterplatten, Figuren sind vorgerenderte 3D-Modelle. Dieser Mischstil ist transparent dokumentiert und benötigt noch die Art-Abnahme des Teams. Es wird nicht behauptet, dass die Konzeptbilder bereits vollständig animierte Spielgrafik darstellen.
-
-## Erweiterung 0.2
-
-15 Raumplatten, 118 Figurenframes aus sieben .blend-Dateien und 19 WAV-Dateien. Vier zusätzliche Raum-Prompts sind vollständig in art-source/expansion-prompts.json erhalten. Die drei neuen Musikloops werden nach Sektion bzw. Bossstatus gewählt. ItemGlyph zeichnet zwölf eigene technische Symbole auf Canvas; EnvironmentRenderer ergänzt getrennte Licht-, Nebel- und Vordergrundebenen.
+Die ImageGen-Hintergründe und Blender-Figuren der Version 0.2 sind ersetzt. `art-source/*.blend`, `tools/render_actors.py` und die Prompts (`docs/ART_PROMPTS.md`, `docs/CONCEPT-PROMPTS.md`) bleiben als Entstehungsgeschichte erhalten; die Bilder liegen in der Git-Historie.

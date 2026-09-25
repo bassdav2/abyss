@@ -1,11 +1,14 @@
 {
-  "kind": "automated JavaFX render test; no human input",
-  "seconds": 180.01, "simulationSpeed": 4.0,
-  "frames": 21547, "completedRuns": 5, "wins": 5, "losses": 0,
-  "distinctRoomBranches": 29, "modules": 3, "eventTypes": 18,
-  "nativeAudioClipsLoadedAndInvokedAtZeroVolume": 19,
-  "updateAndDrawCpuMsP50": 0.041, "updateAndDrawCpuMsP95": 0.178,
-  "frameIntervalMsP50": 8.332, "frameIntervalMsP95": 9.264,
-  "uncaughtErrors": 0,
-  "renderTimingNote": "CPU command submission; not GPU completion. Locked desktop can throttle frames."
+  "seconds": 60,
+  "frames": 30733,
+  "errors": 0,
+  "runs": 2,
+  "wins": 2,
+  "losses": 0,
+  "averageRenderMs": 1.945,
+  "p95RenderMs": 2.115,
+  "worstRenderMs": 74.460,
+  "roomThemesSeen": 29,
+  "eventTypesSeen": 41,
+  "note": "Headless-Software-Rendering mit Testspieler, zwei Simulationsschritte pro Bild. Kein menschlicher Spieltest."
 }

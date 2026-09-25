@@ -25,7 +25,7 @@ def run(*args):
     subprocess.run([str(a) for a in args],cwd=ROOT,env=env,check=True)
 
 
-run(ROOT/'gradlew','test','jar','copyRuntime')
+run(ROOT/'gradlew','test','jar','copyRuntime','processResources')
 modules=BUILD/'fx-modules'
 modules.mkdir(exist_ok=True)
 for file in modules.glob('*.jar'):
@@ -37,7 +37,7 @@ if runtime.exists(): shutil.rmtree(runtime)
 run(JAVA/'bin/jlink','--module-path',str(JAVA/'jmods')+os.pathsep+str(modules),
     '--add-modules','javafx.controls,javafx.media,java.desktop,java.logging,java.xml,jdk.unsupported',
     '--strip-debug','--no-man-pages','--no-header-files','--output',runtime)
-run(JAVA/'bin/java',ROOT/'tools/MakeIcon.java',ROOT)
+run(JAVA/'bin/java','--class-path',BUILD/'classes/java/main',ROOT/'tools/MakeIcon.java',ROOT)
 run('/usr/bin/iconutil','-c','icns',BUILD/'Abyss.iconset','-o',BUILD/'Abyss.icns')
 staging=BUILD/'package-input'
 staging.mkdir(exist_ok=True)
@@ -48,8 +48,9 @@ out=ROOT/'dist'
 out.mkdir(exist_ok=True)
 app=out/'Abyss.app'
 if app.exists(): shutil.rmtree(app)
-# macOS/jpackage verlangt eine positive erste Versionskomponente.
-run(JAVA/'bin/jpackage','--type','app-image','--name','Abyss','--app-version','1.0.1',
+# macOS/jpackage verlangt eine positive erste Versionskomponente. Spielstand 0.2 war Bundle 1.0.1,
+# Spielversion 1.0 war Bundle 1.1.0, Spielversion 1.1 ist Bundle 1.2.0.
+run(JAVA/'bin/jpackage','--type','app-image','--name','Abyss','--app-version','1.2.0',
     '--description','Vom Heck bis zur Brücke. Ein Tiefsee-Roguelite.',
     '--vendor','Abyss Project','--input',staging,'--main-jar','abyss.jar',
     '--main-class','ch.zhaw.abyss.Launcher','--runtime-image',runtime,'--dest',out,

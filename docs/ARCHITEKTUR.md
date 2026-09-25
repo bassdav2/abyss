@@ -1,79 +1,98 @@
-# Architektur und Design - Arbeitsfassung
+# Architektur und Design · Version 1.1
 
-Stand 22.09.2026. Beschreibt den implementierten Stand, keine bereits durch das Team beschlossene Architektur. Paketnamen sind relativ zu `ch.zhaw.abyss`.
+Stand 25.09.2026. Beschreibt den implementierten Stand; Teamentscheide und Dozentenabsprachen sind nicht belegt. Paketnamen relativ zu `ch.zhaw.abyss`. Diagramme: `docs/diagrams` (PlantUML-Quellen und gerenderte PNG/SVG).
 
 ## Kontext und Grenzen
 
-ABYSS ist ein lokales Einzelspieler-Desktopspiel. Eine Figur kämpft sich vom Heck eines langen U-Boots durch zwölf Räume bis zur Brücke. Es gibt keine Serververbindung, kein Konto, keinen Mehrspielerbetrieb und keine relationale Datenbank. JavaFX ist die einzige Produktionsbibliothek; Gradle dient dem Build, JUnit den Tests. JavaFX-Freigabe und Themenwahl bleiben mit dem Fachdozenten abzustimmen.
+ABYSS ist ein lokales Einzelspieler-Desktopspiel. Eine Figur kämpft sich vom Heck eines U-Boots durch 24 Räume in vier Sektionen bis zur Brücke. Kein Server, kein Konto, keine Datenbank. Produktionsbibliothek ist ausschliesslich JavaFX (Fenster, Zeichenfläche, Eingabe, Audio, Bildausgabe). Gradle baut, JUnit testet. Die Vorgaben aus dem PM3-Kick-off (Java, eigene geschichtete Architektur, keine Frameworks, JavaFX-Controller ohne Fachlogik) sind die wichtigsten Einflussfaktoren.
 
-## Vier zentrale Einflussfaktoren
+## Einflussfaktoren
 
 | Einflussfaktor | Konsequenz | Verifikation |
 |---|---|---|
-| PM3: überwiegend Java und eigene Architektur | Java-Domäne ohne Engine-Framework; UI und Dateien bleiben ausserhalb der Regeln | Abhängigkeitsprüfung und reine Domain-Tests |
-| Reaktionsfähiger 2D-Kampf | Fester Simulationsschritt von 1/120 s; JavaFX Canvas zeichnet unabhängig davon | Eingabe-/Kampf-Tests und Render-Probelauf |
-| Reproduzierbare Runs und verlässlicher Unterbruch | Seed-basierte Raumwahl, unveränderlicher Checkpoint am Raumeingang | 1000 Seeds; Roundtrip- und Resume-Tests |
-| Begrenzter Semesterumfang und konsistente Assets | Zwölf Raumpositionen, wiederverwendbare Raumtypen, gemeinsame Figurenquelle | Assetmanifest, Blender-Quellen, vollständiger Run |
+| PM3: Java, eigene Architektur, keine Frameworks | Eigene Domäne statt Engine; JavaFX nur in `ui`/`infrastructure` | Domain-Tests ohne JavaFX; Paketabhängigkeiten |
+| Reaktionsfähiger 2D-Kampf mit Plattformen | Fester Simulationsschritt 1/120 s, eigene Physik mit einseitigen Laufstegen | Bewegungs- und Kampftests, Kampagnensimulation |
+| Pixel-Art-Look mit dynamischem Licht | Eigener Software-Framebuffer 480 × 270, prozedurale Grafik, Upload als `WritableImage` | Render-Smoke-Test, Render-Probelauf (≈2 ms/Bild) |
+| Wiederspielwert | Seed-basierter Generator, Meta-Progression, Zyklen, Druckstufen | Generator-Tests über 600 Seeds, Balancebericht |
+| Verlässlicher Unterbruch | Unveränderlicher Checkpoint am Raumeingang, versioniertes Dateiformat mit Migration | Rundreise-, Fehler- und Migrationstests |
 
-## Logische Architektur
+## Logische Architektur (Diagramm 03)
 
-- **domain:** `GameRun` bildet die Konsistenzgrenze eines Tauchgangs. Enthält `Player`, `Enemy`, `Projectile`, `Hazard`, aktuelle `RoomPlan`, Route und Beute. `EnemyAi` ist eine explizite Zustandsmaschine; `RoomGenerator` erzeugt regelkonforme Raumangebote. Keine Imports aus JavaFX, I/O oder Anwendungsschichten.
-- **application:** `GameService` koordiniert Start, Fortsetzen, Fortschrittsverbuchung und Speichern. `Profile` und `Settings` sind unveränderliche Werte. Er kennt nur den Speichervertrag, keine konkreten Dateien.
-- **ports:** `GameRepository` beschreibt Laden, Speichern und Entfernen der lokalen Sicherung.
-- **infrastructure:** `FileGameRepository` implementiert den Vertrag mit versionierten Properties-Dateien. `AudioSystem` übersetzt Ereignisse in JavaFX-Audio.
-- **ui:** `GameWindow` verwaltet Bildschirmzustände und Benutzeraktionen. `InputController` übersetzt Tastatur/Maus in `InputFrame`. `GameRenderer` zeichnet nur lesend aus der Domäne. `AssetCatalog` lädt gemeinsame Assets; `ParticleField` ist rein visuell.
-- **Composition root:** `AbyssApplication` verbindet das konkrete Datei-Repository mit Service und Fenster. `Launcher` startet die Anwendung.
+- **domain** – reine Spielregeln. `GameRun` ist Aggregat und Konsistenzgrenze eines Tauchgangs und einzige öffentliche Änderungsschnittstelle. Intern arbeitet es mit paketinternen Mitarbeiterklassen: `PlayerMotor` (Bewegung, Sprünge, Ausweichen), `Arsenal` (Kombinationen, Luftangriffe, Harpunen, aktive Module, Drohne), `Ballistics` (Geschosse), `Loot` (Beute und Kisten) und `Rewards` (Bergung, Handel, Kapelle). `StatSheet` leitet alle Kampfwerte aus Klasse, Waffenstufe, Modulen und aktiven Resonanzen (`Synergy`) ab. `Combat` bündelt Schadensregeln (Kritik, Panzerung, Zustände, Modul-Auslöser, Explosionen, Kettenblitze), `Physics` die Bewegung mit Laufstegen. Gegnerverhalten sind Strategien (`EnemyBehavior`), gemeinsam über die Schablone `Brain`. `RoomGenerator` erzeugt reproduzierbare `RoomPlan`s mit `RoomLayout`, Wellen, Gefahren, Kisten, Raumtechnik (`Fixture`, gesteuert von `Machinery`) und `RoomCondition` (Raumzustand, aus einem eigenen Zufallsstrom, damit die übrigen Raumdaten eines Seeds unverändert bleiben). Keine Importe aus JavaFX, `java.io` oder den äusseren Schichten.
+- **application** – `GameService` koordiniert Anwendungsfälle (starten, fortsetzen, sichern, Ergebnis verbuchen, freischalten, Aussehen). Unveränderliche Werte: `Profile`, `Loadout`, `Cosmetics`, `Settings`, `Unlock`-Katalog, `Achievement` (Logbuch; Bedingungen werden nach jeder Verbuchung gegen Tauchgang und Profil geprüft).
+- **ports** – `GameRepository` als Speichervertrag.
+- **infrastructure** – `FileGameRepository` (Properties-Format 3, Migration 1/2, atomares Schreiben, `.bak`-Sicherung); `AudioSystem` übersetzt Ereignisse in Klänge.
+- **ui.pixel** – JavaFX-freie Pixelgrundlagen: `Frame` (Framebuffer mit Alpha, Clipping, Sprites, Linien), `Sprite` (mit Leuchtebene), `LightMap` (gestuftes Licht mit Bayer-Raster), `PostProcess` (Bloom, Farbstimmung, Vignette, Aberration), `PixelFont`.
+- **ui.art** – prozedurale Pixel-Art: `Painter` (Formen, Kugelschattierung, Kontur, gedrehte Stempel), `DiverArt` (Figur mit Skelett-Posen und Garderobe), `EnemyArt`/`BossArt`, `RoomArt` (Raumstreifen, Lichter, Requisiten), `PropArt`, `IconArt`, Palette `Pal`.
+- **ui.render** – `WorldRenderer` zeichnet einen `GameRun` lesend; `ActorPainter` (Figuren, Hiebspuren), `EventEffects` (Ereignis → Effekt), `ScreenFeel` (Blitz, Trefferpause, Zeitlupe), `MachinePainter` (Raumtechnik), `HudRenderer`, `Effects`, `Camera`, `Ocean`, `SubmarineScene` (Titel, Bootskarte, Auftakt, Siegesszene), `SpriteBank` (Zwischenspeicher). Raumzustände wirken im Renderer nur auf Licht und Partikel (Stromausfall, Alarmlichter, Lecks); ihre Regeln liegen im Generator und in `Rewards`.
+- **ui.gui** – `Gui`: Bordsystem-Oberfläche im Framebuffer (Immediate-Mode): Schottplatten, Tasten mit Druckeffekt, Hologramm-Karten, Wahlschalter, Pegelregler, Kippschalter, Ziffernfeld, räumliche Tastaturnavigation und eigener Pixel-Mauszeiger.
+- **ui** – `GameWindow` (Spielschleife, Eingabe, Navigation, Dispatch der Bildschirme pro Bild), `MenuScreens` und `RunScreens` (zeichnen ihre Bildschirme mit `Gui`, halten nur Auswahlzustand), `PixelView` (pixelgenaue Ausgabe mit Maus-Umrechnung), `InputController`. JavaFX liefert Fenster, Zeichenfläche, Eingabe und Audio.
+- **Composition Root** – `AbyssApplication` verbindet Dateispeicher, Dienst und Fenster; `Launcher` startet.
 
-Die Darstellung darf die Domäne lesen und öffentliche Aktionen aufrufen. Dateizugriff erfolgt über den Service. Treffer, Energiekosten, Belohnungen, Schadensregeln und zulässige Raumwechsel liegen ausschliesslich in der Domäne. Audio und Effekte reagieren auf entnommene `GameEvent`-Werte und können keine Treffer erzeugen.
+Abhängigkeiten zeigen nach innen: UI → Anwendung → Domäne; Infrastruktur implementiert den Port. Die Darstellung liest die Domäne und ruft nur öffentliche Aktionen auf (`take`, `acceptDeal`, `chooseNextRoom`, `repair`, `useRepairKit`, `nextCycle`). Was die Interaktionstaste auslöst, entscheidet die Domäne (`GameRun.interaction()`), nicht der Controller.
+
+## Entwurfsmuster
+
+| Muster | Umsetzung | Nutzen |
+|---|---|---|
+| Strategie | `EnemyBehavior` mit 17 Implementierungen; `Weapon` als Daten-Strategie der Angriffe | Neue Gegner ohne Änderung an `GameRun` |
+| Schablonenmethode | `Brain.update` (final) steuert Annähern → Ausholen → Angriff → Erholung; Arten überschreiben Einstiegspunkte | Gemeinsame, testbare Zustandsmaschine |
+| Fabrikmethode | `EnemyKind.behavior()` | Zuordnung Art → Verhalten an einer Stelle |
+| Beobachter (Pull) | `GameEvent`-Liste, von UI und Audio pro Bild entnommen | Effekte/Audio ohne Rückwirkung auf Regeln |
+| Aggregat | `GameRun` als einzige Änderungsschnittstelle eines Tauchgangs | Konsistenz und Prüfbarkeit |
+| Wertobjekte | Records: `RoomPlan`, `RunSetup`, `RunCheckpoint`, `StatSheet`, `Offer`, `Profile` | Unveränderlichkeit, einfache Tests |
+| Port/Adapter | `GameRepository` / `FileGameRepository` | Speicher austauschbar, Speicher im Arbeitsspeicher für Tests |
+| Baukasten | `InputFrame.Builder`, `Profile.Builder` | Lesbare Tests und Änderungen |
+| Zwischenspeicher | `SpriteBank`, `PropArt`, `IconArt` | Grafik nur einmal malen |
 
 ## Architekturentscheidungen
 
-### ADR-01 - JavaFX Canvas und eigene Domäne
+### ADR-01 · JavaFX und eigene Domäne (unverändert)
+JavaFX liefert Fenster, Controls, Eingaben und Audio. Die Spielregeln bleiben eigenes, direkt testbares Java. Alternativen wie LibGDX, Godot oder Unity würden die Java-/Framework-Vorgaben verletzen.
 
-Status: implementierter Vorschlag. JavaFX bietet Fenster, Controls, Eingaben, Zeichenfläche und Audio. Eigene Regeln erlauben direkte Unit-Tests und machen die im Modul erwarteten Verantwortlichkeiten sichtbar. Alternative: LibGDX/Godot/Unity. Diese würden mehr Engine-Funktionalität liefern, vergrössern aber die Abhängigkeit und passen schlechter zur gegenwärtigen Java-/Framework-Vorgabe. Nachteil der Wahl: Kollision, Animation und Spielschleife werden selbst gepflegt.
+### ADR-02 · Fester Simulationsschritt, Trefferpause und Zeitlupe in der UI
+`GameWindow` sammelt reale Zeit und ruft `GameRun.update` in Schritten von 1/120 s auf; ein Bild ist auf 100 ms begrenzt. Trefferpausen (35–70 ms) und Zeitlupe (Bossniederlage, eigener Tod) sind reine Präsentation: Die UI speist in dieser Zeit weniger Simulationszeit ein; die Regeln bleiben unverändert.
 
-### ADR-02 - Fester Simulationsschritt
+### ADR-03 · Checkpoint am Raumeingang (erweitert)
+Gespeichert werden Seed, Zyklus, Druckstufe, Route, Klasse, Waffe mit Stufe, Modul, Ressourcen, Module, Kerne, Notfallkapsel, Tiefenrausch und Integritätsopfer. Gegner und Geschosse werden beim Laden aus dem Raumplan rekonstruiert. `GameRun.restore` validiert alle Werte und lehnt Manipulationen ab.
 
-`AnimationTimer` sammelt reale Zeit; die Domäne erhält Schritte von 1/120 s. Ein einzelner Render-Abstand wird auf 100 ms begrenzt, um nach langen Unterbrechungen keine minutenlange Aufholschleife auszuführen. Pause und Fokusverlust stoppen die Simulation. Dadurch hängen Schadens- und Bewegungswerte nicht direkt von einer einzelnen Bildrate ab. Dies ist keine vollständig deterministische Replay-Engine: Eingabezeitpunkte und spätere Änderungen an Regeln können ein Ergebnis verändern.
+### ADR-04 · Dateiformat 3 mit Migration
+Zwei Properties-Dateien, atomar geschrieben. Format 1/2 wird gelesen: Profilfortschritt skaliert, alte Freischaltungen übernommen, Raum-Sicherungen bestmöglich in dieselbe Sektion übertragen; das Original bleibt als `.bak`. Profil und Checkpoint sind keine gemeinsame Transaktion.
 
-### ADR-03 - Unveränderlicher Checkpoint am Raum-Einstieg
+### ADR-05 · Ereignisse für Rückmeldung (erweitert)
+50 Ereignisarten (Treffer, Krit, Block, Explosion, Boss-Auftritt, Phasenwechsel, Raumtechnik …). Pro Bild entnimmt die UI alle Ereignisse; Renderer und Audio werten sie getrennt aus.
 
-Gespeichert werden Seed, Zyklus, Tiefe, gewählter Zweig, Startmodul, Ressourcen, passive Upgrades, Statistiken und Route. Gegner, Projektile und Animationen werden beim Laden aus dem Einstieg rekonstruiert. Ein Raum muss nach dem Verlassen erneut gespielt werden. Das begrenzt die Save-Komplexität und verhindert halbe Kampfschnappschüsse. Die UI erklärt diese Regel.
+### ADR-06 · Generator mit festen Wächtern und variabler Geometrie
+Vier Sektionen à sechs Positionen; Wächter an 5, 11, 17 und die Brücke an 24, Werkstätten danach. Sonderräume (Elite, Schwarzmarkt, Kapelle, Versorgung) werden pro Sektion gemischt. Seed und Abzweig bestimmen Thema, Breite (1–1,75 Bildschirme), Laufstege aus Vorlagen, Wellen nach Bedrohungsbudget, Gefahren und Kisten.
 
-### ADR-04 - Datei-Repository hinter einem Port
+### ADR-07 · Software-Pixel-Pipeline statt Bildplatten (neu)
+Die Welt wird in einen 480 × 270 Framebuffer gezeichnet (Farb- und Leuchtebene), mit einer Lichtkarte in halber Auflösung multipliziert, die in 9 Stufen quantisiert und per Bayer-Matrix gerastert wird. Bloom entsteht aus der Leuchtebene. Das fertige Bild wird einmal pro Bild in ein `WritableImage` geschrieben und ohne Glättung skaliert. Vorteile: pixelgenauer Look, dynamisches Licht, volle Kontrolle, ohne JavaFX testbar, ≈2 ms pro Bild. Nachteil: Zeichenfunktionen werden selbst gepflegt.
 
-Zwei kleine UTF-8-Properties-Dateien benötigen keine Datenbank oder Serialisierungsbibliothek. Formatversion und Werte werden geprüft. Schreiben erfolgt in eine temporäre Datei und nach Möglichkeit über atomisches Umbenennen. Vor dem Ersetzen einer nicht lesbaren Datei entsteht eine `.bak`-Kopie. Atomizität gilt je Datei; Profil und Checkpoint sind keine gemeinsame Transaktion. Ein Prozessabbruch exakt zwischen zwei Schreiboperationen kann deshalb Statistik und Raum-Sicherung auseinanderlaufen lassen. Der Spielstand bleibt lokal und manipulierbar; Anti-Cheat ist kein Ziel.
+### ADR-08 · Prozedurale Pixel-Art in Java (neu)
+Figuren, Gegner, Räume, Symbole und Effekte werden beim Start aus Grundformen gemalt (Kugelschattierung, Konturen, Skelettposen mit Zweigelenk-Kinematik). Dadurch sind Garderobe und Waffen frei kombinierbar, die Grafik ist reproduzierbar und versionierbar, und es entstehen keine Lizenzfragen. Der frühere Mischstil (ImageGen-Platten, Blender-Renderings) ist abgelöst; die Quellen bleiben in `art-source` und der Git-Historie.
 
-### ADR-05 - Ereignisse für Feedback
+### ADR-09 · Menüs als Bordsysteme im Framebuffer (geändert in 1.1)
+In 1.0 waren Menüs JavaFX-Controls mit CSS über der Pixelfläche; sie wirkten wie ein Fremdkörper. Seit 1.1 zeichnet ein eigenes Immediate-Mode-GUI (`ui.gui.Gui`) alle Menüs, Karten und Regler in denselben 480 × 270 Framebuffer: Schottplatten, Terminals, Hologramm-Karten, Kamerabilder der nächsten Räume. Maus und Tastatur werden gesammelt und einmal pro Bild ausgewertet; Pfeiltasten wandern räumlich zum nächsten Element. Vorteile: einheitlicher Pixel-Look, Menüs wirken wie Teil des U-Boots, keine Abhängigkeit von Schriftdateien, Menüs laufen mit der Spielschleife. Nachteil: Layout und Bedienelemente werden selbst gepflegt. Controller rufen weiterhin nur Anwendungsfälle und öffentliche Domänenaktionen auf.
 
-Die Domäne erzeugt z.B. `HIT`, `DASH`, `ROOM_CLEAR` und `VICTORY`. Pro Darstellungsframe entnimmt die UI die seit dem letzten Frame gesammelten Ereignisse. Renderer und Audio werten sie separat aus. So bleiben Audioausfall, Partikelbudget und reduzierte Bewegung ohne Wirkung auf den Kampf.
+### ADR-10 · Raumtechnik als Aggregat-Mitarbeiter (neu in 1.1)
+Förderbänder, Dampfdüsen, Turbinenwind, Pressen, Lasergitter und Notschalter sind `Fixture`s im `GameRun`. `Fixture` kennt nur Art, Lage und Takt; `Machinery` berechnet Schub, Starts, Treffer und Schalter-Effekte. Anlagen-Treffer nutzen die Quelle `MACHINE`, die die Panzerung von Wächtern durchschlägt und ihren Kern kurz freilegt. So werden Bossarenen interaktiv, ohne die Bossverhalten anzufassen. Der Generator verteilt Anlagen aus einem eigenen Zufallsstrom.
 
-### ADR-06 - Begrenzter Generator statt beliebiger Geometrie
+## Verantwortlichkeiten
 
-Die achtzehn Raumpositionen folgen drei Sektionen. Sektorwächter liegen an 5 und 11, Werkstätten an 6 und 12, die Brücke an 18. An zwölf Positionen gibt es zwei Routenangebote. Seed und Zweig bestimmen Begegnungen und Raumvariante; der zentrale Weg nach vorn bleibt immer vorhanden. Geometrie und Sektorreihenfolge werden nicht zufällig permutiert. Der Wiederspielwert kommt aus Gegnerzusammenstellung, Risiko-/Vorratswahl, Modulangeboten und Folgezyklen.
-
-### ADR-07 - Blender-Figuren und gerasterte Hintergrundplatten
-
-Figuren werden aus editierbaren Blender-Modellen in transparente Animationsframes gerendert. Kamera, Materialdefinition, Bildgrösse und Ankerpunkt sind gemeinsam. Hintergrundplatten wurden mit Imagegen erstellt und auf feste Bodenhöhe und Perspektive abgestimmt. Interaktive Kisten, Schotteffekte, Gefahren und Trefferanzeigen werden separat gezeichnet. Ein Hintergrundbild ist keine Kollisionsgeometrie. Fonts werden mit Lizenz mitgeliefert.
-
-## Wichtige Verantwortlichkeiten
-
-| Klasse | Verantwortung | Bewusst nicht zuständig für |
+| Klasse | Verantwortung | Bewusst nicht zuständig |
 |---|---|---|
-| GameRun | Spielregeln, Kampf, Räume, Upgrades und Run-Phase | Dateien, Controls, Audio |
-| RoomGenerator | Gültige Angebote aus Seed, Tiefe und Zyklus | Aktueller Lebenszustand |
-| EnemyAi | Entscheidungs- und Angriffszustände der Gegner | Animationsdateien |
-| GameService | Anwendungsfälle, Profilfortschritt, Speicherkoordination | Trefferberechnung |
-| FileGameRepository | Versioniertes Lesen und Schreiben | Menüablauf |
-| GameWindow | Bildschirmwechsel und Eingabeübersetzung | Schadensformeln |
-| GameRenderer | Zeichenbefehle und sichtbares Feedback | Mutation von Spielerwerten |
+| GameRun | Phasen, Räume, Wellen, Sicherung; koordiniert die Mitarbeiterklassen | Dateien, Controls, Grafik |
+| PlayerMotor / Arsenal | Bewegung bzw. Angriffe und Module der Figur | Gegnerlogik |
+| Ballistics / Loot / Rewards | Geschosse, Beute, Belohnungen und Handel | Eingaben |
+| Combat | Schadensberechnung, Auslöser-Module, Explosionen | Eingaben, Raumfolge |
+| Brain + Unterklassen | Entscheidungen und Angriffsmuster der Gegner | Animation |
+| RoomGenerator | Reproduzierbare Raumpläne | Laufzeitzustand |
+| StatSheet | Abgeleitete Werte aus Klasse, Waffe und Modulen | Ressourcen |
+| GameService | Anwendungsfälle, Profil, Kerne, Freischaltungen | Trefferregeln |
+| FileGameRepository | Lesen, Schreiben, Migration | Menüablauf |
+| WorldRenderer | Bild aus Domänenzustand, Effekte aus Ereignissen | Regeln |
+| GameWindow | Spielschleife, Eingabe, Navigation | Spielregeln |
 
-## Bekannte Architekturgrenzen
+## Bekannte Grenzen
 
-`GameRun` und `GameWindow` sind die grössten Klassen. Eine weitere Ausweitung um Waffen, Dialoge oder Plattformphysik sollte vorher eine gezielte Aufteilung in Kampf-/Raumsysteme bzw. Bildschirmklassen auslösen. Für den aktuellen begrenzten Umfang bleibt die zentrale Konsistenzgrenze verständlich. Der Renderer zeichnet in logischen 1600 x 900 Einheiten; das Fenster skaliert die Oberfläche. Gamepad, frei belegbare Tasten, Screenreader-Spielbedienung, Cloud-Saves und Netzwerkspiel sind nicht implementiert.
-
-Die Diagrammquellen unter `docs/diagrams/` gehören zum Stand. Ein konzeptuelles Domänenmodell und ein Design-Klassendiagramm sind absichtlich getrennt: Ersteres beschreibt Fachbegriffe, letzteres tatsächlich vorhandene Klassen.
-
-## Erweiterung 0.2
-
-`SupplyCrate` kapselt Inhalt, Treffer und einmalige Auszahlung. `EnvironmentRenderer` übernimmt rein visuelle Tiefenebenen; `ItemGlyph` liefert gemeinsame Icons für HUD, Inventar und Bergung. Beide verändern keine Spielregeln. Das Repository liest Version 1 und 2; neue Daten verwenden Version 2. Alte Raumpositionen werden sektortreu abgebildet und ursprüngliche Dateien vor dem Überschreiben gesichert.
+Die grössten Klassen sind `WorldRenderer` (~1200 Zeilen inkl. Formatierung), `GameRun` (~1000 Zeilen) und `Gui` (~760 Zeilen). `WorldRenderer` delegiert bereits an `ActorPainter`, `EventEffects`, `HudRenderer` und `Effects`; weitere Zeichner (Requisiten, Licht) wären der nächste Schnitt. Gamepad, frei belegbare Tasten, Screenreader-Bedienung und Netzwerkspiel fehlen. Geprüft wurde nur auf Apple-Silicon-macOS.

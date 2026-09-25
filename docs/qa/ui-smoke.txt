@@ -1,24 +1,41 @@
-PASS Titel -> Vorbereitung
-PASS Ungültiger Seed startet keinen Run
-PASS Seed-Eingabe und Start-Button
-PASS I öffnet Build-Inventar
-PASS Inventar enthält zwölf Item-Karten
-PASS Bootskarte enthält achtzehn Räume
-PASS JavaFX-KeyEvent bewegt Spielfigur
-PASS Pause stoppt Simulation
-PASS Hilfe aus Pause
-PASS Optionen gespeichert
-PASS Weiter nach Pause
-PASS Fortsetzen rekonstruiert gespeicherten Raum
-PASS Werkstatt-Interaktion repariert
-PASS Werkstatt öffnet Modulauswahl
-PASS Werkstatt kauft ein mitnehmbares Reparaturset
-PASS Reparaturset kostet genau 20 Schrott
-PASS Modulkarte verändert Build
-PASS Werkstatt zieht genau 15 Schrott ab (inkl. Raumlohn)
-PASS Rechtes Schott öffnet Navigation
-PASS Routenkarte wechselt Raum
-PASS Raumwechsel persistiert Sicherung
-PASS Hauptmenü -> Fortsetzen erhält Build
-PASS Layout bei minimaler Fensterbreite
-PASS
+ABYSS 1.1 · JavaFX-Komponentenprüfung · 25.09.2026 13:08
+./gradlew uiSmoke -Psilent --args="--capture=docs/qa/screens"
+
+OK     title → TITLE
+OK     loadout → LOADOUT
+OK     wardrobe → WARDROBE
+OK     archive-divers → ARCHIVE
+OK     archive-blueprints → ARCHIVE
+OK     archive-codex → ARCHIVE
+OK     archive-logbook → ARCHIVE
+OK     archive-resonances → ARCHIVE
+OK     settings → SETTINGS
+OK     help → HELP
+OK     Auftakt beim ersten Tauchgang
+OK     intro → PLAY
+OK     Auftakt übersprungen
+OK     play-start → PLAY
+OK     play-fight → PLAY
+OK     Raum gesichert
+OK     reward → REWARD
+OK     inventory → INVENTORY
+OK     map → MAP
+OK     pause → PAUSE
+OK     route → ROUTE
+OK     merchant → REWARD
+OK     boss → PLAY
+OK     shrine-or-workshop → REWARD
+OK     sector2 → PLAY
+OK     Raumzustand in der Routenwahl
+OK     route-condition → ROUTE
+OK     Audioclips geladen (16)
+OK     audio → PLAY
+OK     Brücke erobert
+OK     Siegesszene läuft
+OK     ending → OUTCOME
+OK     Auswertung nach der Szene
+OK     victory → OUTCOME
+OK     Niederlage ohne Siegesszene
+OK     outcome → OUTCOME
+OK     title-again → TITLE
+UI_SMOKE 37/37 bestanden

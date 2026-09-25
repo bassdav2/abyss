@@ -1,3 +1,5 @@
+> **Historisch:** Diese Seite beschreibt den Ausbau 0.2. Den aktuellen Stand beschreiben `MORGEN.md`, `INHALTE.md` und `ARCHITEKTUR.md`.
+
 # ABYSS 0.2 - Ausbau am 22.09.2026
 
 Auf Davids ausdrücklichen Wunsch wird der erste Nachtstand erweitert. Der ursprüngliche lokale Commit 608c280 bleibt als Vergleich erhalten.

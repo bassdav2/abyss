@@ -8,7 +8,29 @@ import javafx.scene.input.KeyCode;
 
 import org.junit.jupiter.api.Test;
 
+/** Übersetzung von Tastatur und Maus in Simulationseingaben. */
 class InputControllerTest {
+    @Test
+    void downPlusJumpAndHeldJumpAreReported() {
+        var input = new InputController();
+        input.down(KeyCode.S);
+        input.down(KeyCode.SPACE);
+        var frame = input.frame(100);
+        assertTrue(frame.down() && frame.jump() && frame.jumpHeld());
+        var held = input.frame(100);
+        assertFalse(held.jump());
+        assertTrue(held.jumpHeld());
+        input.up(KeyCode.SPACE);
+        assertFalse(input.frame(100).jumpHeld());
+    }
+
+    @Test
+    void alternativeDashKeyWorks() {
+        var input = new InputController();
+        input.down(KeyCode.L);
+        assertTrue(input.frame(100).dash());
+    }
+
     @Test
     void jumpDashAndAbilityUseRisingEdgesDespiteKeyboardAutoRepeat() {
         var input = new InputController();

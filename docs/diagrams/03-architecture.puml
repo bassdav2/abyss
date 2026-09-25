@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,54 +14,76 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-top to bottom direction
-package "ui" {
- [GameWindow]
- [InputController]
- [GameRenderer]
- [AssetCatalog]
- [EnvironmentRenderer / ItemGlyph]
+title Logische Architektur (Schichten, Abhängigkeiten nach innen)
+package "ui (JavaFX)" {
+ [GameWindow] as GW
+ [MenuScreens / RunScreens] as Screens
+ [PixelView] as PV
+ [InputController] as IC
+}
+package "ui.gui" {
+ [Gui (Bordsystem, Immediate-Mode)] as Gui
+}
+package "ui.render" {
+ [WorldRenderer] as WR
+ [HudRenderer] as HR
+ [MachinePainter] as MP
+ [Effects / Camera / Ocean] as FX
+}
+package "ui.art" {
+ [DiverArt / EnemyArt / BossArt] as Art
+ [RoomArt / PropArt / IconArt] as RoomArt
+}
+package "ui.pixel" {
+ [Frame / Sprite / LightMap / PostProcess / PixelFont] as Pixel
 }
 package "application" {
- [GameService]
- [Profile / Settings]
+ [GameService] as GS
+ [Profile / Loadout / Unlock / Achievement] as Meta
 }
 package "ports" {
- interface GameRepository
-}
-package "domain" {
- [GameRun]
- [RoomGenerator]
- [EnemyAi]
- [Actors / Hazards / Projectiles]
- [RunCheckpoint / GameEvent]
+ [GameRepository] as Port
 }
 package "infrastructure" {
- [FileGameRepository]
- [AudioSystem]
+ [FileGameRepository] as File
+ [AudioSystem] as Audio
 }
-[GameWindow] --> [InputController]
-[GameWindow] --> [GameService]
-[GameWindow] --> [GameRun] : Spielaktionen
-[GameWindow] --> [GameRenderer]
-[GameWindow] --> [AudioSystem] : Ereignisse
-[GameRenderer] --> [GameRun] : nur lesen
-[GameRenderer] --> [AssetCatalog]
-[GameRenderer] --> [EnvironmentRenderer / ItemGlyph]
- [EnvironmentRenderer / ItemGlyph]
-[GameService] --> [GameRun]
-[GameService] --> GameRepository
-[GameService] --> [Profile / Settings]
-[FileGameRepository] ..|> GameRepository
-[FileGameRepository] --> [RunCheckpoint / GameEvent] : Checkpoint-Daten
-[GameRun] --> [RoomGenerator]
-[GameRun] --> [EnemyAi]
-[GameRun] --> [Actors / Hazards / Projectiles]
-[GameRun] --> [RunCheckpoint / GameEvent]
-note bottom of "domain"
-Keine Abhängigkeit auf JavaFX,
-Dateisystem oder Infrastruktur.
-end note
+package "domain (reines Java)" {
+ [GameRun] as Run
+ [Combat / Physics / Machinery] as Rules
+ [EnemyBehavior-Strategien] as AI
+ [RoomGenerator] as Gen
+}
+GW --> Screens
+GW --> Gui
+Screens --> Gui
+Gui --> Pixel
+GW --> WR
+WR --> MP
+GW --> IC
+GW --> PV
+GW --> GS
+GW --> Audio
+Screens --> GS
+WR --> HR
+WR --> FX
+WR --> Art
+WR --> RoomArt
+WR --> Pixel
+Art --> Pixel
+RoomArt --> Pixel
+WR ..> Run : liest
+GS --> Run
+GS --> Meta
+GS --> Port
+File ..|> Port
+Run --> Rules
+Run --> AI
+Run --> Gen
+note bottom of Run : Keine Importe aus JavaFX,\nDateien oder Anwendungsschicht
+note right of Pixel : Software-Framebuffer 480 x 270,\nohne JavaFX testbar
 
 @enduml

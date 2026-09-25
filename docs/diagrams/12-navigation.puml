@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,29 +14,35 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
+title Bildschirmnavigation
 [*] --> Titel
-Titel --> Vorbereitung : Neuer Tauchgang
-Vorbereitung --> Spiel : Start
-Titel --> Spiel : Fortsetzen
-Titel --> Optionen
-Titel --> Hilfe
+Titel --> Vorbereitung
 Titel --> Archiv
-Spiel --> Inventar : I / Tab
-Inventar --> Spiel : Weiter / Esc
-Spiel --> Bootskarte : M
-Bootskarte --> Spiel : Weiter / Esc
+Titel --> Garderobe
+Titel --> Optionen
+Titel --> Steuerung
+Titel --> Spiel : Fortsetzen
+Vorbereitung --> Garderobe
+Vorbereitung --> Spiel : Tauchen
 Spiel --> Pause : Esc / Fokusverlust
-Pause --> Spiel : Weiter
-Pause --> Optionen
-Pause --> Hilfe
+Pause --> Spiel
+Pause --> Ausrüstung
+Pause --> Bootskarte
 Pause --> Titel
-Spiel --> Bergung : E am Fund
-Bergung --> Spiel : Modul / Zurück
+Spiel --> Ausrüstung : I / Tab
+Spiel --> Bootskarte : M
+Spiel --> Bergung : E an Kapsel / Händlerin / Werkstatt
+Spiel --> Kapelle : E am Altar
 Spiel --> Route : E am Schott
-Route --> Spiel : Raumwahl / Zurück
-Spiel --> Ergebnis : Niederlage / Sieg
-Ergebnis --> Spiel : Neuer Versuch / nächster Zyklus
+Bergung --> Spiel
+Kapelle --> Spiel
+Route --> Spiel : Raumwahl
+Spiel --> Ergebnis : Sieg / Niederlage
+Ergebnis --> Spiel : nächster Zyklus / erneut
+Ergebnis --> Archiv
 Ergebnis --> Titel
 
 @enduml

@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,24 +14,25 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-actor Player
-participant GameWindow as UI
-participant GameRun as Run
-participant "player:Player" as Character
-Player -> UI : Modulkarte wählen
-UI -> Run : claimReward(upgrade)
-Run -> Run : Phase, Angebot, Verfügbarkeit\nund Werkstattkosten prüfen
-alt gültige Wahl
- Run -> Character : Schrott abziehen (Werkstatt)
- loop 1 oder 2 Stufen, maximal 3 insgesamt
-  Run -> Character : upgrade(upgrade)
- end
- Run -> Run : rewardAvailable = false\nUPGRADE-Ereignis erzeugen
- Run --> UI : true
- UI --> Player : Spiel mit aktualisiertem Build
-else nicht zulässig
- Run --> UI : false
-end
+title Sequenz: Bergung wählen (UC-03)
+actor "Spieler/in" as P
+participant ":GameWindow" as W
+participant ":GameRun" as R
+participant ":Player" as Pl
+P -> W : E
+W -> R : interaction()
+R --> W : REWARD
+W -> W : reward() zeigt offers()
+P -> W : Angebot 2
+W -> R : take(offers().get(1))
+R -> R : Phase, Angebot, Preis prüfen
+R -> Pl : install(item) / weapon wechseln
+Pl -> Pl : recompute(): StatSheet
+R -> R : rewardAvailable = false
+R --> W : true
+W -> W : play()
 
 @enduml

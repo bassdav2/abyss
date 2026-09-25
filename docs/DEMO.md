@@ -1,18 +1,24 @@
-# Gameplay-Demo 0.2
+# Gameplay-Demo 1.0
 
-`output/video/Abyss_Gameplay_Demo.mp4` ist ein 120-Sekunden-Video aus dem tatsächlichen JavaFX-Renderer. Der Testspieler verwendet reguläre Eingaben. Bossbegegnungen und Garten starten aus vorbereiteten gültigen QA-Checkpoints mit Upgrades; die Menübilder stammen aus echten JavaFX-Screenshots. Die dauerhafte Einblendung kennzeichnet dies als automatisierte Demo.
+`output/video/Abyss_Gameplay_Demo.mp4` (Kopie: `Spiel/Gameplay-Demo.mp4`) zeigt knapp 90 Sekunden aus dem echten Pixel-Renderer von ABYSS 1.0, verlustfrei hochskaliert von 480 × 270 auf 1920 × 1080. Gespielt wird vom automatischen Testspieler (`qa/CampaignPilot`) mit normalen Eingaben. Jeder Ausschnitt ist ein frischer Tauchgang mit festem Seed; der Testspieler spielt bis zur gezeigten Raumposition vor. Eine Einblendung oben in der Mitte weist das Video als automatische Demo aus.
 
 | Zeit | Inhalt |
 |---|---|
-| 0-3 s | Titel |
-| 3-18 s | Heck und erster Kampf |
-| 18-23 s | Inventar mit zwölf Itemtypen |
-| 23-42 s | Schottmeister, erster Boss |
-| 42-47 s | 18-Raum-Bootskarte |
-| 47-66 s | Reaktorkern, zweiter Boss |
-| 66-77 s | Sauerstoffgarten |
-| 77-83 s | Werkstatt und neue Bergungskarten |
-| 83-115 s | Lotse, Brückenboss |
-| 115-120 s | Abschlussbild |
+| 0–5 s | Titel mit dem U-Boot im Längsschnitt |
+| 5–18 s | Hecksektion, erste Räume (Mechanikerin, Harpunier) |
+| 18–28 s | Schottmeister, erster Sektorwächter |
+| 28–35 s | Maschinendeck |
+| 35–45 s | Reaktorkern |
+| 45–52 s | Forschungsdeck |
+| 52–62 s | Brutmutter |
+| 62–69 s | Kommandodeck |
+| 69–81 s | Lotse auf der Brücke |
+| 81–89 s | Siegesszene: Das Boot steigt zur Oberfläche auf |
 
-Die Tonspur ist die eigene synthetische Boss-Musik. Sie ist kein Mitschnitt einer gehörten Testausgabe. Erzeugen: `./gradlew renderDemo` (FFmpeg erforderlich). Die Aufnahme ersetzt keinen menschlichen Spieltest.
+Die Klassen wechseln von Ausschnitt zu Ausschnitt. Als Tonspur läuft die eigene synthetische Musik in Schleife; Kampfklänge sind nicht eingemischt. Die Aufnahme ersetzt keinen menschlichen Spieltest: Der Bot reagiert fehlerfrei und geht direkt auf das nächste Ziel.
+
+Erzeugen (FFmpeg erforderlich):
+
+```sh
+./gradlew renderDemo
+```

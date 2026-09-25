@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,64 +14,166 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-class GameWindow {
- - service: GameService
- - run: GameRun
- - screen: Screen
- - chooseRoute(index)
- - chooseReward(index)
-}
-class GameService {
- - repository: GameRepository
- - profile: Profile
- + start(seed, module, explorer): GameRun
- + resume(): Optional<GameRun>
- + saveRoom()
- + recordOutcome()
- + nextCycle(): boolean
-}
-interface GameRepository {
- + loadProfile(): Profile
- + loadCheckpoint(): Optional<RunCheckpoint>
- + saveProfile(profile)
- + saveCheckpoint(checkpoint)
- + clearCheckpoint()
-}
-class FileGameRepository
+title Design-Klassendiagramm der Domänenschicht (Auszug)
 class GameRun {
- - player: Player
  - phase: Phase
+ - room: RoomPlan
+ - cycle: int
  + update(seconds, input)
- + claimReward(upgrade): boolean
+ + interaction(): Interaction
+ + take(offer): boolean
+ + acceptDeal(deal): boolean
  + chooseNextRoom(branch): boolean
+ + nextCycle(): boolean
  + checkpoint(): RunCheckpoint
  + drainEvents(): List<GameEvent>
+ + {static} restore(saved, items, weapons): GameRun
+}
+class Combat {
+ ~ hitEnemy(enemy, base, source, knockback, x): double
+ ~ hurtPlayer(amount, x, source, melee): boolean
+ ~ explode(x, y, radius, damage, ...)
+ ~ chain(origin, damage, range)
+}
+class Physics {
+ ~ {static} move(actor, layout, dt)
+}
+class PlayerMotor {
+ ~ tick(dt)
+ ~ move(dt, input)
+}
+class Arsenal {
+ ~ update(dt, input)
+ ~ slamImpact()
+ ~ updateDrone(dt)
+}
+class Ballistics {
+ ~ update(dt)
+}
+class Loot {
+ ~ update(dt)
+ ~ drop(kind, value, x, y)
+ ~ breakCrate(crate)
+}
+class Rewards {
+ ~ open(room)
+ ~ take(offer): boolean
+ ~ accept(deal): boolean
+ ~ repair(): boolean
+}
+abstract class Actor {
+ # x, y, vx, vy
+ # health, maxHealth
+ + bounds(): Bounds
+}
+class Player {
+ - weapon: Weapon
+ - items: Map<Item,Integer>
+ - stats: StatSheet
+ + stacks(item): int
+}
+class Enemy {
+ - kind: EnemyKind
+ - affix: Affix
+ - state: State
+ + telegraph(): Telegraph
+ + armored(): boolean
+}
+interface EnemyBehavior {
+ update(enemy, run, dt)
+}
+abstract class Brain {
+ + update(enemy, run, dt) {final}
+ # approach(...)
+ # ready(...): boolean
+ # strikeStart(...)
+ # strike(...)
+}
+class WardenBrain
+class ReactorBrain
+class BroodBrain
+class CaptainBrain
+class "Behaviors.*\n(10 reguläre Arten)" as Regular
+class Fixture {
+ - kind: Kind
+ - x, direction, sector
+ + active(): boolean
+ + warning(): boolean
+}
+class Machinery {
+ ~ push(actor): double
+ ~ update(dt)
+ ~ use(): boolean
 }
 class RoomGenerator {
  + choices(depth): List<RoomPlan>
+ + room(depth, branch): RoomPlan
 }
-class Player {
- + health(): double
- + energy(): double
- + upgrades(): Map<Upgrade,Integer>
+class StatSheet <<record>> {
+ + {static} compute(diver, weapon, level, items, bonus)
 }
-class Enemy
-class SupplyCrate
+class RoomPlan <<record>>
+class RoomLayout <<record>>
+class Platform <<record>>
+class RunSetup <<record>>
 class RunCheckpoint <<record>>
-class InputFrame <<record>>
-class GameEvent <<record>>
-GameWindow --> GameService
-GameWindow --> GameRun
-GameService --> GameRepository
-FileGameRepository ..|> GameRepository
-GameService --> GameRun
+class Offer <<record>>
+enum Weapon
+enum Item
+enum ActiveModule
+enum DiverClass
+enum RoomCondition
+enum Synergy
+enum EnemyKind {
+ ~ behavior(): EnemyBehavior
+}
 GameRun *-- Player
 GameRun *-- "0..*" Enemy
+GameRun *-- "0..*" Projectile
+GameRun *-- "0..*" Hazard
+GameRun *-- "0..*" Pickup
 GameRun *-- "0..*" SupplyCrate
+GameRun *-- Combat
+GameRun *-- PlayerMotor
+GameRun *-- Arsenal
+GameRun *-- Ballistics
+GameRun *-- Loot
+GameRun *-- Rewards
+GameRun *-- Machinery
+GameRun *-- "0..*" Fixture
+Machinery ..> Fixture
+PlayerMotor ..> Physics
+StatSheet ..> Synergy
+Synergy ..> Item
+Rewards ..> Offer
+note top of Rewards : Mitarbeiterklassen des Aggregats:\nnur GameRun ist öffentlich
 GameRun --> RoomGenerator
-GameRun --> RunCheckpoint
-GameRun ..> InputFrame
-GameRun ..> GameEvent
+GameRun --> RoomPlan
+GameRun --> RunSetup
+GameRun ..> RunCheckpoint
+RoomPlan *-- RoomLayout
+RoomPlan --> RoomCondition
+RoomLayout *-- "0..*" Platform
+Actor <|-- Player
+Actor <|-- Enemy
+Player --> StatSheet
+Player --> Weapon
+Player --> ActiveModule
+Player --> DiverClass
+Player ..> Item
+Enemy --> EnemyKind
+Enemy --> EnemyBehavior
+EnemyKind ..> EnemyBehavior : Fabrikmethode
+EnemyBehavior <|.. Brain
+Brain <|-- WardenBrain
+Brain <|-- ReactorBrain
+Brain <|-- BroodBrain
+Brain <|-- CaptainBrain
+Brain <|-- Regular
+note right of Brain : Schablonenmethode:\ngemeinsame Zustandsmaschine,\nArten überschreiben Einstiegspunkte
+note bottom of EnemyBehavior : Strategie: austauschbares\nVerhalten pro Gegnerart
 
 @enduml

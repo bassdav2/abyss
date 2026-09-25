@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'ch.zhaw.abyss'
-version = '0.2.0'
+version = '1.1.0'
 
 repositories { mavenCentral() }
 
@@ -58,7 +58,31 @@ tasks.register('renderDemo', JavaExec) {
     mainClass = 'ch.zhaw.abyss.qa.RenderDemo'
 }
 
-tasks.withType(JavaExec).matching { it.name in ['run', 'renderSoak', 'uiSmoke', 'renderDemo'] }.configureEach {
+tasks.register('balance', JavaExec) {
+    description = 'Balancebericht: Testspieler spielt viele Tauchgänge je Klasse.'
+    classpath = sourceSets.qa.runtimeClasspath
+    mainClass = 'ch.zhaw.abyss.qa.BalanceReport'
+}
+
+tasks.register('artSheet', JavaExec) {
+    description = 'Exportiert die prozedural gemalten Pixelgrafiken als Übersichtsbögen.'
+    classpath = sourceSets.qa.runtimeClasspath
+    mainClass = 'ch.zhaw.abyss.qa.ArtSheet'
+}
+
+tasks.register('contentCatalog', JavaExec) {
+    description = 'Erzeugt docs/INHALTE.md aus den Domänen-Enums.'
+    classpath = sourceSets.qa.runtimeClasspath
+    mainClass = 'ch.zhaw.abyss.qa.ContentCatalog'
+}
+
+tasks.register('sceneShot', JavaExec) {
+    description = 'Rendert Spielszenen ohne Fenster als PNG.'
+    classpath = sourceSets.qa.runtimeClasspath
+    mainClass = 'ch.zhaw.abyss.qa.SceneShot'
+}
+
+tasks.withType(JavaExec).matching { it.name in ['run', 'renderSoak', 'uiSmoke', 'renderDemo', 'balance', 'artSheet', 'sceneShot', 'contentCatalog'] }.configureEach {
     if (project.hasProperty('silent')) systemProperty 'abyss.silent', 'true'
     if (project.hasProperty('qaSave')) systemProperty 'abyss.saveDir', project.property('qaSave')
     doFirst {
@@ -90,7 +114,7 @@ tasks.named('javadoc', Javadoc) {
     options.encoding = 'UTF-8'
     options.charSet = 'UTF-8'
     options.addStringOption('Xdoclint:all,-missing', '-quiet')
-    title = 'ABYSS API · Arbeitsstand 22.09.2026'
+    title = 'ABYSS API · Version 1.0'
 }
 
 tasks.withType(JavaCompile).configureEach {

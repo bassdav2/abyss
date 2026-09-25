@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,25 +14,24 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-actor "Spieler/in" as Player
-participant ":ABYSS" as System
-loop Bis letzter Gegner besiegt
- Player -> System : bewegen(richtung), springen(),\nangreifen(), ausweichen(), modulAktivieren()
- System --> Player : Position, Ressourcen,\nGefahren und Trefferfeedback
+title Systemsequenzdiagramm UC-02 Zum nächsten Raum vordringen
+actor "Spieler/in" as P
+participant ":ABYSS" as S
+loop bis der Raum gesichert ist
+ P -> S : bewegen, springen, ausweichen, angreifen, Modul
+ S --> P : Bild, Vorwarnungen, Treffer, Welle
 end
-System --> Player : Raum gesichert, Fund und Schott verfügbar
-Player -> System : interagieren(Fund)
-System --> Player : Modulangebote
-Player -> System : modulWählen(index)
-System --> Player : aktualisierter Build
-Player -> System : interagieren(Schott)
-System --> Player : nächste Raumangebote
-Player -> System : routeWählen(index)
-System --> Player : neuer Raum, gesicherter Einstieg
-note over System
-Blackbox-Sicht: keine internen Klassen.
-Systemoperationen sind fachlich benannt.
-end note
+S --> P : Raum gesichert, Bergung und Schott offen
+P -> S : interagieren (E) an der Bergungskapsel
+S --> P : Angebote (3–4 Module oder Waffe)
+P -> S : take(angebot)
+S --> P : installiert
+P -> S : interagieren (E) am Schott
+S --> P : nächste Räume (1–2)
+P -> S : chooseNextRoom(abzweig)
+S --> P : neuer Raum, Raum-Sicherung geschrieben
 
 @enduml

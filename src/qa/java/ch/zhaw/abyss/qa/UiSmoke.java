@@ -1,283 +1,321 @@
 package ch.zhaw.abyss.qa;
 
-import ch.zhaw.abyss.application.*;
-import ch.zhaw.abyss.domain.*;
+import ch.zhaw.abyss.application.GameService;
+import ch.zhaw.abyss.application.Loadout;
+import ch.zhaw.abyss.domain.GameRun;
+import ch.zhaw.abyss.domain.RoomCondition;
+import ch.zhaw.abyss.domain.RoomPlan;
 import ch.zhaw.abyss.infrastructure.FileGameRepository;
 import ch.zhaw.abyss.ui.GameWindow;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.event.Event;
-import javafx.scene.control.*;
-import javafx.scene.input.*;
+import javafx.scene.media.AudioClip;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
-import java.nio.file.*;
-import java.util.*;
-import java.util.function.BooleanSupplier;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
-/** Komponenten-/Controller-Test innerhalb JavaFX. Kein Betriebssystem- oder Usability-Test. */
+/**
+ * JavaFX-Komponentenprüfung im echten Fenster mit temporärem Speicherort: alle Bildschirme öffnen,
+ * einen Tauchgang starten, Räume sichern, Bergung, Händler, Route, Ausrüstung, Karte und Ergebnis
+ * anzeigen. Mit {@code --capture=Verzeichnis} entsteht zu jedem Schritt ein Bildschirmfoto. Keine
+ * Betriebssystem-Eingaben und kein menschlicher Spieltest.
+ */
 public final class UiSmoke extends Application {
-    private Stage stage;
-    private GameWindow window;
-    private GameService service;
-    private FileGameRepository repository;
-    private final List<String> checks = new ArrayList<>();
-    private Path output;
-
-    @Override
-    public void start(Stage stage) throws Exception {
-        System.setProperty("abyss.silent", "true");
-        this.stage = stage;
-        output = Path.of("docs/qa/ui-smoke.txt");
-        Path save = Files.createTempDirectory(Path.of("build"), "ui-smoke-");
-        repository = new FileGameRepository(save);
-        service = new GameService(repository);
-        window =
-                new GameWindow(
-                        stage, service, Map.of("capture", "qa-focus-suppression", "after", "9999"));
-        window.show();
-        later(
-                .3,
-                () -> {
-                    button("NEUER TAUCHGANG").fire();
-                    check(button("TAUCHGANG STARTEN  →") != null, "Titel -> Vorbereitung");
-                    var seed = (TextField) stage.getScene().lookup(".text-field");
-                    seed.setText("invalid");
-                    button("TAUCHGANG STARTEN  →").fire();
-                    check(service.run() == null, "Ungültiger Seed startet keinen Run");
-                    seed.setText("8123");
-                    button("TAUCHGANG STARTEN  →").fire();
-                    check(service.run().seed() == 8123, "Seed-Eingabe und Start-Button");
-                    key(KeyCode.I, true);
-                    check(button("WEITERSPIELEN  →") != null, "I öffnet Build-Inventar");
-                    check(
-                            stage.getScene().getRoot().lookupAll(".card").size() == 12,
-                            "Inventar enthält zwölf Item-Karten");
-                    key(KeyCode.ESCAPE, true);
-                    key(KeyCode.M, true);
-                    check(
-                            stage.getScene().getRoot().lookupAll(".card").size() == 18,
-                            "Bootskarte enthält achtzehn Räume");
-                    button("WEITERSPIELEN  →").fire();
-                    key(KeyCode.D, true);
-                    later(
-                            .5,
-                            () -> {
-                                key(KeyCode.D, false);
-                                check(
-                                        service.run().player().x() > 230,
-                                        "JavaFX-KeyEvent bewegt Spielfigur");
-                                key(KeyCode.ESCAPE, true);
-                                double pausedX = service.run().player().x();
-                                double pausedTime = service.run().elapsed();
-                                later(
-                                        .35,
-                                        () -> {
-                                            check(
-                                                    service.run().elapsed() == pausedTime
-                                                            && service.run().player().x()
-                                                                    == pausedX,
-                                                    "Pause stoppt Simulation");
-                                            button("STEUERUNG").fire();
-                                            check(button("VERSTANDEN") != null, "Hilfe aus Pause");
-                                            button("VERSTANDEN").fire();
-                                            button("OPTIONEN").fire();
-                                            for (var node :
-                                                    stage.getScene().getRoot().lookupAll(".slider"))
-                                                ((Slider) node).setValue(0);
-                                            button("ÜBERNEHMEN").fire();
-                                            check(
-                                                    service.profile().settings().masterVolume()
-                                                            == 0,
-                                                    "Optionen gespeichert");
-                                            button("WEITERSPIELEN  →").fire();
-                                            later(
-                                                    .3,
-                                                    () -> {
-                                                        check(
-                                                                service.run().elapsed()
-                                                                        > pausedTime,
-                                                                "Weiter nach Pause");
-                                                        installWorkshop();
-                                                    });
-                                        });
-                            });
-                });
-    }
-
-    private void installWorkshop() throws Exception {
-        window.close();
-        repository.saveCheckpoint(
-                new RunCheckpoint(
-                        73419,
-                        0,
-                        5,
-                        0,
-                        ActiveModule.PULSE,
-                        false,
-                        60,
-                        80,
-                        45,
-                        Map.of(),
-                        5,
-                        30,
-                        List.of(0, 0, 0, 0, 0, 0)));
-        service = new GameService(repository);
-        window =
-                new GameWindow(
-                        stage, service, Map.of("capture", "qa-focus-suppression", "after", "9999"));
-        window.show();
-        button("FORTSETZEN  →").fire();
-        check(
-                service.run().room().kind() == RoomPlan.Kind.WORKSHOP,
-                "Fortsetzen rekonstruiert gespeicherten Raum");
-        key(KeyCode.D, true);
-        until(
-                () -> service.run().player().x() >= 790,
-                () -> {
-                    key(KeyCode.D, false);
-                    key(KeyCode.E, true);
-                    check(
-                            service.run().player().health() == 100,
-                            "Werkstatt-Interaktion repariert");
-                    check(
-                            button("INSTALLIEREN · 15 SCHROTT") != null,
-                            "Werkstatt öffnet Modulauswahl");
-                    button("REPARATURSET KAUFEN · 20 SCHROTT").fire();
-                    check(
-                            service.run().player().repairKits() == 2,
-                            "Werkstatt kauft ein mitnehmbares Reparaturset");
-                    check(
-                            service.run().player().salvage() == 31,
-                            "Reparaturset kostet genau 20 Schrott");
-                    button("INSTALLIEREN · 15 SCHROTT").fire();
-                    check(
-                            service.run().player().upgrades().size() == 1,
-                            "Modulkarte verändert Build");
-                    check(
-                            service.run().player().salvage() == 16,
-                            "Werkstatt zieht genau 15 Schrott ab (inkl. Raumlohn)");
-                    key(KeyCode.D, true);
-                    until(
-                            () -> service.run().player().x() >= 1340,
-                            () -> {
-                                key(KeyCode.D, false);
-                                key(KeyCode.E, true);
-                                check(
-                                        button("DIESEN WEG NEHMEN  →") != null,
-                                        "Rechtes Schott öffnet Navigation");
-                                button("DIESEN WEG NEHMEN  →").fire();
-                                check(
-                                        service.run().room().depth() == 6,
-                                        "Routenkarte wechselt Raum");
-                                check(
-                                        repository.loadCheckpoint().orElseThrow().depth() == 6,
-                                        "Raumwechsel persistiert Sicherung");
-                                key(KeyCode.ESCAPE, true);
-                                button("ZUM HAUPTMENÜ").fire();
-                                button("FORTSETZEN  →").fire();
-                                check(
-                                        service.run().room().depth() == 6
-                                                && service.run().player().upgrades().size() == 1
-                                                && service.run().player().repairKits() == 2,
-                                        "Hauptmenü -> Fortsetzen erhält Build");
-                                key(KeyCode.ESCAPE, true);
-                                stage.setWidth(960);
-                                stage.setHeight(580);
-                                later(
-                                        .3,
-                                        () -> {
-                                            window.capture(
-                                                    Path.of("docs/qa/screens/pause-minimum.png"));
-                                            check(
-                                                    stage.getScene()
-                                                                    .getRoot()
-                                                                    .getBoundsInLocal()
-                                                                    .getWidth()
-                                                            <= stage.getScene().getWidth() + 2,
-                                                    "Layout bei minimaler Fensterbreite");
-                                            Files.createDirectories(output.getParent());
-                                            Files.writeString(
-                                                    output, String.join("\n", checks) + "\nPASS\n");
-                                            System.out.println(
-                                                    "UI_SMOKE_PASS checks=" + checks.size());
-                                            window.close();
-                                            Platform.exit();
-                                        });
-                            });
-                });
-    }
-
-    private Button button(String text) {
-        stage.getScene().getRoot().applyCss();
-        return stage.getScene().getRoot().lookupAll(".button").stream()
-                .filter(Button.class::isInstance)
-                .map(Button.class::cast)
-                .filter(button -> button.getText().equals(text))
-                .findFirst()
-                .orElseThrow(() -> new AssertionError("Button missing: " + text));
-    }
-
-    private void key(KeyCode code, boolean down) {
-        Event.fireEvent(
-                stage.getScene(),
-                new KeyEvent(
-                        down ? KeyEvent.KEY_PRESSED : KeyEvent.KEY_RELEASED,
-                        "",
-                        code.getName(),
-                        code,
-                        false,
-                        false,
-                        false,
-                        false));
-    }
-
-    private void check(boolean condition, String message) {
-        if (!condition) throw new AssertionError(message);
-        checks.add("PASS " + message);
-        System.out.println("PASS " + message);
-    }
+    private record Step(String name, String expected, Action action, double delay) {}
 
     @FunctionalInterface
-    private interface CheckedAction {
+    private interface Action {
         void run() throws Exception;
     }
 
-    private void later(double seconds, CheckedAction action) {
-        var delay = new PauseTransition(Duration.seconds(seconds));
+    private final List<String> results = new ArrayList<>();
+    private final ArrayDeque<Step> steps = new ArrayDeque<>();
+    private int failures;
+    private GameWindow window;
+    private GameService service;
+    private Path capture;
+
+    @Override
+    public void start(Stage stage) throws Exception {
+        var directory = Files.createTempDirectory("abyss-ui-smoke");
+        String target = getParameters().getNamed().get("capture");
+        capture = target == null ? null : Path.of(target);
+        service = new GameService(new FileGameRepository(directory));
+        window = new GameWindow(stage, service, Map.of());
+        window.show();
+        plan();
+        next();
+    }
+
+    private void plan() {
+        add("title", "TITLE", () -> window.title());
+        add("loadout", "LOADOUT", () -> window.loadout());
+        add("wardrobe", "WARDROBE", () -> window.wardrobe());
+        add("archive-divers", "ARCHIVE", () -> window.archive(0));
+        add("archive-blueprints", "ARCHIVE", () -> window.archive(3));
+        add("archive-codex", "ARCHIVE", () -> window.archive(6));
+        add("archive-logbook", "ARCHIVE", () -> window.archive(7));
+        add("archive-resonances", "ARCHIVE", () -> window.archive(8));
+        add("settings", "SETTINGS", () -> window.settings(false));
+        add("help", "HELP", () -> window.help(false));
+        add(
+                "intro",
+                "PLAY",
+                () -> {
+                    window.startRun(Loadout.DEFAULT, 4242);
+                    expect("Auftakt beim ersten Tauchgang", window.introPlaying());
+                },
+                3.5);
+        add(
+                "play-start",
+                "PLAY",
+                () -> {
+                    window.skipIntro();
+                    expect("Auftakt übersprungen", !window.introPlaying());
+                });
+        add("play-fight", "PLAY", () -> simulate(1.2));
+        add(
+                "reward",
+                "REWARD",
+                () -> {
+                    clearRoom();
+                    expect("Raum gesichert", run().phase() == GameRun.Phase.ROOM_CLEARED);
+                    window.reward();
+                });
+        add(
+                "inventory",
+                "INVENTORY",
+                () -> {
+                    run().take(run().offers().getFirst());
+                    window.inventory();
+                });
+        add("map", "MAP", () -> window.map());
+        add("pause", "PAUSE", () -> window.pause());
+        add("route", "ROUTE", () -> window.route());
+        add(
+                "merchant",
+                "REWARD",
+                () -> {
+                    travelTo(RoomPlan.Kind.MERCHANT);
+                    run().player().statuses();
+                    window.reward();
+                });
+        add(
+                "boss",
+                "PLAY",
+                () -> {
+                    travelTo(RoomPlan.Kind.BOSS);
+                    window.play();
+                    simulate(3.2);
+                });
+        add(
+                "shrine-or-workshop",
+                "REWARD",
+                () -> {
+                    travelTo(RoomPlan.Kind.WORKSHOP);
+                    run().repair();
+                    window.reward();
+                });
+        add(
+                "sector2",
+                "PLAY",
+                () -> {
+                    travelTo(RoomPlan.Kind.COMBAT);
+                    window.play();
+                    simulate(2.5);
+                });
+        add(
+                "route-condition",
+                "ROUTE",
+                () -> {
+                    var run = run();
+                    for (int guard = 0; guard < 30 && !conditionAhead(); guard++) {
+                        if (run.phase() == GameRun.Phase.RUNNING) clearRoom();
+                        if (run.phase() != GameRun.Phase.ROOM_CLEARED || conditionAhead()) break;
+                        CampaignPilot.advance(run, 0);
+                        service.saveRoom();
+                    }
+                    expect("Raumzustand in der Routenwahl", conditionAhead());
+                    window.route();
+                });
+        add(
+                "audio",
+                "PLAY",
+                () -> {
+                    window.play();
+                    int clips = 0;
+                    for (String name :
+                            new String[] {
+                                "hit",
+                                "hurt",
+                                "swing",
+                                "dash",
+                                "jump",
+                                "shot",
+                                "down",
+                                "click",
+                                "upgrade",
+                                "clear",
+                                "victory",
+                                "defeat",
+                                "pulse",
+                                "warning",
+                                "ambience",
+                                "music"
+                            }) {
+                        var clip =
+                                new AudioClip(
+                                        Objects.requireNonNull(
+                                                        UiSmoke.class.getResource(
+                                                                "/audio/" + name + ".wav"))
+                                                .toExternalForm());
+                        clip.setVolume(0);
+                        clips++;
+                    }
+                    expect("Audioclips geladen (" + clips + ")", clips == 16);
+                });
+        add(
+                "ending",
+                "OUTCOME",
+                () -> {
+                    travelTo(RoomPlan.Kind.BRIDGE);
+                    clearRoom();
+                    expect("Brücke erobert", run().phase() == GameRun.Phase.VICTORY);
+                    service.recordOutcome();
+                    window.outcome();
+                    expect("Siegesszene läuft", window.endingPlaying());
+                },
+                4.5);
+        add(
+                "victory",
+                "OUTCOME",
+                () -> {
+                    window.skipEnding();
+                    expect("Auswertung nach der Szene", !window.endingPlaying());
+                });
+        add(
+                "outcome",
+                "OUTCOME",
+                () -> {
+                    window.startRun(Loadout.DEFAULT, 77);
+                    killPlayer();
+                    window.outcome();
+                    expect("Niederlage ohne Siegesszene", !window.endingPlaying());
+                });
+        add("title-again", "TITLE", () -> window.title());
+    }
+
+    private void add(String name, String expected, Action action) {
+        add(name, expected, action, .7);
+    }
+
+    private void add(String name, String expected, Action action, double delay) {
+        steps.add(new Step(name, expected, action, delay));
+    }
+
+    private GameRun run() {
+        return window.currentRun();
+    }
+
+    private void simulate(double seconds) {
+        var run = run();
+        for (int i = 0; i < seconds * 120 && run.phase() == GameRun.Phase.RUNNING; i++)
+            run.update(1.0 / 120, CampaignPilot.input(run));
+    }
+
+    private void clearRoom() {
+        var run = run();
+        for (int i = 0; i < 120 * 90 && run.phase() == GameRun.Phase.RUNNING; i++)
+            run.update(1.0 / 120, CampaignPilot.input(run));
+    }
+
+    private void travelTo(RoomPlan.Kind kind) {
+        var run = run();
+        for (int guard = 0; guard < 40; guard++) {
+            if (run.phase() == GameRun.Phase.RUNNING) clearRoom();
+            if (run.phase() != GameRun.Phase.ROOM_CLEARED) return;
+            var choices = run.nextRooms();
+            int branch = 0;
+            for (int i = 0; i < choices.size(); i++) if (choices.get(i).kind() == kind) branch = i;
+            boolean found = choices.get(branch).kind() == kind;
+            CampaignPilot.advance(run, branch);
+            service.saveRoom();
+            if (found) return;
+        }
+    }
+
+    private boolean conditionAhead() {
+        var run = run();
+        return run.phase() == GameRun.Phase.ROOM_CLEARED
+                && run.nextRooms().stream()
+                        .anyMatch(room -> room.condition() != RoomCondition.NONE);
+    }
+
+    private void killPlayer() {
+        var run = run();
+        for (int i = 0; i < 120 * 600 && run.phase() == GameRun.Phase.RUNNING; i++)
+            run.update(1.0 / 120, ch.zhaw.abyss.domain.InputFrame.NONE);
+        service.recordOutcome();
+    }
+
+    private void next() {
+        var step = steps.poll();
+        if (step == null) {
+            finish();
+            return;
+        }
+        try {
+            step.action().run();
+            expect(
+                    step.name() + " → " + step.expected(),
+                    step.expected().equals(window.screenName()));
+        } catch (Exception | AssertionError error) {
+            failures++;
+            results.add("FEHLER " + step.name() + ": " + error);
+            error.printStackTrace();
+        }
+        var delay = new PauseTransition(Duration.seconds(capture == null ? .05 : step.delay()));
         delay.setOnFinished(
                 event -> {
-                    try {
-                        action.run();
-                    } catch (Throwable error) {
-                        error.printStackTrace();
-                        window.close();
-                        Platform.exit();
-                        System.exit(1);
+                    if (capture != null) {
+                        try {
+                            window.capture(capture.resolve(step.name() + ".png"));
+                        } catch (Exception error) {
+                            results.add("FEHLER Bildschirmfoto " + step.name());
+                        }
                     }
+                    next();
                 });
         delay.play();
     }
 
-    private void until(BooleanSupplier condition, CheckedAction action) {
-        poll(condition, action, System.nanoTime());
+    private void finish() {
+        results.forEach(System.out::println);
+        System.out.println(
+                "UI_SMOKE " + (results.size() - failures) + "/" + results.size() + " bestanden");
+        window.close();
+        Platform.exit();
+        if (failures > 0) System.exit(1);
     }
 
-    private void poll(BooleanSupplier condition, CheckedAction action, long start) {
-        later(
-                .02,
-                () -> {
-                    if (condition.getAsBoolean()) action.run();
-                    else if (System.nanoTime() - start > 10_000_000_000L)
-                        throw new AssertionError("UI movement timeout");
-                    else poll(condition, action, start);
-                });
+    private void expect(String name, boolean condition) {
+        results.add((condition ? "OK     " : "FEHLER ") + name);
+        if (!condition) failures++;
     }
 
+    /**
+     * @param args JavaFX-Argumente, optional {@code --capture=Verzeichnis}
+     */
     public static void main(String[] args) {
-        launch(args);
+        launch(UiSmoke.class, args);
     }
 }

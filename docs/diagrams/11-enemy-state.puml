@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,22 +14,20 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-[*] --> APPROACH
-APPROACH --> WINDUP : in Reichweite / Angriff bereit
-WINDUP --> STRIKE : Vorwarnzeit endet
-STRIKE --> RECOVER : Angriffszeit endet
-RECOVER --> APPROACH : Erholung endet
-APPROACH --> STUNNED : Treffer / Impuls (kein Boss)
-RECOVER --> STUNNED : Treffer / Impuls (kein Boss)
-WINDUP --> STUNNED : Impuls (kein Boss)
-STRIKE --> STUNNED : Impuls (kein Boss)
-STUNNED --> APPROACH : Betäubung endet
-note right of RECOVER
-Boss ist hier vollständig verwundbar.
-Sonst 50 / 38 / 22% Schaden,
-je nach Sektorwächter.
-Bei <50% Integrität kürzere Zeiten.
-end note
+title Zustandsmaschine eines Gegners (Brain)
+[*] --> SPAWNING
+SPAWNING --> APPROACH : Auftritt vorbei
+APPROACH --> WINDUP : bereit und Abklingzeit 0\n/ Vorwarnung
+WINDUP --> STRIKE : Ausholzeit abgelaufen
+STRIKE --> RECOVER : Angriff beendet
+RECOVER --> APPROACH : Erholung vorbei
+APPROACH --> STUNNED : Treffer / Impuls
+STUNNED --> APPROACH
+APPROACH --> HIDDEN : Aal taucht ab
+HIDDEN --> WINDUP : Figur in Reichweite
+note right of RECOVER : Bosse: Panzerung aus,\nKern offen
 
 @enduml

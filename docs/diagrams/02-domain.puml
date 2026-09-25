@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,53 +14,100 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
+title Konzeptuelles Domänenmodell (Fachbegriffe)
 class Tauchgang {
  Seed
  Zyklus
+ Druckstufe
+ Tauchzeit
+}
+class Boot
+class Sektion {
+ Name
+}
+class Raum {
+ Tiefe
+ Art
+ Thema
+}
+class Raumzustand {
+ Stromausfall
+ Alarm
+ Druckleck
+ Hüllenbruch
+ Schlagseite
+}
+class Raumtechnik {
+ Art
+ Takt
+}
+class Welle
+class Gegner {
+ Integrität
  Zustand
 }
-class Spielfigur {
+class Wächter
+class "Taucher/in" as Diver {
  Integrität
  Energie
  Schrott
+ Datenkerne
 }
-class Raum {
- Position
- Sektion
- Typ
+class Klasse
+class Waffe {
+ Stufe
 }
-class Gegner {
- Integrität
- Angriffszustand
+class "Aktives Modul" as Ability
+class "Passives Modul" as Item {
+ Seltenheit
+ Stufe
 }
-class Projektil
+class Angebot {
+ Preis
+}
+class Laufsteg
 class Gefahr
-class Vorratskiste
-class "Aktives Modul" as Active
-class "Passives Modul" as Passive
-class "Installierte Modulstufe" as Stack {
- Stufe: 1..3
+class Beute
+class Profil {
+ Freischaltungen
+ Aussehen
+ Statistik
 }
-class Bauplan
-class "Raum-Einstieg" as Save
-class Spielerprofil
-Tauchgang "1" *-- "1" Spielfigur
-Tauchgang "1" --> "1" Raum : befindet sich in
-Raum "1" -- "0..*" Gegner : Begegnung
-Raum "1" -- "0..*" Gefahr
-Raum "1" -- "0..*" Vorratskiste
-Tauchgang "1" *-- "0..*" Projektil
-Spielfigur "1" --> "1" Active
-Spielfigur "1" *-- "0..12" Stack
-Stack "0..*" --> "1" Passive
-Spielerprofil "1" -- "1..3" Bauplan : kennt
-Bauplan "1" --> "1" Active : ermöglicht
-Tauchgang "1" --> "1" Save : gesicherter Einstieg
-note bottom of Save
-Konzeptuelles Modell:
-keine UI-Klassen, keine Methoden,
-keine Dateiformate.
-end note
+class Resonanz {
+ Bonus
+}
+class "Logbuch-Eintrag" as Achievement {
+ Bedingung
+ Kerne
+}
+class "Raum-Sicherung" as Checkpoint
+Boot "1" *-- "4" Sektion
+Sektion "1" *-- "6" Raum
+Tauchgang --> Boot
+Tauchgang "1" *-- "1" Diver
+Tauchgang --> "1" Raum : aktueller
+Raum *-- "0..3" Welle
+Welle *-- "1..6" Gegner
+Wächter --|> Gegner
+Raum *-- "0..*" Laufsteg
+Raum *-- "0..*" Gefahr
+Raum o-- "0..*" Beute
+Raum o-- "0..6" Angebot
+Diver --> Klasse
+Diver --> Waffe
+Diver --> Ability
+Diver o-- "0..*" Item
+Angebot ..> Item
+Angebot ..> Waffe
+Profil ..> Klasse : schaltet frei
+Profil ..> Item : schaltet frei
+Profil o-- "0..*" Achievement : erreicht
+Raum --> "0..1" Raumzustand
+Raum *-- "0..3" Raumtechnik
+Resonanz --> "2" Item : verbindet
+Tauchgang ..> Checkpoint : beim Raumeingang
 
 @enduml

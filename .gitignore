@@ -10,3 +10,5 @@ art-source/render-work/
 docs/qa/*.png
 docs/qa/*.mp4
 release/
+__pycache__/
+*.pyc

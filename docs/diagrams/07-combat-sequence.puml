@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,30 +14,28 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-participant GameWindow as UI
-participant InputController as Input
-participant GameRun as Run
-participant Player
-participant Enemy
-participant GameRenderer as Renderer
-participant AudioSystem as Audio
-UI -> Input : frame(playerX)
-Input --> UI : InputFrame
-UI -> Run : update(1/120, input)
-Run -> Player : Bewegung / Cooldowns
-alt Angriff zulässig und Treffer in Reichweite
- Run -> Enemy : Schaden anwenden
- Run -> Run : HIT / ENEMY_DOWN sammeln
+title Sequenz: Werkzeugtreffer in einem Simulationsschritt
+participant ":GameWindow" as W
+participant ":GameRun" as R
+participant ":Combat" as C
+participant ":Enemy" as E
+participant ":WorldRenderer" as V
+W -> R : update(1/120 s, input)
+R -> R : updatePlayer(): startSwing / updateSwing
+alt aktives Trefferfenster
+ R -> C : hitEnemy(enemy, schaden, MELEE, rückstoss, x)
+ C -> C : Kritik, Module, Panzerung, Zustände
+ C -> E : Integrität senken, Rückstoss
+ opt besiegt
+  C -> R : Beute, Kerne, Auslöser-Module
+ end
+ C -> R : emit(HIT / CRIT)
 end
-Run -> Run : Gegnerzustände, Projektile, Gefahren\nund Raumabschluss aktualisieren
-UI -> Run : drainEvents()
-Run --> UI : List<GameEvent>
-UI -> Renderer : event(event, settings)
-UI -> Audio : event(event)
-UI -> Renderer : render(run, settings, ...)
-note over Renderer,Audio
-Feedback verändert keine Spielregeln.
-end note
+R -> E : behavior.update(): Vorwarnung, Angriff
+W -> R : drainEvents()
+W -> V : event(e) → Funken, Zahlen, Trefferpause
 
 @enduml

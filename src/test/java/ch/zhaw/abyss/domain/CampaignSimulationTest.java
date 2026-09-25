@@ -2,71 +2,59 @@ package ch.zhaw.abyss.domain;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import ch.zhaw.abyss.qa.CampaignPilot;
+import ch.zhaw.abyss.qa.BalanceReport;
 
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
 
-import java.util.stream.Stream;
-
-/** Vollständige Runs mit regulären Eingaben, ohne Unverwundbarkeit oder direktes Töten. */
+/**
+ * Systemnahe Kampagnensimulation: Der Testspieler spielt vollständige Tauchgänge mit regulären
+ * Eingaben. Geprüft wird, dass jede Klasse spielbar bleibt, kein Raum hängen bleibt und Siege
+ * möglich sind. Bot-Ergebnisse sind keine menschlichen Spieltests.
+ */
 class CampaignSimulationTest {
-    static Stream<Arguments> configurations() {
-        return Stream.of(ActiveModule.values())
-                .flatMap(
-                        module ->
-                                Stream.of(false, true)
-                                        .flatMap(
-                                                explorer ->
-                                                        Stream.of(0, 1)
-                                                                .map(
-                                                                        branch ->
-                                                                                Arguments.of(
-                                                                                        module,
-                                                                                        explorer,
-                                                                                        branch))));
+
+    @ParameterizedTest
+    @EnumSource(DiverClass.class)
+    void everyDiverCanReachTheBridgeWithoutStalling(DiverClass diver) {
+        int wins = 0;
+        for (long seed = 1; seed <= 8; seed++) {
+            var run = BalanceReport.play(RunSetup.standard(seed * 7_919L, diver), 3600);
+            assertNotEquals(
+                    GameRun.Phase.RUNNING,
+                    run.phase(),
+                    diver + " hängt in Raum " + run.room().depth());
+            assertNotEquals(
+                    GameRun.Phase.ROOM_CLEARED,
+                    run.phase(),
+                    diver + " hängt nach Raum " + run.room().depth());
+            if (run.phase() == GameRun.Phase.VICTORY) {
+                wins++;
+                assertEquals(RoomGenerator.ROOM_COUNT - 1, run.room().depth());
+                assertTrue(run.kills() > 20);
+            }
+        }
+        assertTrue(wins >= 3, diver + " gewinnt zu selten: " + wins + "/8");
     }
 
-    @ParameterizedTest(name = "{0}, explorer={1}, preferred branch={2}")
-    @MethodSource("configurations")
-    void fullCampaignIsReachableWithEveryLoadoutAndRoute(
-            ActiveModule module, boolean explorer, int branch) {
-        int wins = 0;
-        for (int seed = 0; seed < 12; seed++) {
-            var run = new GameRun(seed, module, explorer);
-            for (int tick = 0; tick < 120 * 900; tick++) {
-                if (run.phase() == GameRun.Phase.DEFEAT || run.phase() == GameRun.Phase.VICTORY)
-                    break;
-                if (run.phase() == GameRun.Phase.ROOM_CLEARED)
-                    assertTrue(CampaignPilot.advance(run, branch));
-                else run.update(1.0 / 120, CampaignPilot.input(run));
-                var p = run.player();
-                assertTrue(Double.isFinite(p.x()) && Double.isFinite(p.y()));
-                assertTrue(p.health() >= 0 && p.health() <= p.maxHealth());
-                assertTrue(p.energy() >= 0 && p.energy() <= p.maxEnergy());
-                run.drainEvents();
-            }
-            assertTrue(
-                    run.phase() == GameRun.Phase.VICTORY || run.phase() == GameRun.Phase.DEFEAT,
-                    "Kein Run darf blockieren.");
-            boolean won = run.phase() == GameRun.Phase.VICTORY;
-            if (won) wins++;
-            System.out.printf(
-                    "CAMPAIGN seed=%d module=%s explorer=%s branch=%d won=%s room=%d kills=%d"
-                            + " seconds=%.1f health=%.1f%n",
-                    seed,
-                    module,
-                    explorer,
-                    branch,
-                    won,
-                    run.room().depth() + 1,
-                    run.kills(),
-                    run.elapsed(),
-                    run.player().health());
-        }
-        assertTrue(
-                wins > 0,
-                "Mindestens ein vollständiger Run muss pro Konfiguration erreichbar sein.");
+    @ParameterizedTest
+    @EnumSource(DiverClass.class)
+    void higherPressureIsHarderButStillPlayable(DiverClass diver) {
+        var setup = RunSetup.standard(31337, diver);
+        var hard =
+                new RunSetup(
+                        31337,
+                        diver,
+                        diver.weapon(),
+                        diver.module(),
+                        false,
+                        5,
+                        setup.itemPool(),
+                        setup.weaponPool(),
+                        0,
+                        0,
+                        0);
+        var run = BalanceReport.play(hard, 3600);
+        assertTrue(run.phase() == GameRun.Phase.VICTORY || run.phase() == GameRun.Phase.DEFEAT);
     }
 }

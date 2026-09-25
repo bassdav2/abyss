@@ -1,46 +1,84 @@
-import java.awt.*;
-import java.awt.geom.*;
+import ch.zhaw.abyss.application.Cosmetics;
+import ch.zhaw.abyss.domain.DiverClass;
+import ch.zhaw.abyss.domain.Weapon;
+import ch.zhaw.abyss.ui.art.DiverArt;
+
 import java.awt.image.BufferedImage;
-import java.nio.file.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import javax.imageio.ImageIO;
 
-/** Vektorbasiertes App-Signet; deterministischer Export ohne Fremdgrafik. */
+/**
+ * Pixel-App-Signet: die Taucherin in einem Messingbullauge, 64 x 64 Pixel, verlustfrei auf alle
+ * macOS-Grössen vergrössert. Aufruf mit Klassenpfad der kompilierten Hauptquellen.
+ */
 class MakeIcon {
     public static void main(String[] args) throws Exception {
-        Path root=Path.of(args[0]);
-        Path out=root.resolve("build/Abyss.iconset");Files.createDirectories(out);
-        BufferedImage image=new BufferedImage(1024,1024,BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g=image.createGraphics();
-        g.setRenderingHint(RenderingHints.KEY_ANTIALIASING,RenderingHints.VALUE_ANTIALIAS_ON);
-        g.setPaint(new GradientPaint(0,0,new Color(30,65,79),850,1024,new Color(3,16,25)));
-        g.fill(new RoundRectangle2D.Double(12,12,1000,1000,218,218));
-        g.setStroke(new BasicStroke(4));g.setColor(new Color(92,143,151));
-        g.draw(new RoundRectangle2D.Double(37,37,950,950,180,180));
-        g.setPaint(new GradientPaint(100,0,new Color(244,204,133),700,1024,new Color(112,72,40)));
-        g.setStroke(new BasicStroke(27));g.drawOval(140,130,744,744);
-        g.setStroke(new BasicStroke(4));g.setColor(new Color(107,187,192));g.drawOval(176,166,672,672);
-        for(int i=0;i<12;i++) {
-            double angle=Math.PI*2*i/12;
-            double x=512+373*Math.cos(angle),y=502+373*Math.sin(angle);
-            g.setColor(new Color(16,30,37));g.fill(new Ellipse2D.Double(x-14,y-14,28,28));
-            g.setColor(new Color(216,178,111));g.draw(new Ellipse2D.Double(x-13,y-13,26,26));
+        Path root = Path.of(args[0]);
+        Path out = root.resolve("build/Abyss.iconset");
+        Files.createDirectories(out);
+        int n = 64;
+        int[] px = new int[n * n];
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++) {
+                double dx = Math.max(0, Math.max(6 - x, x - (n - 7))), dy = Math.max(0, Math.max(6 - y, y - (n - 7)));
+                if (dx * dx + dy * dy > 36) continue;
+                double t = y / (double) n;
+                px[y * n + x] = mix(0xFF16263D, 0xFF06101C, t);
+            }
+        for (int y = 0; y < n; y++)
+            for (int x = 0; x < n; x++) {
+                double d = Math.hypot(x - 31.5, y - 31.5);
+                if (d < 23) px[y * n + x] = mix(0xFF1A6166, 0xFF0B2B2E, (y - 8) / 48.0);
+                else if (d < 25) px[y * n + x] = 0xFFE09B3A;
+                else if (d < 27) px[y * n + x] = d < 26 ? 0xFFF5C45E : 0xFF94501C;
+            }
+        for (int k = 0; k < 12; k++) {
+            double a = k * Math.PI / 6;
+            int x = (int) Math.round(31.5 + Math.cos(a) * 25.5), y = (int) Math.round(31.5 + Math.sin(a) * 25.5);
+            px[y * n + x] = 0xFF6B3414;
         }
-        Font font=Font.createFont(Font.TRUETYPE_FONT,root.resolve("src/main/resources/fonts/BarlowCondensed-SemiBold.ttf").toFile()).deriveFont(650f);
-        Shape letter=font.createGlyphVector(g.getFontRenderContext(),"A").getOutline();
-        var bounds=letter.getBounds2D();
-        var transform=AffineTransform.getTranslateInstance(512-bounds.getCenterX(),495-bounds.getCenterY());
-        g.setColor(new Color(242,206,147));g.fill(transform.createTransformedShape(letter));
-        g.setStroke(new BasicStroke(11,BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-        g.setColor(new Color(115,225,219));
-        Path2D wave=new Path2D.Double();wave.moveTo(277,722);wave.curveTo(365,690,433,761,519,728);wave.curveTo(605,694,670,756,747,722);g.draw(wave);
+        var sprite = DiverArt.build(Cosmetics.DEFAULT, Weapon.WRENCH, DiverClass.MECHANIC).get(DiverArt.Anim.IDLE).getFirst();
+        var glow = sprite.glow();
+        for (int y = 0; y < sprite.height(); y++)
+            for (int x = 0; x < sprite.width(); x++) {
+                int c = sprite.get(x, y);
+                if (glow != null && glow.get(x, y) >>> 24 != 0) c = glow.get(x, y);
+                if (c >>> 24 == 0) continue;
+                int tx = x + 8, ty = y + 12;
+                if (tx >= 0 && ty >= 0 && tx < n && ty < n && Math.hypot(tx - 31.5, ty - 31.5) < 23) px[ty * n + tx] = c;
+            }
+        var image = scale(px, n, 16);
+        ImageIO.write(image, "png", root.resolve("art-source/app-icon.png").toFile());
+        for (int size : new int[] {16, 32, 128, 256, 512})
+            for (int multiplier : new int[] {1, 2}) {
+                int pixels = size * multiplier;
+                var small = pixels >= n ? scale(px, n, pixels / n) : downscale(image, pixels);
+                ImageIO.write(small, "png", out.resolve("icon_" + size + "x" + size + (multiplier == 2 ? "@2x" : "") + ".png").toFile());
+            }
+    }
+
+    static BufferedImage scale(int[] px, int n, int factor) {
+        var image = new BufferedImage(n * factor, n * factor, BufferedImage.TYPE_INT_ARGB);
+        for (int y = 0; y < n * factor; y++)
+            for (int x = 0; x < n * factor; x++) image.setRGB(x, y, px[(y / factor) * n + x / factor]);
+        return image;
+    }
+
+    static BufferedImage downscale(BufferedImage source, int size) {
+        var image = new BufferedImage(size, size, BufferedImage.TYPE_INT_ARGB);
+        var g = image.createGraphics();
+        g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        g.drawImage(source, 0, 0, size, size, null);
         g.dispose();
-        ImageIO.write(image,"png",root.resolve("art-source/app-icon.png").toFile());
-        for(int size:new int[]{16,32,128,256,512}) for(int multiplier:new int[]{1,2}) {
-            int pixels=size*multiplier;
-            BufferedImage small=new BufferedImage(pixels,pixels,BufferedImage.TYPE_INT_ARGB);
-            Graphics2D sg=small.createGraphics();sg.setRenderingHint(RenderingHints.KEY_INTERPOLATION,RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-            sg.drawImage(image,0,0,pixels,pixels,null);sg.dispose();
-            ImageIO.write(small,"png",out.resolve("icon_"+size+"x"+size+(multiplier==2?"@2x":"")+".png").toFile());
-        }
+        return image;
+    }
+
+    static int mix(int a, int b, double t) {
+        t = Math.max(0, Math.min(1, t));
+        int r = (int) (((a >> 16) & 255) * (1 - t) + ((b >> 16) & 255) * t);
+        int g = (int) (((a >> 8) & 255) * (1 - t) + ((b >> 8) & 255) * t);
+        int bl = (int) ((a & 255) * (1 - t) + (b & 255) * t);
+        return 0xFF000000 | r << 16 | g << 8 | bl;
     }
 }

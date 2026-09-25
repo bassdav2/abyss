@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,24 +14,26 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-actor Player
-participant GameWindow as UI
-participant GameService as Service
-participant GameRun as Run
-participant FileGameRepository as Repo
-Player -> UI : Start mit Modul / Seed
-UI -> Service : start(seed, module, explorer)
-Service -> Service : Freischaltung prüfen
-create Run
-Service -> Run : new GameRun(...)
-Run -> Run : enterRoom(room 0)\nCheckpoint erzeugen
-Service -> Service : Profil aktualisieren
-Service -> Repo : saveProfile(profile)
-Service -> Run : checkpoint()
-Run --> Service : unveränderlicher Einstieg
-Service -> Repo : saveCheckpoint(checkpoint)
-Service --> UI : run
-UI --> Player : Spielbildschirm
+title Sequenz: Tauchgang beginnen (UC-01)
+actor "Spieler/in" as P
+participant ":MenuScreens" as M
+participant ":GameWindow" as W
+participant ":GameService" as S
+participant ":Profile" as Pr
+participant ":GameRun" as R
+participant ":GameRepository" as Repo
+P -> M : TAUCHEN
+M -> W : startRun(loadout, seed)
+W -> S : start(loadout, seed)
+S -> Pr : owns(diver), owns(module), maxPressure
+S -> R ** : new GameRun(RunSetup)
+R -> R : enterRoom(room(0,0))
+S -> Repo : saveProfile(profile)
+S -> Repo : saveCheckpoint(run.checkpoint())
+S --> W : run
+W -> W : play()
 
 @enduml

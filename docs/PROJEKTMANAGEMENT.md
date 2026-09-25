@@ -14,6 +14,18 @@ Der Nachtlauf ist eine autonome Implementierung durch Codex am 22.09.2026. Er is
 | Auslieferung | Startbare Mac-App und Quellen | Lokales Bundle; endgültiger Buildstatus im Handoff |
 | Kursdokumentation | Reale Architektur, Use Cases, UML, Teststrategie, KI-Einsatz | Editierbare Arbeitsfassung, keine Abgabe |
 
+## Version 1.0 (autonomer Lauf mit Claude Code, 25.09.2026)
+
+| Arbeitspaket | Ergebnis |
+|---|---|
+| Pixel-Art-Umstellung | Software-Framebuffer 480 × 270, gestuftes Licht, Bloom, prozedurale Grafik für Figur, Gegner, Bosse, Räume, Symbole |
+| Spieltiefe | Laufstege, Kombinationen, 24 Räume in vier Sektionen, Raumzustände, zwölf Gegnerarten, vier Bosse mit Phasen, 41 Module, neun Resonanzen, fünf Klassen, Druckstufen |
+| Meta-Fortschritt | Datenkerne, Archiv, Garderobe, Kompendium, Logbuch, Tagestauchgang, Profilmigration |
+| Qualität | 106 Tests, Kampagnensimulation, Balancebericht, JavaFX-Prüfung, Render-Probelauf; Aufteilung von `GameRun` und Renderer |
+| Dokumentation | Anforderungen, Architektur, 13 UML-Diagramme, Teststrategie, KI-Einsatz, Inhalte |
+
+Auch dieser Lauf ist keine studentische Iteration. Das Risiko, dass das Team den Code nicht ausreichend versteht, ist mit 1.0 gewachsen; Iteration I-1 wird dadurch wichtiger. Das Risiko einer uneinheitlichen Grafik ist entschärft, weil alle Grafik jetzt aus einer Palette und einer Pipeline stammt.
+
 Detaillierte Zeitpunkte stehen in WORK_PLAN.md. Der ursprünglich zugestandene Zeitraum war eine Obergrenze, kein Nachweis von zwölf tatsächlich geleisteten Stunden.
 
 ## Nächste menschliche Iterationen - Schätzung zur Diskussion
@@ -34,7 +46,7 @@ Diese Spannen sind neue Schätzungen, keine erfassten Ist-Zeiten. Reihenfolge un
 | Team versteht übernommenen KI-Code nicht ausreichend | Hoch / hoch | Ownership verteilen; Ablauf- und Änderungsreviews; vor Abgabe eigene Begründungen |
 | UI-/Bibliothekswahl oder Spielthema nicht freigegeben | Offen / hoch | Fachdozent prüfen lassen; JavaFX und eigene Domäne belegen |
 | Kampf wirkt repetitiv oder zu einfach | Mittel / hoch | Menschen testen; Bot-Ergebnisse nicht als Spassnachweis ausgeben |
-| Grafik von Hintergründen und Figuren wirkt uneinheitlich | Mittel / mittel | Gemeinsame Materialien/Kamera; Silhouetten und Grössen prüfen; Art-Pass nach Test |
+| Grafik von Hintergründen und Figuren wirkt uneinheitlich | Niedrig / mittel | Seit 1.0 eine Palette und prozedurale Pixel-Pipeline; Übersichtsbögen (`artSheet`) prüfen |
 | Andere Teamplattformen bauen nicht | Mittel / hoch | OS-/Architektur-spezifische JavaFX-Pakete; separate CI oder echte Geräteprüfung |
 | Save-Dateien sind beschädigt | Niedrig / mittel | Validierung, temporäres Schreiben, Original-Backups; Integrationstests |
 | Profil und Checkpoint werden durch Absturz inkonsistent | Niedrig / niedrig bis mittel | Je Datei atomar; keine gemeinsame Transaktion; bei Bedarf ein gemeinsames Snapshot-Format einführen |

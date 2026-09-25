@@ -2,33 +2,35 @@
 
 ## Projektmaterial
 
-ABYSS-Spielidee und Richtungsentscheid: David; gemeinsamer PM3-Projektkontext, Teamzuordnung noch offen. Spielcode, Tests, Modellierungs-/Audioskripte und Dokumentationsentwürfe: mit OpenAI Codex erstellt. Hintergrundplatten: OpenAI Imagegen, Prompts im Projekt. Keine Figuren, Namen, Logos oder Filmszenen aus Snowpiercer wurden als Assets übernommen; die räumliche Bewegung vom hinteren zum vorderen Bereich war eine Konzeptassoziation.
+ABYSS-Spielidee und Richtungsentscheide: David; gemeinsamer PM3-Projektkontext, Teamzuordnung noch offen. Version 0.1/0.2: Code, Tests, Skripte und Dokumentationsentwürfe mit OpenAI Codex, Hintergrundplatten mit OpenAI ImageGen. Version 1.0: Code, prozedurale Pixel-Art, zusätzliche Klänge, Tests und Dokumentation mit Anthropic Claude (Claude Code). Keine Figuren, Namen, Logos oder Filmszenen aus Snowpiercer wurden übernommen; die Bewegung vom hinteren zum vorderen Ende ist eine Konzeptassoziation.
 
-Für den Projektcode wird hier keine neue Open-Source-Lizenz im Namen des Teams erklärt. Eine mögliche Veröffentlichung und Lizenzwahl sind eine eigene Teamentscheidung.
+Für den Projektcode wird hier keine Open-Source-Lizenz im Namen des Teams erklärt. Veröffentlichung und Lizenzwahl sind eine Teamentscheidung.
 
 ## Enthaltene Drittbestandteile
 
-- **Barlow / Barlow Condensed**, Jeremy Tribby und Mitwirkende, SIL Open Font License 1.1. Die Original-Lizenzdateien liegen bei den Fonts unter `src/main/resources/fonts/`. Herkunft: https://github.com/google/fonts/tree/main/ofl/barlow und https://github.com/google/fonts/tree/main/ofl/barlowcondensed.
-- **OpenJFX 26.0.2**, Laufzeitbibliothek. Herkunft: Maven Central, Gruppe `org.openjfx`; Projekt https://openjfx.io/. Die Laufzeit enthält ihre eigenen Lizenz-/Hinweisdateien.
-- **OpenJDK 25**, mit der Mac-App gebündelte Laufzeit. Die von `jlink` übernommenen Lizenzdateien unter `legal/` bleiben im Bundle. Herkunft der lokalen Installation: Homebrew-Formel `openjdk@25`.
+- **OpenJFX 26.0.2**, Laufzeitbibliothek. Herkunft: Maven Central, Gruppe `org.openjfx`; https://openjfx.io/.
+- **OpenJDK 25**, mit der Mac-App gebündelte Laufzeit (jlink); Lizenzdateien unter `legal/` im Bundle. Herkunft der lokalen Installation: Homebrew `openjdk@25`.
+
+Seit Version 1.1 werden keine fremden Schriften mehr ausgeliefert: Menüs, HUD und Karten nutzen ausschliesslich die eigene Pixelschrift. Die in 1.0 verwendeten OFL-Schriften (Pixelify Sans, Silkscreen, Jersey 10) und die frühere Schrift Barlow sind entfernt.
+
+## Eigene Inhalte
+
+- **Pixelgrafik:** vollständig prozedural in Java (`ui/art`), keine Spritepacks, keine Bild-KI.
+- **Schrift:** eigene 5×7-Bitmap-Schrift in `src/main/resources/pixel/font.txt` für HUD und alle Menüs.
+- **Klänge und Musik:** eigene NumPy-Synthese (`tools/create_audio.py`, `tools/create_audio_extra.py`), keine Fremd-Samples.
+- **App-Signet:** `tools/MakeIcon.java` aus der Figurengrafik.
 
 ## Entwicklungswerkzeuge (nicht Teil der Spiellogik)
 
-- Gradle Wrapper 9.3.1: reproduzierbarer Build.
-- JUnit 6.0.3: Tests, nicht im Spiel-Bundle.
-- Blender 5.1: prozedurale Modelle und Animationsexporte.
-- PlantUML und Graphviz: editierbare UML-Diagramme.
-- google-java-format 1.36.0: einheitliche Java-Formatierung, nur Werkzeugkonfiguration `formatter`. Offizielle Quelle: https://github.com/google/google-java-format/releases/tag/v1.36.0. Erforderliche JDK-Exports entsprechend https://github.com/google/google-java-format/blob/v1.36.0/README.md.
-- Python/NumPy: eigene Klangsynthetisierung; Python/ReportLab: PDF-Arbeitsfassung.
-
-Keine fremden Sound-Samples oder heruntergeladenen Spiel-Spritepacks wurden für diesen Stand verwendet.
+- Gradle Wrapper 9.3.1, JUnit 6.0.3, google-java-format 1.36.0 (AOSP-Stil).
+- PlantUML und Graphviz für die UML-Quellen in `docs/diagrams`.
+- Python mit NumPy (Klangsynthese) und Pillow (nur für QA-Übersichten); ffmpeg für das Demo-Video.
+- Blender 5.1 für die historischen Modelle in `art-source` (in 1.0 nicht mehr verwendet).
 
 ## Lokale Kursquellen
 
-Die Originale liegen im persönlichen Semester-Wiki und werden unverändert gelassen. Sie sind nicht als Teil des veröffentlichbaren Spiels kopiert.
+1. **Einführung und Kick-off.pdf**, PM3 HS26, Seiten 17 und 19: JavaFX als erste Wahl, Controller ohne Fachlogik, Java, eigene geschichtete Architektur, keine Frameworks, Bibliotheken mit Dozierenden absprechen. Quellen-ID `PM3-5c00363db893`.
+2. **Auftrag Lösungsarchitektur (M2).pdf** und **Auftrag Prototyp und technischer Bericht II (M3).pdf**: Quellcode mit Javadoc, Use Cases, Domänenmodell, Architektur, Design, Interaktionsdiagramme, Tests; Bewertungsaspekte des Prototyps.
+3. **Verwendung von KI im PM3.pdf**, Seite 1: Dokumentation von Tool, Ziel, Prompt-Aufwand, Übernahme und Nutzungsart. Quellen-ID `PM3-ddd8548018c7`.
 
-1. **Einführung und Kick-off.pdf**, PM3 HS26, physische PDF-Seiten 17 und 19: JavaFX-Richtung, Java-Schwerpunkt, eigene Architektur, Bibliotheksabstimmung. Quellen-ID `PM3-5c00363db893`.
-2. **Auftrag Lösungsarchitektur (M2).pdf**, Version 1.0, Seiten 1-3: Quellcode/Javadoc und Technischer Bericht I, Use Cases, Domänenmodell, Architektur, Design, mindestens vier Interaktionsdiagramme, Tests und Projektmanagement. Quellen-ID `PM3-301d1f86d58d`, SHA-256 `6186b9a35464bec07ff327a2cbfded6e87a1dedc27805471733cc731003c5856`.
-3. **Verwendung von KI im PM3.pdf**, Version 1.0, Seite 1: Dokumentation von Tool, Ziel, Prompt-Aufwand, Übernahme und Nutzungsart. Quellen-ID `PM3-ddd8548018c7`, SHA-256 `a09a4362f7bd39abfd57e4f0c389d87379822701c36395d2b89bdbbd84652b02`.
-
-Die Kursdateien stammen aus dem lokalen Export vom 14.09.2026. Später geänderte Moodle-Vorgaben sind damit nicht automatisch abgedeckt. Der Bericht ist eine Arbeitsfassung und keine bereits eingereichte oder bewertete Abgabe.
+Die Kursdateien stammen aus den lokalen Exporten vom 14./15.09.2026; spätere Moodle-Änderungen sind nicht abgedeckt.

@@ -64,13 +64,17 @@ public final class AudioSystem implements AutoCloseable {
                                                 || run.room().kind() == RoomPlan.Kind.BRIDGE)
                                         && run.phase() == GameRun.Phase.RUNNING
                                 ? "music_boss"
-                                : run.room().sector() == 1
-                                        ? "music_engine"
-                                        : run.room().sector() == 2 ? "music_command" : "music";
+                                : switch (run.room().sector()) {
+                                    case 1 -> "music_engine";
+                                    case 2 -> "music_research";
+                                    case 3 -> "music_command";
+                                    default -> "music";
+                                };
         if (next.equals(musicKey)) return;
         try {
             if (music != null) music.stop();
             music = load(next);
+            if (music == null) music = load("music");
             musicKey = next;
             if (music != null) {
                 music.setCycleCount(AudioClip.INDEFINITE);
@@ -90,6 +94,22 @@ public final class AudioSystem implements AutoCloseable {
                 });
     }
 
+    private static String fallback(String name) {
+        return switch (name) {
+            case "crit", "block", "crate", "land" -> "hit";
+            case "zap", "freeze", "spawn", "core", "curse" -> "pulse";
+            case "harpoon" -> "shot";
+            case "explosion", "roar", "door" -> "down";
+            case "pickup" -> "click";
+            default -> "click";
+        };
+    }
+
+    /**
+     * Spielt einen Klang, höchstens alle 60 ms pro Name.
+     *
+     * @param name Dateiname ohne Endung
+     */
     public void play(String name) {
         if (!enabled || settings.masterVolume() <= 0) return;
         long now = System.nanoTime();
@@ -97,33 +117,69 @@ public final class AudioSystem implements AutoCloseable {
         lastPlayed.put(name, now);
         try {
             var clip = load(name);
+            if (clip == null) clip = load(fallback(name));
             if (clip != null)
-                clip.play(settings.masterVolume() * (name.equals("warning") ? .55 : .7));
+                clip.play(
+                        settings.masterVolume()
+                                * (name.equals("warning") || name.equals("pickup") ? .45 : .7));
         } catch (RuntimeException error) {
             System.err.println("Sound unavailable: " + name);
         }
     }
 
+    /**
+     * Spielt den passenden Klang zu einem Domänenereignis.
+     *
+     * @param event Ereignis
+     */
     public void event(GameEvent event) {
         String name =
                 switch (event.type()) {
                     case SWING -> "swing";
-                    case HIT -> "hit";
+                    case HIT -> "BURN".equals(event.text()) ? null : "hit";
+                    case CRIT -> "crit";
                     case PLAYER_HIT -> "hurt";
+                    case SHIELD_HIT, BLOCK -> "block";
                     case ENEMY_DOWN -> "down";
+                    case ELITE_DOWN, BOSS_DOWN -> "explosion";
                     case DASH -> "dash";
-                    case JUMP -> "jump";
-                    case PULSE, SHIELD, ARC -> "pulse";
-                    case SHOT -> "shot";
-                    case TELEGRAPH -> "warning";
+                    case JUMP, AIR_JUMP -> "jump";
+                    case LAND -> "land";
+                    case PULSE, SHIELD, SONAR, OVERDRIVE -> "pulse";
+                    case ARC, CHAIN, SHOCK -> "zap";
+                    case SHOT, TORPEDO, FLAME -> "shot";
+                    case HARPOON -> "harpoon";
+                    case EXPLOSION, SLAM -> "explosion";
+                    case FREEZE -> "freeze";
+                    case DRONE, SPAWN -> "spawn";
+                    case TELEGRAPH, REINFORCEMENTS -> "warning";
                     case ROOM_CLEAR -> "clear";
-                    case UPGRADE, HEAL, SUPPLY -> "upgrade";
+                    case UPGRADE, WEAPON, HEAL, SUPPLY, PURCHASE, SYNERGY -> "upgrade";
+                    case CURSE -> "curse";
                     case DEFEAT -> "defeat";
                     case VICTORY -> "victory";
-                    case BOSS_PHASE -> "pulse";
-                    case REINFORCEMENTS -> "warning";
+                    case REVIVE, BOSS_PHASE -> "roar";
+                    case BOSS_INTRO -> "roar";
+                    case CRATE_BREAK -> "crate";
+                    case PICKUP -> "pickup";
+                    case CORE -> "core";
+                    case DOOR -> "door";
+                    case CONDITION -> "ALARM".equals(event.text()) ? "warning" : "down";
+                    case MACHINE ->
+                            switch (event.text()) {
+                                case "VENT" -> "jump";
+                                case "LASER" -> "zap";
+                                case "STEAM" -> "explosion";
+                                case "ESCAPE", "FLEE" -> "dash";
+                                case "CAUGHT" -> "core";
+                                case "SEALED" -> "clear";
+                                case "LIST_WARN" -> "warning";
+                                case "LIST" -> "down";
+                                case "EXPOSED" -> "crit";
+                                default -> "pulse";
+                            };
                 };
-        play(name);
+        if (name != null) play(name);
     }
 
     @Override

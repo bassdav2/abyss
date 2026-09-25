@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,31 +14,40 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
 left to right direction
 actor "Spieler/in" as Player
-rectangle "ABYSS · lokales Desktopspiel" {
- usecase "UC-01\nTauchgang beginnen" as Start
- usecase "UC-02\nZum nächsten Raum vordringen" as Progress
- usecase "UC-03\nAusrüstung verbessern" as Upgrade
- usecase "UC-04\nUnterbrechen / fortsetzen" as Resume
- usecase "UC-05\nBrücke / nächster Zyklus" as Win
- usecase "UC-06\nErneut versuchen" as Retry
- usecase "UC-07\nBaupläne / Startmodul" as Blueprint
- usecase "UC-08\nOptionen / Hilfe" as Options
+rectangle "ABYSS 1.0 · lokales Desktopspiel" {
+ usecase "UC-01\nTauchgang vorbereiten\nund beginnen" as Start
+ usecase "UC-02\nZum nächsten Raum\nvordringen" as Progress
+ usecase "UC-03\nBergung wählen" as Reward
+ usecase "UC-04\nHandeln: Schwarzmarkt,\nWerkstatt, Kapelle" as Trade
+ usecase "UC-05\nUnterbrechen und\nfortsetzen" as Resume
+ usecase "UC-06\nBrücke erobern /\nnächster Zyklus" as Win
+ usecase "UC-07\nNach Niederlage\nerneut tauchen" as Retry
+ usecase "UC-08\nIm Archiv freischalten" as Archive
+ usecase "UC-09\nAussehen anpassen" as Wardrobe
+ usecase "UC-10\nAusrüstung und\nBootskarte ansehen" as Inventory
+ usecase "UC-11\nOptionen und Steuerung" as Options
 }
+actor "Lokales Dateisystem" as Disk
 Player --> Start
 Player --> Progress
-Player --> Upgrade
+Player --> Reward
+Player --> Trade
 Player --> Resume
 Player --> Win
 Player --> Retry
-Player --> Blueprint
+Player --> Archive
+Player --> Wardrobe
+Player --> Inventory
 Player --> Options
-note right of Resume
-Lokale Save-Dateien sind ein
-technischer Speicheradapter.
-Keine Online-Akteure oder Konten.
-end note
+Progress ..> Reward : <<extend>>
+Progress ..> Trade : <<extend>>
+Start --> Disk
+Resume --> Disk
+Archive --> Disk
 
 @enduml

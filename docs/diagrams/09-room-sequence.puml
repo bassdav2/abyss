@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,31 +14,22 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-actor Player
-participant GameWindow as UI
-participant GameRun as Run
-participant RoomGenerator as Generator
-participant GameService as Service
-participant FileGameRepository as Repo
-Player -> UI : Raumkarte wählen
-UI -> Run : chooseNextRoom(index)
-Run -> Run : Phase ROOM_CLEARED prüfen
-Run -> Generator : choices(depth + 1)
-Generator --> Run : zulässige Räume
-Run -> Run : enterRoom(choice)\nGegner / Gefahren erzeugen\nneuen Checkpoint bilden
-Run --> UI : true
-UI -> Service : saveRoom()
-Service -> Service : Kills und Baupläne verbuchen
-Service -> Repo : saveProfile(profile)
-Service -> Run : checkpoint()
-Run --> Service : RunCheckpoint
-Service -> Repo : saveCheckpoint(checkpoint)
-UI --> Player : neuer Raum
-note right of Repo
-Temporär schreiben, dann umbenennen.
-Je Datei atomar, keine Transaktion
-über beide Dateien.
-end note
+title Sequenz: Raumwechsel und Sicherung
+participant ":RunScreens" as U
+participant ":GameRun" as R
+participant ":RoomGenerator" as G
+participant ":GameService" as S
+participant ":GameRepository" as Repo
+U -> R : chooseNextRoom(abzweig)
+R -> R : Phase ROOM_CLEARED prüfen
+R -> G : choices(tiefe + 1)
+G --> R : RoomPlan
+R -> R : enterRoom(plan): Figur, Gefahren, Kisten, Checkpoint
+R -> R : spawnWave() oder clearRoom()
+U -> S : saveRoom()
+S -> Repo : saveCheckpoint(run.checkpoint())
 
 @enduml

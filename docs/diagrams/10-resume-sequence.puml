@@ -1,7 +1,7 @@
 @startuml
 skinparam backgroundColor #FFFFFF
 skinparam defaultFontName Arial
-skinparam defaultFontSize 15
+skinparam defaultFontSize 14
 skinparam shadowing false
 skinparam roundcorner 8
 skinparam ArrowColor #355863
@@ -14,26 +14,20 @@ skinparam noteBackgroundColor #FFF2DA
 skinparam noteBorderColor #D8AA64
 skinparam packageBackgroundColor #F5F8F7
 skinparam packageBorderColor #6E8B91
+skinparam stateBackgroundColor #EAF3F2
+skinparam stateBorderColor #355863
 hide empty members
-actor Player
-participant GameWindow as UI
-participant GameService as Service
-participant FileGameRepository as Repo
-participant GameRun as Run
-note over Service,Repo
-Beim Programmstart
-end note
-Service -> Repo : loadProfile()
-Repo --> Service : Profile
-Service -> Repo : loadCheckpoint()
-Repo -> Run : restore(checkpoint) zur Validierung
-Repo --> Service : Optional<RunCheckpoint>
-Player -> UI : Fortsetzen
-UI -> Service : resume()
-Service -> Run : restore(saved)
-Run -> Run : Werte / Route prüfen\nRaum-Einstieg rekonstruieren
-Run --> Service : GameRun
-Service --> UI : Optional<GameRun>
-UI --> Player : gespeicherter Raumeingang
+title Sequenz: Fortsetzen (UC-05)
+participant ":GameWindow" as W
+participant ":GameService" as S
+participant ":FileGameRepository" as F
+participant "GameRun" as R
+S -> F : loadCheckpoint()
+F --> S : RunCheckpoint (Format 3, ggf. migriert)
+W -> S : resume()
+S -> R : restore(checkpoint, itemPool, weaponPool)
+R -> R : Werte prüfen, Route nachbauen, enterRoom()
+R --> S : run
+S --> W : Optional(run)
 
 @enduml

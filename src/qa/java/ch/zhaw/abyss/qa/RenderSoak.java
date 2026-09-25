@@ -1,104 +1,53 @@
 package ch.zhaw.abyss.qa;
 
 import ch.zhaw.abyss.application.Settings;
-import ch.zhaw.abyss.domain.*;
-import ch.zhaw.abyss.infrastructure.AudioSystem;
-import ch.zhaw.abyss.ui.*;
+import ch.zhaw.abyss.domain.DiverClass;
+import ch.zhaw.abyss.domain.GameEvent;
+import ch.zhaw.abyss.domain.GameRun;
+import ch.zhaw.abyss.domain.RunSetup;
+import ch.zhaw.abyss.ui.pixel.PixelFont;
+import ch.zhaw.abyss.ui.render.SpriteBank;
+import ch.zhaw.abyss.ui.render.WorldRenderer;
 
-import javafx.animation.AnimationTimer;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.layout.StackPane;
-import javafx.scene.media.AudioClip;
-import javafx.stage.Stage;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Locale;
 
-import java.nio.file.*;
-import java.util.*;
+/**
+ * Render-Probelauf ohne Fenster: Der Testspieler spielt fortlaufend Tauchgänge aller Klassen, jedes
+ * Bild wird vollständig gezeichnet (Licht, Bloom, HUD). Gemessen werden Zeichenkosten pro Bild und
+ * Fehler. Das Ergebnis landet als JSON unter {@code docs/qa/render-soak.json}.
+ */
+public final class RenderSoak {
+    private RenderSoak() {}
 
-/** Reale JavaFX-Frames mit Testspieler. Keine OS-Eingaben und kein menschlicher Spieltest. */
-public final class RenderSoak extends Application {
-    private final List<Double> frameCosts = new ArrayList<>(), intervals = new ArrayList<>();
-    private final EnumSet<GameEvent.Type> eventsSeen = EnumSet.noneOf(GameEvent.Type.class);
-    private final Set<String> roomsSeen = new HashSet<>();
-    private final Set<ActiveModule> modulesSeen = EnumSet.noneOf(ActiveModule.class);
-    private int runs, wins, losses, frames, errors;
-    private GameRun run;
-    private AudioSystem audio;
-    private long begin, previous;
-    private double accumulator;
-
-    @Override
-    public void start(Stage stage) throws Exception {
-        double duration =
-                Double.parseDouble(getParameters().getNamed().getOrDefault("seconds", "180"));
-        double speed = Double.parseDouble(getParameters().getNamed().getOrDefault("speed", "4"));
-        Path output =
-                Path.of(
-                        getParameters()
-                                .getNamed()
-                                .getOrDefault("output", "docs/qa/render-soak.json"));
-        var canvas = new Canvas(1600, 900);
-        var renderer = new GameRenderer(canvas, new AssetCatalog());
-        var settings = new Settings(0, 0, false, false, false);
-        audio = new AudioSystem();
-        audio.settings(settings);
-        audio.start();
-        int nativeClips = 0;
-        for (String name :
-                new String[] {
-                    "hit",
-                    "hurt",
-                    "swing",
-                    "dash",
-                    "jump",
-                    "shot",
-                    "down",
-                    "click",
-                    "upgrade",
-                    "clear",
-                    "victory",
-                    "defeat",
-                    "pulse",
-                    "warning",
-                    "ambience",
-                    "music",
-                    "music_engine",
-                    "music_command",
-                    "music_boss"
-                }) {
-            var clip =
-                    new AudioClip(
-                            Objects.requireNonNull(
-                                            getClass().getResource("/audio/" + name + ".wav"))
-                                    .toExternalForm());
-            clip.setVolume(0);
-            clip.play(0);
-            clip.stop();
-            nativeClips++;
+    /**
+     * @param args {@code --seconds=N} reale Laufzeit, {@code --output=Pfad}
+     * @throws IOException bei Schreibfehlern
+     */
+    public static void main(String[] args) throws IOException {
+        double seconds = 60;
+        Path output = Path.of("docs/qa/render-soak.json");
+        for (String arg : args) {
+            if (arg.startsWith("--seconds=")) seconds = Double.parseDouble(arg.substring(10));
+            if (arg.startsWith("--output=")) output = Path.of(arg.substring(9));
         }
-        System.out.println("SOAK_NATIVE_AUDIO_CLIPS=" + nativeClips + " volume=0");
-        stage.setScene(new Scene(new StackPane(canvas), 1280, 720));
-        stage.setTitle("ABYSS · automated render soak");
-        stage.show();
-        Thread.setDefaultUncaughtExceptionHandler(
-                (thread, error) -> {
-                    errors++;
-                    error.printStackTrace();
-                });
-        run = new GameRun(0, ActiveModule.PULSE, false);
-        begin = System.nanoTime();
-        previous = begin;
-        new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                double elapsed = (now - begin) / 1e9, dt = Math.min(.1, (now - previous) / 1e9);
-                previous = now;
-                if (frames > 120) intervals.add(dt * 1000);
-                long started = System.nanoTime();
-                accumulator += dt * speed;
-                while (accumulator >= 1.0 / 120) {
+        var renderer = new WorldRenderer(PixelFont.load(), new SpriteBank());
+        var settings = Settings.DEFAULT;
+        var costs = new ArrayList<Double>();
+        var events = EnumSet.noneOf(GameEvent.Type.class);
+        var rooms = new HashSet<String>();
+        int runs = 0, wins = 0, losses = 0, frames = 0, errors = 0;
+        long end = System.nanoTime() + (long) (seconds * 1e9);
+        var run = new GameRun(RunSetup.standard(0, DiverClass.MECHANIC));
+        while (System.nanoTime() < end) {
+            try {
+                for (int step = 0; step < 2; step++) {
                     if (run.phase() == GameRun.Phase.ROOM_CLEARED)
                         CampaignPilot.advance(run, runs % 2);
                     else if (run.phase() == GameRun.Phase.VICTORY
@@ -106,85 +55,56 @@ public final class RenderSoak extends Application {
                         if (run.phase() == GameRun.Phase.VICTORY) wins++;
                         else losses++;
                         runs++;
-                        run = new GameRun(runs, ActiveModule.values()[runs % 3], runs % 2 == 1);
+                        var diver = DiverClass.values()[runs % DiverClass.values().length];
+                        run = new GameRun(RunSetup.standard(runs * 7_919L, diver));
                         renderer.clearEffects();
                     }
                     run.update(1.0 / 120, CampaignPilot.input(run));
-                    accumulator -= 1.0 / 120;
-                    for (var event : run.drainEvents()) {
-                        eventsSeen.add(event.type());
-                        renderer.event(event, settings);
-                        audio.event(event);
-                    }
                 }
-                roomsSeen.add(run.room().depth() + ":" + run.room().branch());
-                modulesSeen.add(run.player().module());
-                audio.context(run, false);
-                renderer.update(dt);
-                renderer.render(run, settings, false, true);
-                double cost = (System.nanoTime() - started) / 1e6;
-                if (frames > 120) frameCosts.add(cost);
+                for (var event : run.drainEvents()) {
+                    events.add(event.type());
+                    renderer.event(event, run, settings);
+                }
+                rooms.add(run.room().theme() + ":" + run.room().kind());
+                long started = System.nanoTime();
+                renderer.update(1.0 / 60, run, settings);
+                renderer.render(run, settings, true);
+                costs.add((System.nanoTime() - started) / 1e6);
                 frames++;
-                if (elapsed >= duration) {
-                    stop();
-                    audio.close();
-                    try {
-                        Files.createDirectories(output.toAbsolutePath().getParent());
-                        String report =
-                                String.format(
-                                        Locale.ROOT,
-                                        """
-                                        {
-                                          "kind": "automated JavaFX render test; no human input",
-                                          "seconds": %.2f, "simulationSpeed": %.1f,
-                                          "frames": %d, "completedRuns": %d, "wins": %d, "losses": %d,
-                                          "distinctRoomBranches": %d, "modules": %d, "eventTypes": %d,
-                                          "nativeAudioClipsLoadedAndInvokedAtZeroVolume": 19,
-                                          "updateAndDrawCpuMsP50": %.3f, "updateAndDrawCpuMsP95": %.3f,
-                                          "frameIntervalMsP50": %.3f, "frameIntervalMsP95": %.3f,
-                                          "uncaughtErrors": %d,
-                                          "renderTimingNote": "CPU command submission; not GPU completion. Locked desktop can throttle frames."
-                                        }
-                                        """,
-                                        elapsed,
-                                        speed,
-                                        frames,
-                                        runs,
-                                        wins,
-                                        losses,
-                                        roomsSeen.size(),
-                                        modulesSeen.size(),
-                                        eventsSeen.size(),
-                                        percentile(frameCosts, .5),
-                                        percentile(frameCosts, .95),
-                                        percentile(intervals, .5),
-                                        percentile(intervals, .95),
-                                        errors);
-                        Files.writeString(output, report);
-                        System.out.println(report);
-                    } catch (Exception error) {
-                        error.printStackTrace();
-                        System.exit(1);
-                    }
-                    Platform.exit();
-                }
+            } catch (RuntimeException error) {
+                errors++;
+                error.printStackTrace();
+                run = new GameRun(RunSetup.standard(++runs, DiverClass.MECHANIC));
             }
-        }.start();
-    }
-
-    private static double percentile(List<Double> values, double fraction) {
-        if (values.isEmpty()) return 0;
-        var sorted = new ArrayList<>(values);
-        Collections.sort(sorted);
-        return sorted.get(Math.min(sorted.size() - 1, (int) (sorted.size() * fraction)));
-    }
-
-    @Override
-    public void stop() {
-        if (audio != null) audio.close();
-    }
-
-    public static void main(String[] args) {
-        launch(args);
+        }
+        Collections.sort(costs);
+        double average = costs.stream().mapToDouble(Double::doubleValue).average().orElse(0);
+        double p95 = costs.isEmpty() ? 0 : costs.get((int) (costs.size() * .95));
+        double worst = costs.isEmpty() ? 0 : costs.getLast();
+        String json =
+                String.format(
+                        Locale.ROOT,
+                        "{%n  \"seconds\": %.0f,%n  \"frames\": %d,%n  \"errors\": %d,%n  \"runs\":"
+                            + " %d,%n  \"wins\": %d,%n  \"losses\": %d,%n  \"averageRenderMs\":"
+                            + " %.3f,%n  \"p95RenderMs\": %.3f,%n  \"worstRenderMs\": %.3f,%n "
+                            + " \"roomThemesSeen\": %d,%n  \"eventTypesSeen\": %d,%n  \"note\":"
+                            + " \"Headless-Software-Rendering mit Testspieler, zwei"
+                            + " Simulationsschritte pro Bild. Kein menschlicher Spieltest.\"%n}%n",
+                        seconds,
+                        frames,
+                        errors,
+                        runs,
+                        wins,
+                        losses,
+                        average,
+                        p95,
+                        worst,
+                        rooms.size(),
+                        events.size());
+        if (output.toAbsolutePath().getParent() != null)
+            Files.createDirectories(output.toAbsolutePath().getParent());
+        Files.writeString(output, json);
+        System.out.print(json);
+        if (errors > 0) System.exit(1);
     }
 }

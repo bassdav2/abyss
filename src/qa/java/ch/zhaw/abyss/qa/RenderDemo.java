@@ -1,259 +1,158 @@
 package ch.zhaw.abyss.qa;
 
 import ch.zhaw.abyss.application.Settings;
-import ch.zhaw.abyss.domain.*;
-import ch.zhaw.abyss.ui.*;
+import ch.zhaw.abyss.domain.DiverClass;
+import ch.zhaw.abyss.domain.GameRun;
+import ch.zhaw.abyss.domain.RunSetup;
+import ch.zhaw.abyss.ui.pixel.Frame;
+import ch.zhaw.abyss.ui.pixel.PixelFont;
+import ch.zhaw.abyss.ui.render.SpriteBank;
+import ch.zhaw.abyss.ui.render.WorldRenderer;
 
-import javafx.animation.AnimationTimer;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.image.*;
-import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.TextAlignment;
-import javafx.stage.Stage;
-
-import java.io.*;
-import java.nio.file.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 /**
- * Offline-Aufnahme des echten Renderers mit regulärem Testspieler und gekennzeichneten
- * QA-Einstiegen.
+ * Erzeugt ein gekennzeichnetes Gameplay-Video ohne Fenster: Titel, dann Ausschnitte aus allen vier
+ * Sektionen und Bosskämpfen, gespielt vom Testspieler, zum Schluss die Siegesszene. Die Pixelbilder
+ * werden roh an ffmpeg übergeben und mit Nachbarpixel-Skalierung auf 1920 x 1080 kodiert.
  */
-public final class RenderDemo extends Application {
-    private static final int FPS = 30, TOTAL = 120 * FPS;
-    private int frame, chapter = -1;
-    private GameRun run;
-    private double clearedTime;
-    private final Settings settings = new Settings(0, 0, false, false, false);
-    private Process encoder;
-    private OutputStream pipe;
+public final class RenderDemo {
+    private static final int FPS = 30;
 
-    @Override
-    public void start(Stage stage) throws Exception {
-        Path out = Path.of("output/video/Abyss_Gameplay_Demo.mp4");
-        Files.createDirectories(out.getParent());
-        encoder =
-                new ProcessBuilder(
+    private RenderDemo() {}
+
+    /**
+     * @param args Zieldatei, Vorgabe {@code output/video/Abyss_Gameplay_Demo.mp4}
+     * @throws Exception bei Kodierfehlern
+     */
+    public static void main(String[] args) throws Exception {
+        var target = Path.of(args.length > 0 ? args[0] : "output/video/Abyss_Gameplay_Demo.mp4");
+        Files.createDirectories(target.toAbsolutePath().getParent());
+        var music = Path.of("src/main/resources/audio/music.wav");
+        var command =
+                new java.util.ArrayList<>(
+                        java.util.List.of(
                                 "ffmpeg",
                                 "-y",
+                                "-loglevel",
+                                "error",
                                 "-f",
                                 "rawvideo",
                                 "-pix_fmt",
                                 "bgra",
                                 "-s",
-                                "1600x900",
+                                "480x270",
                                 "-r",
-                                "30",
+                                "" + FPS,
                                 "-i",
-                                "pipe:0",
-                                "-stream_loop",
-                                "-1",
-                                "-i",
-                                "src/main/resources/audio/music_boss.wav",
-                                "-c:v",
-                                "libx264",
-                                "-preset",
-                                "fast",
-                                "-crf",
-                                "21",
-                                "-pix_fmt",
-                                "yuv420p",
-                                "-c:a",
-                                "aac",
-                                "-b:a",
-                                "128k",
-                                "-af",
-                                "volume=0.35",
-                                "-shortest",
-                                "-movflags",
-                                "+faststart",
-                                out.toString())
-                        .redirectError(Path.of("docs/qa/demo-encode.log").toFile())
-                        .redirectOutput(ProcessBuilder.Redirect.DISCARD)
-                        .start();
-        pipe = new BufferedOutputStream(encoder.getOutputStream(), 4 * 1024 * 1024);
-        var canvas = new Canvas(1600, 900);
-        var assets = new AssetCatalog();
-        var renderer = new GameRenderer(canvas, assets);
-        var reward = new Image(Path.of("docs/qa/screens/reward.png").toUri().toString());
-        var route = new Image(Path.of("docs/qa/screens/route.png").toUri().toString());
-        var inventory = new Image(Path.of("docs/qa/screens/inventory.png").toUri().toString());
-        var map = new Image(Path.of("docs/qa/screens/map.png").toUri().toString());
-        var scene = new Scene(new StackPane(canvas), 1280, 720);
-        stage.setScene(scene);
-        stage.setTitle("ABYSS · Offline-Demo-Export");
-        stage.show();
-        var pixels = new byte[1600 * 900 * 4];
-        var snapshot = new WritableImage(1600, 900);
-        new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                try {
-                    for (int batch = 0; batch < 2 && frame < TOTAL; batch++, frame++) {
-                        double seconds = frame / (double) FPS;
-                        int next =
-                                seconds < 3
-                                        ? 0
-                                        : seconds < 18
-                                                ? 1
-                                                : seconds < 23
-                                                        ? 2
-                                                        : seconds < 42
-                                                                ? 3
-                                                                : seconds < 47
-                                                                        ? 4
-                                                                        : seconds < 66
-                                                                                ? 5
-                                                                                : seconds < 77
-                                                                                        ? 6
-                                                                                        : seconds
-                                                                                                        < 83
-                                                                                                ? 7
-                                                                                                : seconds
-                                                                                                                < 115
-                                                                                                        ? 8
-                                                                                                        : 9;
-                        if (next != chapter) {
-                            chapter = next;
-                            clearedTime = 0;
-                            renderer.clearEffects();
-                            if (chapter == 1) run = new GameRun(0, ActiveModule.PULSE, false);
-                            if (chapter == 3) run = fixture(4, ActiveModule.PULSE);
-                            if (chapter == 5) run = fixture(10, ActiveModule.ARC);
-                            if (chapter == 6) run = fixture(13, ActiveModule.AEGIS);
-                            if (chapter == 8) run = fixture(17, ActiveModule.PULSE);
-                            System.out.println("DEMO_CHAPTER " + chapter + " at " + seconds);
-                        }
-                        if (chapter == 1
-                                || chapter == 3
-                                || chapter == 5
-                                || chapter == 6
-                                || chapter == 8) {
-                            for (int step = 0; step < 4; step++) {
-                                if (run.phase() == GameRun.Phase.ROOM_CLEARED) {
-                                    clearedTime += 1.0 / 120;
-                                    if (clearedTime > 2) {
-                                        CampaignPilot.advance(run, 0);
-                                        clearedTime = 0;
-                                        renderer.clearEffects();
-                                    }
-                                } else run.update(1.0 / 120, CampaignPilot.input(run));
-                                for (var event : run.drainEvents()) renderer.event(event, settings);
-                            }
-                        }
-                        renderer.update(1.0 / FPS);
-                        renderer.render(run, settings, chapter == 0 || chapter == 9, true);
-                        var g = canvas.getGraphicsContext2D();
-                        if (chapter == 2) g.drawImage(inventory, 0, 0, 1600, 900);
-                        if (chapter == 4) g.drawImage(map, 0, 0, 1600, 900);
-                        if (chapter == 7) g.drawImage(reward, 0, 0, 1600, 900);
-                        if (chapter == 8 && run.phase() == GameRun.Phase.VICTORY) {
-                            g.setFill(Color.rgb(3, 14, 22, .82));
-                            g.fillRoundRect(380, 290, 840, 160, 12, 12);
-                            g.setTextAlign(TextAlignment.CENTER);
-                            g.setFill(GameRenderer.AMBER);
-                            g.setFont(assets.display(62));
-                            g.fillText("BRÜCKE EROBERT", 800, 363);
-                            g.setFill(GameRenderer.TEXT);
-                            g.setFont(assets.text(25));
-                            g.fillText("Ein nächster, schwererer Zyklus ist möglich.", 800, 414);
-                        }
-                        if (chapter == 9) {
-                            g.setTextAlign(TextAlignment.CENTER);
-                            g.setFill(GameRenderer.AMBER);
-                            g.setFont(assets.display(48));
-                            g.fillText("SPIELBARER ENTWICKLUNGSSTAND", 800, 728);
-                        }
-                        String label =
-                                switch (chapter) {
-                                    case 0 -> "ABYSS · VOM HECK BIS ZUR BRÜCKE";
-                                    case 1 -> "01 / HECK · BEWEGUNG, AUSWEICHEN, KAMPF";
-                                    case 2 -> "02 / INVENTAR · ZWÖLF ITEMS, DEIN BUILD";
-                                    case 3 -> "03 / ERSTER BOSS · DER SCHOTTMEISTER";
-                                    case 4 -> "04 / BOOTSKARTE · ACHTZEHN RÄUME";
-                                    case 5 -> "05 / ZWEITER BOSS · DER REAKTORKERN";
-                                    case 6 -> "06 / SAUERSTOFFGARTEN · ATMOSPHÄRE UND KAMPF";
-                                    case 7 -> "07 / BERGUNG · NEUE ITEM-EFFEKTE";
-                                    case 8 -> "08 / DIE BRÜCKE · DER LOTSE";
-                                    default -> "JAVA + JAVAFX · LOKALE MAC-APP";
-                                };
-                        g.setGlobalAlpha(1);
-                        g.setFill(Color.rgb(2, 10, 16, .88));
-                        g.fillRect(0, 850, 1600, 50);
-                        g.setTextAlign(TextAlignment.LEFT);
-                        g.setFont(assets.text(19));
-                        g.setFill(GameRenderer.AMBER);
-                        g.fillText(label, 32, 883);
-                        g.setTextAlign(TextAlignment.RIGHT);
-                        g.setFont(assets.text(15));
-                        g.setFill(GameRenderer.TEXT);
-                        g.fillText("AUTOMATISIERTE DEMO · VORBEREITETE SPIELSTÄNDE", 1568, 883);
-                        canvas.snapshot(null, snapshot);
-                        snapshot.getPixelReader()
-                                .getPixels(
-                                        0,
-                                        0,
-                                        1600,
-                                        900,
-                                        PixelFormat.getByteBgraInstance(),
-                                        pixels,
-                                        0,
-                                        1600 * 4);
-                        pipe.write(pixels);
+                                "-"));
+        if (Files.exists(music))
+            command.addAll(
+                    java.util.List.of(
+                            "-stream_loop",
+                            "-1",
+                            "-i",
+                            music.toString(),
+                            "-shortest",
+                            "-c:a",
+                            "aac",
+                            "-b:a",
+                            "128k"));
+        command.addAll(
+                java.util.List.of(
+                        "-vf",
+                        "scale=1920:1080:flags=neighbor",
+                        "-c:v",
+                        "libx264",
+                        "-preset",
+                        "medium",
+                        "-crf",
+                        "18",
+                        "-pix_fmt",
+                        "yuv420p",
+                        target.toString()));
+        var process = new ProcessBuilder(command).redirectErrorStream(true).start();
+        var font = PixelFont.load();
+        var renderer = new WorldRenderer(font, new SpriteBank());
+        var settings = Settings.DEFAULT;
+        try (var out = process.getOutputStream()) {
+            for (int i = 0; i < FPS * 5; i++) {
+                renderer.update(1.0 / FPS, null, settings);
+                renderer.renderTitle(settings, true);
+                write(out, renderer.frame());
+            }
+            int[][] segments = {
+                {0, 7}, {2, 6}, {4, 10}, {7, 7}, {10, 10}, {13, 7}, {16, 10}, {20, 7}, {23, 12}
+            };
+            var divers = DiverClass.values();
+            for (int s = 0; s < segments.length; s++) {
+                var run = new GameRun(RunSetup.standard(4000 + s * 17L, divers[s % divers.length]));
+                fastForward(run, segments[s][0]);
+                renderer.clearEffects();
+                for (int frame = 0; frame < FPS * segments[s][1]; frame++) {
+                    for (int step = 0; step < 120 / FPS; step++) {
+                        if (run.phase() == GameRun.Phase.ROOM_CLEARED)
+                            CampaignPilot.advance(run, 0);
+                        else run.update(1.0 / 120, CampaignPilot.input(run));
                     }
-                    if (frame >= TOTAL) {
-                        stop();
-                        pipe.close();
-                        int result = encoder.waitFor();
-                        if (result != 0) throw new IOException("ffmpeg exit=" + result);
-                        System.out.println("DEMO_READY " + out + " frames=" + frame);
-                        Platform.exit();
-                    }
-                } catch (Exception error) {
-                    error.printStackTrace();
-                    encoder.destroy();
-                    Platform.exit();
-                    System.exit(1);
+                    for (var event : run.drainEvents()) renderer.event(event, run, settings);
+                    renderer.update(1.0 / FPS, run, settings);
+                    renderer.render(run, settings, true);
+                    label(font, renderer.frame());
+                    write(out, renderer.frame());
                 }
             }
-        }.start();
+            for (int frame = 0; frame < FPS * 8; frame++) {
+                renderer.update(1.0 / FPS, null, settings);
+                renderer.renderEnding(frame / (double) FPS, settings);
+                label(font, renderer.frame(), 6);
+                write(out, renderer.frame());
+            }
+        }
+        int code = process.waitFor();
+        System.out.println(new String(process.getInputStream().readAllBytes()));
+        if (code != 0) throw new IOException("ffmpeg beendet mit " + code);
+        System.out.println("ABYSS_DEMO " + target);
     }
 
-    private static GameRun fixture(int depth, ActiveModule module) {
-        return GameRun.restore(
-                new RunCheckpoint(
-                        73419,
-                        0,
-                        depth,
-                        0,
-                        module,
-                        false,
-                        140,
-                        140,
-                        45,
-                        Map.of(
-                                Upgrade.SERVO,
-                                2,
-                                Upgrade.MEDICAL,
-                                2,
-                                Upgrade.RECOVERY,
-                                1,
-                                Upgrade.PLATING,
-                                2,
-                                Upgrade.CAPACITOR,
-                                2,
-                                Upgrade.COOLANT,
-                                1),
-                        28,
-                        420,
-                        Collections.nCopies(depth + 1, 0)));
+    private static void label(PixelFont font, Frame frame) {
+        label(font, frame, 22);
     }
 
-    public static void main(String[] args) {
-        launch(args);
+    private static void label(PixelFont font, Frame frame, int y) {
+        var text = "AUTOMATISCHE DEMO · TESTSPIELER";
+        font.drawOutlined(
+                frame,
+                text,
+                (frame.width() - font.width(text, 1)) / 2,
+                y,
+                0x90FFFFFF,
+                0xA0000000,
+                1);
+    }
+
+    private static void fastForward(GameRun run, int depth) {
+        for (int guard = 0; guard < 120 * 60 * 30 && run.room().depth() < depth; guard++) {
+            if (run.phase() == GameRun.Phase.ROOM_CLEARED) CampaignPilot.advance(run, guard % 2);
+            else if (run.phase() == GameRun.Phase.DEFEAT) return;
+            else run.update(1.0 / 120, CampaignPilot.input(run));
+            run.drainEvents();
+        }
+    }
+
+    private static void write(OutputStream out, Frame frame) throws IOException {
+        var pixels = frame.pixels();
+        var bytes = new byte[pixels.length * 4];
+        for (int i = 0; i < pixels.length; i++) {
+            int c = pixels[i];
+            bytes[i * 4] = (byte) c;
+            bytes[i * 4 + 1] = (byte) (c >> 8);
+            bytes[i * 4 + 2] = (byte) (c >> 16);
+            bytes[i * 4 + 3] = (byte) 255;
+        }
+        out.write(bytes);
     }
 }
