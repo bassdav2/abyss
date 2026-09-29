@@ -30,6 +30,9 @@ import java.util.Map;
  * @param rushStacks Stufen des Tiefenrauschs
  * @param healthPenalty dauerhafte Integritätsopfer aus Druckkapellen
  * @param bonusHealth dauerhafte Bonusintegrität aus dem Archiv
+ * @param level Überladungsstufe
+ * @param xp Überladung zur nächsten Stufe
+ * @param pendingLevelUps offene Levelaufstiege
  */
 public record RunCheckpoint(
         long seed,
@@ -54,7 +57,10 @@ public record RunCheckpoint(
         boolean reviveUsed,
         int rushStacks,
         double healthPenalty,
-        double bonusHealth) {
+        double bonusHealth,
+        int level,
+        double xp,
+        int pendingLevelUps) {
     /** Kopiert Sammlungen unveränderlich. */
     public RunCheckpoint {
         items = Map.copyOf(items);

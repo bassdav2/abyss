@@ -316,6 +316,77 @@ public final class IconArt {
                 p.ellipse(8.5, 12, 3, 3, Pal.RED_3);
                 p.lightRect(8, 5, 1, 7, Pal.RED_4);
             }
+            case AREA -> {
+                p.ellipse(8, 8, 6.5, 6.5, Pal.STEEL_3);
+                p.ellipse(8, 8, 4.5, 4.5, Pal.INK);
+                p.ellipse(8, 8, 2.5, 2.5, Pal.RUST_4);
+                for (int k = 0; k < 4; k++) {
+                    double a = k * Math.PI / 2 + Math.PI / 4;
+                    p.light((int) (8 + Math.cos(a) * 6), (int) (8 + Math.sin(a) * 6), Pal.RUST_6);
+                }
+            }
+            case CHARGER -> {
+                p.poly(new double[] {8, 13, 8, 3}, new double[] {1, 8, 15, 8}, Pal.VIOLET_2);
+                p.poly(new double[] {8, 11, 8, 5}, new double[] {4, 8, 12, 8}, Pal.VIOLET_4);
+                p.light(8, 6, Pal.VIOLET_5);
+                p.light(8, 7, Pal.WHITE);
+            }
+            case BLOODRUSH -> {
+                p.ellipse(8, 9, 5, 5, Pal.RED_2);
+                p.poly(new double[] {3, 13, 8}, new double[] {9, 9, 15}, Pal.RED_2);
+                p.thick(4, 12, 12, 4, 2, Pal.RUST_6);
+                p.light(11, 5, Pal.RUST_7);
+            }
+            case BLADE_WAVE -> {
+                for (int k = 0; k < 3; k++)
+                    p.thick(3 + k * 3, 14, 7 + k * 3, 2, 1.6, k == 2 ? Pal.TEAL_6 : Pal.TEAL_4);
+                p.light(13, 2, Pal.WHITE);
+            }
+            case ORBITAL -> {
+                p.ellipse(8, 8, 2.5, 2.5, Pal.STEEL_5);
+                for (int k = 0; k < 3; k++) {
+                    double a = k * Math.PI * 2 / 3;
+                    double bx = 8 + Math.cos(a) * 5.5, by = 8 + Math.sin(a) * 5.5;
+                    p.thick(8, 8, bx, by, 1, Pal.STEEL_3);
+                    p.thick(
+                            bx,
+                            by,
+                            bx + Math.cos(a + 1.6) * 3,
+                            by + Math.sin(a + 1.6) * 3,
+                            2,
+                            Pal.STEEL_7);
+                }
+            }
+            case TESLA_FIELD -> {
+                p.box(5, 8, 6, 7, r(Pal.STEEL_4));
+                p.rect(7, 3, 2, 5, Pal.RUST_4);
+                p.ellipse(8, 3, 2.5, 2.5, Pal.TEAL_3);
+                bolt(p, 3, 1, Pal.TEAL_6);
+                p.light(13, 4, Pal.TEAL_6);
+            }
+            case MULTISHOT -> {
+                for (int k = 0; k < 3; k++) {
+                    int y = 3 + k * 4;
+                    p.thick(2, y + 1, 11, y + 1, 1.4, Pal.STEEL_5);
+                    p.poly(
+                            new double[] {11, 15, 11},
+                            new double[] {y - 1, y + 1, y + 3},
+                            Pal.STEEL_7);
+                }
+            }
+            case OVERCHARGE -> {
+                p.sphere(8, 8, 5.5, 5.5, r(Pal.VIOLET_3));
+                p.ellipse(8, 8, 3, 3, Pal.VIOLET_5);
+                bolt(p, 5, 3, Pal.WHITE);
+                p.light(8, 8, Pal.WHITE);
+            }
+            case NOVA -> {
+                p.ellipse(8, 8, 7, 7, Pal.RUST_3);
+                p.ellipse(8, 8, 5.5, 5.5, Pal.INK);
+                p.sphere(8, 8, 3.5, 3.5, r(Pal.RUST_5));
+                p.light(8, 8, Pal.WHITE);
+                p.light(7, 7, Pal.RUST_7);
+            }
         }
         return finish(p);
     }

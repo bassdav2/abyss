@@ -54,6 +54,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
         PLAY,
         PAUSE,
         REWARD,
+        LEVEL_UP,
         SHRINE,
         ROUTE,
         INVENTORY,
@@ -170,6 +171,12 @@ public final class GameWindow implements AutoCloseable, Navigator {
                 audio.event(event);
             }
             hitStop = Math.max(hitStop, renderer.takeHitStop());
+            if (run.pendingLevelUps() > 0
+                    && (run.phase() == GameRun.Phase.RUNNING
+                            || run.phase() == GameRun.Phase.ROOM_CLEARED)) {
+                setScreen(Screen.LEVEL_UP);
+                audio.play("upgrade");
+            }
             if (run.phase() == GameRun.Phase.DEFEAT || run.phase() == GameRun.Phase.VICTORY) {
                 service.recordOutcome();
                 outcomeDelay += dt;
@@ -229,6 +236,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
             case HELP -> menus.help(gui, inGameModal);
             case PAUSE -> runScreens.pause(gui);
             case REWARD -> runScreens.reward(gui);
+            case LEVEL_UP -> runScreens.levelUp(gui);
             case SHRINE -> runScreens.shrine(gui);
             case ROUTE -> runScreens.route(gui);
             case INVENTORY -> runScreens.inventory(gui);
@@ -243,7 +251,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
 
     private boolean inGameScreen() {
         return switch (screen) {
-            case PAUSE, REWARD, SHRINE, ROUTE, INVENTORY, MAP, OUTCOME -> true;
+            case PAUSE, REWARD, LEVEL_UP, SHRINE, ROUTE, INVENTORY, MAP, OUTCOME -> true;
             case SETTINGS, HELP -> inGameModal;
             default -> false;
         };
@@ -310,6 +318,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
                     else pause();
                 }
                 case PAUSE, REWARD, SHRINE, ROUTE, INVENTORY, MAP -> play();
+                case LEVEL_UP -> pause();
                 case SETTINGS, HELP -> {
                     if (inGameModal) pause();
                     else title();
@@ -335,6 +344,9 @@ public final class GameWindow implements AutoCloseable, Navigator {
             }
             case REWARD -> {
                 if (digit >= 0) runScreens.choose(digit);
+            }
+            case LEVEL_UP -> {
+                if (digit >= 0) runScreens.chooseLevel(digit);
             }
             case SHRINE -> {
                 if (digit >= 0) runScreens.acceptDeal(digit);
@@ -493,6 +505,20 @@ public final class GameWindow implements AutoCloseable, Navigator {
     @Override
     public void shrine() {
         setScreen(Screen.SHRINE);
+    }
+
+    /** Öffnet die Auswahl eines offenen Levelaufstiegs, etwa für die Oberflächenprüfung. */
+    public void levelUp() {
+        setScreen(Screen.LEVEL_UP);
+    }
+
+    /**
+     * Wählt eine Karte des offenen Levelaufstiegs wie per Zifferntaste.
+     *
+     * @param index Kartenindex ab 0
+     */
+    public void chooseLevel(int index) {
+        runScreens.chooseLevel(index);
     }
 
     @Override

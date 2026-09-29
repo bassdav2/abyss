@@ -74,3 +74,14 @@ Auftrag um ca. 12:26: interaktivere Räume, mehr Abteilungen, Gimmicks, spannend
 - ca. 12:45: Raumtechnik (`Fixture`, `Machinery`, `MachinePainter`): Förderband, Dampfdüse, Turbinenwind, Presse, Lasergitter, Notschalter mit vier Sektionseffekten; Testspieler weicht aus und nutzt Schalter.
 - ca. 12:55: Hüllenbruch, Schmugglerdrohne, acht neue Raumthemen mit Requisiten, Ersatzglyphen für typografische Zeichen.
 - ca. 13:05: Bossarenen mit Anlagen, Anlagen-Treffer durchschlagen Bosspanzerung; Schlagseite mit gekipptem Bild; Koloss-Tempo angehoben; Doku und UML auf 1.1.
+
+## Version 1.2 · Schwarm-Update (29.09.2026)
+
+Auftrag am Morgen: Effekte von Upgrades und Bäumen viel stärker skalieren, schnell mehr als zwei Gegner, im Endgame Schwärme von hunderten Gegnern, die die Waffen bewältigen.
+
+- Motor: `EnemyGrid` (räumliches Raster), Abstossung in Schwärmen, iterative Explosionswarteschlange, Elternkennung statt Listensuche, Effekt- und Trefferpausen-Budget in der Darstellung.
+- Inhalt: Rostmilbe, Glimmfisch, Nanodrohne; Hordenkontingente je Welle, schubweises Nachströmen bis zur Obergrenze; Kernwellen bis 10 Gegner.
+- Kraft: Energiesplitter, Überladung, Levelaufstiege mit Kartenwahl; Stapel bis 8-fach und multiplikativ; Klingenwelle, Kreiselmesser, Teslafeld, Mehrfachlader, Druckwellenkern, Blutrausch, Druckkammer, Überladungskern; Werkstatt bis Stufe 8; Tiefenbaum im Archiv.
+- Balance: Gegner exponentiell mit Raumtiefe und Zyklus; Testspieler gewinnt Zyklus 0 in 150/150 Läufen, stirbt auf Druckstufe 5 im zweiten Zyklus.
+- Prüfung: 118 Tests, 42/42 UI-Schritte, Render-Probelauf, Schwarm-Lastprobe, Szenenbilder.
+

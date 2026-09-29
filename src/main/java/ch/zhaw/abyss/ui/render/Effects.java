@@ -208,6 +208,7 @@ public final class Effects {
      * @param color Farbe
      */
     public void ring(double x, double y, double from, double to, double seconds, int color) {
+        if (rings.size() >= 80) rings.removeFirst();
         rings.add(new Ring(x, y, from, to, seconds, color, new double[1]));
     }
 
@@ -220,6 +221,7 @@ public final class Effects {
      * @param color Farbe
      */
     public void bolt(double x1, double y1, double x2, double y2, double seconds, int color) {
+        if (bolts.size() >= 90) bolts.removeFirst();
         bolts.add(new Bolt(x1, y1, x2, y2, seconds, color, new double[1]));
     }
 
@@ -262,6 +264,7 @@ public final class Effects {
      * @param cold Kälteexplosion statt Feuer
      */
     public void explosion(double x, double y, double radius, boolean cold) {
+        if (blasts.size() >= 48) blasts.removeFirst();
         blasts.add(new Blast(x, y, radius, .45 + radius / 140, cold, new double[1]));
         flash(x, y, radius * 3.2, cold ? Pal.TEAL_5 : 0xFFFFB060, 1.6, .35);
         burst(
@@ -308,6 +311,7 @@ public final class Effects {
      */
     public void flash(
             double x, double y, double radius, int color, double intensity, double seconds) {
+        if (flashes.size() >= 40) flashes.removeFirst();
         flashes.add(new Flash(x, y, radius, color, intensity, seconds, new double[1]));
     }
 

@@ -134,6 +134,33 @@ public final class UiSmoke extends Application {
                     simulate(2.5);
                 });
         add(
+                "level-up",
+                "LEVEL_UP",
+                () -> {
+                    var run = run();
+                    CampaignPilot.autoLevel = false;
+                    for (int guard = 0; guard < 30 && run.pendingLevelUps() == 0; guard++) {
+                        if (run.phase() == GameRun.Phase.RUNNING) clearRoom();
+                        if (run.pendingLevelUps() > 0 || run.phase() != GameRun.Phase.ROOM_CLEARED)
+                            break;
+                        CampaignPilot.advance(run, 0);
+                    }
+                    CampaignPilot.autoLevel = true;
+                    expect("Levelaufstieg offen", run.pendingLevelUps() > 0);
+                    expect("Auswahl angeboten", !run.levelOffers().isEmpty());
+                    window.levelUp();
+                });
+        add(
+                "level-up-chosen",
+                "PLAY",
+                () -> {
+                    var run = run();
+                    for (int guard = 0; guard < 20 && run.pendingLevelUps() > 0; guard++)
+                        window.chooseLevel(0);
+                    expect("alle Levelaufstiege gewählt", run.pendingLevelUps() == 0);
+                    window.play();
+                });
+        add(
                 "route-condition",
                 "ROUTE",
                 () -> {

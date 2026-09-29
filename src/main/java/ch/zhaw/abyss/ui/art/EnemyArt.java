@@ -77,6 +77,9 @@ public final class EnemyArt {
             case ENFORCER -> enforcer(p, anim, f);
             case SEEKER -> seeker(p, anim, f);
             case SMUGGLER -> smuggler(p, anim, f);
+            case MITE -> mite(p, anim, f);
+            case GLOWFISH -> glowfish(p, anim, f);
+            case NANODRONE -> nanodrone(p, anim, f);
             default -> {}
         }
         p.outline(Pal.OUTLINE);
@@ -98,6 +101,9 @@ public final class EnemyArt {
             case ENFORCER -> new int[] {50, 50, 47};
             case SEEKER -> new int[] {34, 30, 25};
             case SMUGGLER -> new int[] {38, 34, 30};
+            case MITE -> new int[] {22, 16, 14};
+            case GLOWFISH -> new int[] {24, 16, 12};
+            case NANODRONE -> new int[] {20, 18, 14};
             default -> new int[] {32, 32, 30};
         };
     }
@@ -619,5 +625,67 @@ public final class EnemyArt {
         p.rect((int) shieldX + 3, top + 7, 3, 4, Pal.TEAL_1);
         p.light((int) shieldX + 4, top + 8, Pal.TEAL_5);
         p.thick(hipX + 3, hipY - 12, shieldX + 1, hipY - 10, 4, 0xFF5C4B34);
+    }
+
+    // --- Rostmilbe: winzige Rostkuppel auf sechs Beinchen ----------------------------------------
+
+    private static void mite(Painter p, Anim anim, int f) {
+        int bob = anim == Anim.MOVE ? f % 2 : 0;
+        double lunge = anim == Anim.STRIKE ? 2 : anim == Anim.WINDUP ? -1 : 0;
+        double cx = 11 + lunge, cy = 9 - bob + (anim == Anim.WINDUP ? 1 : 0);
+        for (int i = 0; i < 3; i++) {
+            double phase = anim == Anim.MOVE ? Math.sin((f / 6.0 + i * .33) * Math.PI * 2) : 0;
+            for (int side = -1; side <= 1; side += 2) {
+                double hip = cx + (i - 1) * 2.5;
+                double foot = hip + side * 3 + phase * 1.6 * side;
+                p.line((int) hip, (int) cy + 2, (int) foot, 13, i == 1 ? Pal.STEEL_3 : Pal.STEEL_2);
+            }
+        }
+        p.sphere(cx, cy, 4.8, 3.6, RUST);
+        p.rect((int) cx - 4, (int) cy + 1, 9, 1, Pal.RUST_2);
+        p.px((int) cx - 2, (int) cy - 2, Pal.RUST_6);
+        boolean charged = anim == Anim.WINDUP || anim == Anim.STRIKE;
+        p.light((int) cx + 3, (int) cy - 1, charged ? Pal.RED_5 : Pal.RED_4);
+        p.light((int) cx + 4, (int) cy, charged ? Pal.WHITE : Pal.RED_3);
+        if (anim == Anim.HURT) p.light((int) cx, (int) cy - 2, Pal.WHITE);
+    }
+
+    // --- Glimmfisch: leuchtender Tiefseefisch mit Schwanzflosse
+    // -----------------------------------
+
+    private static void glowfish(Painter p, Anim anim, int f) {
+        double swish =
+                Math.sin(f * Math.PI / (anim == Anim.MOVE ? 3 : 2)) * (anim == Anim.STRIKE ? 0 : 2);
+        double cx = 12 + (anim == Anim.STRIKE ? 2 : 0), cy = 8;
+        p.thick(cx - 6, cy, cx - 10, cy - 3 + swish, 2, Pal.VIOLET_2);
+        p.thick(cx - 6, cy, cx - 10, cy + 3 + swish, 2, Pal.VIOLET_2);
+        p.sphere(
+                cx, cy, 6, 3.4, new int[] {Pal.VIOLET_1, Pal.VIOLET_2, Pal.VIOLET_3, Pal.VIOLET_4});
+        p.rect((int) cx - 3, (int) cy + 2, 7, 1, Pal.TEAL_3);
+        p.px((int) cx - 1, (int) cy - 3, Pal.VIOLET_4);
+        p.lightRect((int) cx - 4, (int) cy, 5, 1, Pal.TEAL_4);
+        boolean charged = anim == Anim.WINDUP || anim == Anim.STRIKE;
+        p.light((int) cx + 4, (int) cy - 1, charged ? Pal.WHITE : Pal.TEAL_5);
+        p.light((int) cx + 1, (int) cy - 5, Pal.TEAL_6);
+        p.px((int) cx + 1, (int) cy - 4, Pal.VIOLET_3);
+        if (anim == Anim.HURT) p.light((int) cx, (int) cy, Pal.WHITE);
+    }
+
+    // --- Nanodrohne: Kugel mit zwei Rotorblättern und rotem Auge
+    // ----------------------------------
+
+    private static void nanodrone(Painter p, Anim anim, int f) {
+        int bob = anim == Anim.IDLE || anim == Anim.MOVE ? f % 2 : 0;
+        double cx = 10, cy = 10 + bob;
+        boolean wide = f % 2 == 0;
+        p.rect(9, (int) cy - 6, 2, 2, Pal.STEEL_3);
+        p.rect(wide ? 3 : 6, (int) cy - 7, wide ? 14 : 8, 1, Pal.STEEL_5);
+        p.sphere(cx, cy, 4.6, 4.2, DARK);
+        p.rect((int) cx - 4, (int) cy + 1, 9, 1, Pal.STEEL_2);
+        boolean charged = anim == Anim.WINDUP || anim == Anim.STRIKE;
+        p.light((int) cx + 2, (int) cy - 1, charged ? Pal.WHITE : Pal.RED_4);
+        p.light((int) cx + 3, (int) cy - 1, charged ? Pal.RED_5 : Pal.RED_3);
+        if (charged) p.light((int) cx, (int) cy + 4, Pal.RED_4);
+        if (anim == Anim.HURT) p.light((int) cx - 1, (int) cy - 2, Pal.WHITE);
     }
 }

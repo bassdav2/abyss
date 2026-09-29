@@ -20,6 +20,9 @@ final class Behaviors {
     static final EnemyBehavior ENFORCER = new Enforcer();
     static final EnemyBehavior SEEKER = new Seeker();
     static final EnemyBehavior SMUGGLER = new Smuggler();
+    static final EnemyBehavior MITE = new Mite();
+    static final EnemyBehavior GLOWFISH = new Glowfish();
+    static final EnemyBehavior NANODRONE = new Nanodrone();
     static final EnemyBehavior WARDEN = new WardenBrain();
     static final EnemyBehavior REACTOR = new ReactorBrain();
     static final EnemyBehavior BROOD = new BroodBrain();
@@ -644,6 +647,162 @@ final class Behaviors {
         @Override
         double cooldown(Enemy e) {
             return 1.0;
+        }
+    }
+
+    // --- Schwarmgegner: einfache, günstige Verhaltensweisen für Horden --------------------------
+
+    /**
+     * Rostmilbe: rennt geradewegs auf die Figur zu, hüpft Stegen nach und beisst mit einem kurzen
+     * Satz. Die Augen leuchten beim Ansetzen rot auf.
+     */
+    static final class Mite extends Brain {
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            Brain.close(e, run, 26);
+            if (e.grounded
+                    && dy(e, run) < -80
+                    && Math.abs(dx(e, run)) < 240
+                    && run.rng.nextDouble() < dt * 2.2) e.vy = -760;
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.abs(dx(e, run)) < 75 && Math.abs(dy(e, run)) < 70 && e.grounded;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .34;
+        }
+
+        @Override
+        double strikeTime(Enemy e) {
+            return .22;
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            if (e.grounded) e.vy = -240;
+        }
+
+        @Override
+        void strike(Enemy e, GameRun run, double dt) {
+            e.vx = e.facing * speed(e) * 2.1;
+            contact(e, run, 7);
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .45;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            return .55 + (e.id % 4) * .08;
+        }
+    }
+
+    /** Glimmfisch: schwimmt in Wellenlinien heran und schiesst dann blitzartig auf die Figur. */
+    static final class Glowfish extends Brain {
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            double wobble = Math.sin(e.animationTime * 5 + e.id) * 55;
+            flyTo(
+                    e,
+                    run.player.x - Math.signum(dx(e, run)) * 40,
+                    run.player.centerY() + wobble,
+                    speed(e));
+            e.facing = e.vx >= 0 ? 1 : -1;
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.hypot(dx(e, run), run.player.centerY() - e.centerY()) < 110;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .3;
+        }
+
+        @Override
+        double strikeTime(Enemy e) {
+            return .3;
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            double angle = Math.atan2(e.targetY - e.centerY(), e.targetX - e.x);
+            e.vx = Math.cos(angle) * speed(e) * 2.5;
+            e.vy = Math.sin(angle) * speed(e) * 2.5;
+        }
+
+        @Override
+        void strike(Enemy e, GameRun run, double dt) {
+            contact(e, run, 6);
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .5;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            return .5 + (e.id % 3) * .1;
+        }
+    }
+
+    /**
+     * Nanodrohne: kreist im Pulk über der Figur und stürzt sich nacheinander herab. Der Versatz
+     * über die Kennung verteilt die Drohnen gleichmässig auf dem Kreis.
+     */
+    static final class Nanodrone extends Brain {
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            double angle = e.id * 1.713 + e.animationTime * 1.4;
+            double tx = run.player.x + Math.cos(angle) * 170;
+            double ty = run.player.centerY() - 90 + Math.sin(angle) * 70;
+            flyTo(e, tx, ty, speed(e));
+            face(e, run);
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.hypot(dx(e, run), run.player.centerY() - e.centerY()) < 260;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .38;
+        }
+
+        @Override
+        double strikeTime(Enemy e) {
+            return .34;
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            double angle = Math.atan2(e.targetY - e.centerY(), e.targetX - e.x);
+            e.vx = Math.cos(angle) * speed(e) * 2.7;
+            e.vy = Math.sin(angle) * speed(e) * 2.7;
+        }
+
+        @Override
+        void strike(Enemy e, GameRun run, double dt) {
+            contact(e, run, 8);
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .6;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            return 1.1 + (e.id % 5) * .22;
         }
     }
 }

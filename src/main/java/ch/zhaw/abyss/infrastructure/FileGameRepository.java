@@ -199,7 +199,10 @@ public final class FileGameRepository implements GameRepository {
                             flag(p, "reviveUsed", false),
                             integer(p, "rushStacks", 0),
                             number(p, "healthPenalty", 0),
-                            number(p, "bonusHealth", 0)));
+                            number(p, "bonusHealth", 0),
+                            integer(p, "level", 0),
+                            number(p, "xp", 0),
+                            integer(p, "pendingLevelUps", 0)));
         } catch (IllegalArgumentException | NullPointerException | IOException e) {
             preserveBeforeReplace.add(path);
             throw new IOException(
@@ -280,6 +283,9 @@ public final class FileGameRepository implements GameRepository {
         p.setProperty("rushStacks", "" + c.rushStacks());
         p.setProperty("healthPenalty", "" + c.healthPenalty());
         p.setProperty("bonusHealth", "" + c.bonusHealth());
+        p.setProperty("level", "" + c.level());
+        p.setProperty("xp", "" + c.xp());
+        p.setProperty("pendingLevelUps", "" + c.pendingLevelUps());
         p.setProperty(
                 "route", c.route().stream().map(String::valueOf).collect(Collectors.joining(",")));
         c.items().forEach((item, count) -> p.setProperty("item." + item.name(), "" + count));

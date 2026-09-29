@@ -25,10 +25,12 @@ Stand 25.09.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2.
 
 | Prüfung | Ergebnis |
 |---|---|
-| JUnit | 106 Testfälle bestanden (siehe `docs/qa/test-summary.json`) |
+| JUnit | 118 Testfälle bestanden, davon 12 in `SwarmTest` für Horden, Raster, Kettenreaktion, Überladung und Horden-Werkzeuge (siehe `docs/qa/test-summary.json`) |
 | Formatprüfung und Javadoc (`-Xdoclint`) | bestanden, keine Compiler-Warnungen |
-| UI-Komponentenprüfung | 37/37 (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
-| Render-Probelauf | 60 s, 30 733 Bilder, 0 Fehler, Mittel 1,9 ms, 95 % unter 2,2 ms; einzelne Spitze 74 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
+| UI-Komponentenprüfung | 42/42 inklusive Levelaufstieg (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
+| Render-Probelauf | 60 s  29 898 Bilder  0 Fehler  Mittel 2.0 ms  95 % unter 2.2 ms; einzelne Spitze 84 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
+| Schwarm-Lastprobe | Druckstufe 5  bis 233 Gegner gleichzeitig: 200–299 Gegner ≈ 2 2 ms Zeichnen und 0 06 ms Simulation pro Bild (`./gradlew swarmBench`) |
+| Balance | Testspieler gewinnt Zyklus 0 in 150/150 Läufen (30 je Klasse); auf Druckstufe 5 stirbt er in Zyklus 2. Kein menschlicher Spieltest |
 | Balancebericht, 30 Seeds je Klasse | Mechanikerin, Harpunier, Schweisserin, Funkerin je 30/30; Koloss 26/30 (nach Anhebung auf 150 Integrität und 20 % Schutz); keine Hänger |
 
 ## Reproduktion

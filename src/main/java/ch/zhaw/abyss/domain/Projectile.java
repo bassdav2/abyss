@@ -20,7 +20,9 @@ public final class Projectile {
         CRYO,
         DRONE_SHOT,
         ENEMY_HARPOON,
-        AFTERIMAGE
+        AFTERIMAGE,
+        /** Druckklinge der Klingenwelle: fliegt flach und durchschlägt mehrere Gegner. */
+        BLADE
     }
 
     final long id;

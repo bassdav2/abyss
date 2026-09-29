@@ -31,7 +31,8 @@ public record RunSetup(
         Set<Weapon> weaponPool,
         double bonusHealth,
         int bonusKits,
-        int startSalvage) {
+        int startSalvage,
+        MetaBonus meta) {
     /** Höchste wählbare Druckstufe. */
     public static final int MAX_PRESSURE = 5;
 
@@ -44,8 +45,51 @@ public record RunSetup(
                 || bonusHealth < 0
                 || bonusKits < 0
                 || startSalvage < 0) throw new IllegalArgumentException("Ungültige Startwerte");
+        if (meta == null) meta = MetaBonus.NONE;
         itemPool = itemPool.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(itemPool));
         weaponPool = weaponPool.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(weaponPool));
+    }
+
+    /**
+     * Startbedingungen ohne Verstärkungen aus dem Tiefenbaum.
+     *
+     * @param seed Routen-Seed
+     * @param diver Klasse
+     * @param weapon Startwaffe
+     * @param module aktives Modul
+     * @param explorer Entdeckermodus
+     * @param pressure Druckstufe
+     * @param itemPool Module in Bergungen
+     * @param weaponPool Waffen in Bergungen
+     * @param bonusHealth zusätzliche Integrität
+     * @param bonusKits zusätzliche Reparatursets
+     * @param startSalvage Startschrott
+     */
+    public RunSetup(
+            long seed,
+            DiverClass diver,
+            Weapon weapon,
+            ActiveModule module,
+            boolean explorer,
+            int pressure,
+            Set<Item> itemPool,
+            Set<Weapon> weaponPool,
+            double bonusHealth,
+            int bonusKits,
+            int startSalvage) {
+        this(
+                seed,
+                diver,
+                weapon,
+                module,
+                explorer,
+                pressure,
+                itemPool,
+                weaponPool,
+                bonusHealth,
+                bonusKits,
+                startSalvage,
+                MetaBonus.NONE);
     }
 
     /**
@@ -106,6 +150,27 @@ public record RunSetup(
                 weaponPool,
                 bonusHealth,
                 bonusKits,
-                startSalvage);
+                startSalvage,
+                meta);
+    }
+
+    /**
+     * @param bonus Verstärkungen aus dem Tiefenbaum
+     * @return gleiche Bedingungen mit anderen Verstärkungen
+     */
+    public RunSetup withMeta(MetaBonus bonus) {
+        return new RunSetup(
+                seed,
+                diver,
+                weapon,
+                module,
+                explorer,
+                pressure,
+                itemPool,
+                weaponPool,
+                bonusHealth,
+                bonusKits,
+                startSalvage,
+                bonus);
     }
 }

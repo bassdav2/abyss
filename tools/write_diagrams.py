@@ -1,4 +1,4 @@
-"""Erzeugt editierbare UML-Quellen, die den implementierten Stand 1.0 beschreiben, und rendert sie
+"""Erzeugt editierbare UML-Quellen, die den implementierten Stand 1.1 beschreiben, und rendert sie
 mit PlantUML als SVG und PNG."""
 from pathlib import Path
 import subprocess
@@ -31,7 +31,7 @@ hide empty members
 DIAGRAMS = {
 '01-use-cases': r'''left to right direction
 actor "Spieler/in" as Player
-rectangle "ABYSS 1.0 · lokales Desktopspiel" {
+rectangle "ABYSS 1.1 · lokales Desktopspiel" {
  usecase "UC-01\nTauchgang vorbereiten\nund beginnen" as Start
  usecase "UC-02\nZum nächsten Raum\nvordringen" as Progress
  usecase "UC-03\nBergung wählen" as Reward

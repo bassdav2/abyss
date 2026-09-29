@@ -31,6 +31,9 @@ public final class Enemy extends Actor {
     Telegraph telegraph;
     final List<Long> children = new ArrayList<>();
 
+    /** Gegner, der diesen herbeigerufen hat, sonst 0. */
+    long parentId;
+
     Enemy(long id, EnemyKind kind, Affix affix, double x, double y, double strength, double delay) {
         super(
                 id,
@@ -44,7 +47,7 @@ public final class Enemy extends Actor {
         this.behavior = kind.behavior();
         this.actionCooldown = delay;
         this.facing = -1;
-        this.stateTime = kind.boss() ? 2.2 : .55;
+        this.stateTime = kind.boss() ? 2.2 : kind.swarm() ? .3 : .55;
         this.homeX = x;
         this.homeY = y;
         if (affix == Affix.SHIELDED) eliteShield = maxHealth * .35;

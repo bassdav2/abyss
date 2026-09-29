@@ -60,7 +60,7 @@ final class Ballistics {
         if (speed < 1) return;
         Actor target =
                 q.friendly
-                        ? run.enemies.stream()
+                        ? run.grid().around(q.x, q.y, 700).stream()
                                 .filter(e -> e.alive() && !e.untargetable())
                                 .filter(e -> (e.x - q.x) * Math.signum(q.vx) > -40)
                                 .min(Comparator.comparingDouble(e -> Math.abs(e.x - q.x)))
@@ -97,8 +97,16 @@ final class Ballistics {
     }
 
     private void collideFriendly(Projectile q) {
-        for (int i = 0; i < run.enemies.size() && q.life > 0; i++) {
-            var e = run.enemies.get(i);
+        var zone = q.bounds();
+        var candidates =
+                run.grid()
+                        .query(
+                                zone.x(),
+                                zone.y(),
+                                zone.x() + zone.width(),
+                                zone.y() + zone.height());
+        for (int i = 0; i < candidates.size() && q.life > 0; i++) {
+            var e = candidates.get(i);
             if (!e.alive() || e.untargetable() || q.hitActors.contains(e.id)) continue;
             if (!q.bounds().intersects(e.bounds())) continue;
             q.hitActors.add(e.id);
@@ -108,7 +116,7 @@ final class Ballistics {
             }
             var source =
                     switch (q.kind) {
-                        case HARPOON, SHOCKWAVE -> Combat.Source.PROJECTILE;
+                        case HARPOON, SHOCKWAVE, BLADE -> Combat.Source.PROJECTILE;
                         case DRONE_SHOT -> Combat.Source.DRONE;
                         default -> Combat.Source.ABILITY;
                     };

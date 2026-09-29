@@ -41,44 +41,53 @@ Automatisch aus dem Quellcode erzeugt (`./gradlew contentCatalog`).
 
 | Modul | Seltenheit | Stufen | Anfangs verfügbar | Wirkung |
 |---|---|---|---|---|
-| Servoverstärker | Standard | 3 | ja | +15 % Werkzeugschaden |
-| Verbundpanzerung | Standard | 3 | ja | −10 % erlittener Schaden |
-| Kondensator | Standard | 3 | ja | +20 Energie +15 % Modulschaden |
-| Notfallreserve | Standard | 3 | ja | +20 max. Integrität heilt sofort 30 |
-| Kühlkreislauf | Standard | 3 | ja | −12 % Abklingzeit für Ausweichen und Modul |
-| Rückgewinnung | Standard | 3 | ja | +3 Integrität pro Abschuss |
-| Teleskopstange | Standard | 3 | ja | +15 % Reichweite |
-| Übertakter | Standard | 3 | ja | +10 % Angriffstempo |
-| Strömungsantrieb | Standard | 3 | ja | +10 % Lauf- und Ausweichtempo |
-| Energiesiphon | Standard | 3 | ja | +4 Energie pro Abschuss +1 Energie pro Sekunde |
-| Reparaturschwarm | Standard | 3 | ja | +8 Integrität nach jedem Raum |
-| Schrottmagnet | Standard | 3 | ja | +30 % Schrott grösserer Sammelradius |
-| Glasfaserlinse | Standard | 3 | ja | +7 % kritische Trefferchance |
-| Ballastgurt | Standard | 3 | ja | +35 % Rückstoss |
-| Zündkerze | Standard | 3 | ja | +15 % Brandchance |
-| Kälteschlange | Standard | 3 | ja | +15 % Kältechance verlangsamt Gegner |
-| Werkzeuggürtel | Standard | 2 | ja | +1 Reparaturset +1 Kapazität |
-| Dornenpanzer | Standard | 3 | ja | Nahkampfangreifer erleiden 14 Schaden |
-| Teslaspule | Selten | 3 | ja | Dritter Treffer: Kettenblitz 15 Schaden |
-| Druckluftdüse | Selten | 2 | ja | +1 Sprung in der Luft |
-| Adrenalinpumpe | Selten | 2 | ja | +30 % Schaden unter 35 % Integrität |
-| Hinterhalt-Protokoll | Selten | 2 | ja | +35 % Schaden gegen abgewandte Gegner |
-| Nachbrenner | Selten | 2 | ja | Nach dem Ausweichen: nächster Treffer +60 % |
-| Klingenrumpf | Selten | 2 | ja | Ausweichen verursacht 18 Schaden |
-| Überdruckventil | Selten | 2 | ja | Bei Treffer: Druckwelle 25 Schaden |
-| Kettenreaktion | Selten | 2 | Archiv, 7 Kerne | Besiegte Gegner explodieren (20 Schaden) |
-| Nanitenkultur | Selten | 2 | ja | Lebensraub: 4 % des Schadens |
-| Barrierenfeld | Selten | 2 | ja | Blockt den ersten Treffer in jedem Raum |
-| Lumineszenz | Selten | 2 | Archiv, 7 Kerne | +20 % Schaden an Gegnern im Lichtkegel |
-| Tiefenrausch | Selten | 2 | Archiv, 7 Kerne | Alle 10 Abschüsse: +3 % Schaden (Run) |
-| Schildzelle | Selten | 2 | ja | +20 Schild, lädt ausserhalb von Treffern |
-| Zielsucher | Selten | 1 | Archiv, 7 Kerne | Geschosse lenken nach +20 % Geschossschaden |
-| Hohlspitzen | Selten | 2 | ja | +40 % kritischer Schaden |
-| Messingkompass | Legendär | 1 | Archiv, 12 Kerne | +1 Auswahl bei jeder Bergung |
+| Servoverstärker | Standard | 8 | ja | +15 % Werkzeugschaden |
+| Verbundpanzerung | Standard | 8 | ja | −10 % erlittener Schaden |
+| Kondensator | Standard | 8 | ja | +20 Energie +15 % Modulschaden |
+| Notfallreserve | Standard | 8 | ja | +20 max. Integrität heilt sofort 30 |
+| Kühlkreislauf | Standard | 8 | ja | −12 % Abklingzeit für Ausweichen und Modul |
+| Rückgewinnung | Standard | 8 | ja | +3 Integrität pro Abschuss |
+| Teleskopstange | Standard | 8 | ja | +15 % Reichweite |
+| Übertakter | Standard | 8 | ja | +10 % Angriffstempo |
+| Strömungsantrieb | Standard | 8 | ja | +10 % Lauf- und Ausweichtempo |
+| Energiesiphon | Standard | 8 | ja | +4 Energie pro Abschuss +1 Energie pro Sekunde |
+| Reparaturschwarm | Standard | 8 | ja | +8 Integrität nach jedem Raum |
+| Schrottmagnet | Standard | 8 | ja | +30 % Schrott grösserer Sammelradius |
+| Glasfaserlinse | Standard | 8 | ja | +7 % kritische Trefferchance |
+| Ballastgurt | Standard | 8 | ja | +35 % Rückstoss |
+| Zündkerze | Standard | 8 | ja | +15 % Brandchance |
+| Kälteschlange | Standard | 8 | ja | +15 % Kältechance verlangsamt Gegner |
+| Werkzeuggürtel | Standard | 4 | ja | +1 Reparaturset +1 Kapazität |
+| Dornenpanzer | Standard | 8 | ja | Nahkampfangreifer erleiden 14 Schaden |
+| Druckkammer | Standard | 8 | ja | +12 % Wirkungsbereich von Schlägen und Explosionen |
+| Ladungsverstärker | Standard | 8 | ja | +15 % Überladung aus Energiesplittern |
+| Blutrausch | Standard | 8 | ja | Abschüsse beschleunigen Angriffe kurzzeitig |
+| Teslaspule | Selten | 6 | ja | Dritter Treffer: Kettenblitz 15 Schaden, +1 Sprung je Stufe |
+| Druckluftdüse | Selten | 5 | ja | +1 Sprung in der Luft |
+| Adrenalinpumpe | Selten | 5 | ja | +30 % Schaden unter 35 % Integrität |
+| Hinterhalt-Protokoll | Selten | 5 | ja | +35 % Schaden gegen abgewandte Gegner |
+| Nachbrenner | Selten | 5 | ja | Nach dem Ausweichen: nächster Treffer +60 % |
+| Klingenrumpf | Selten | 5 | ja | Ausweichen verursacht 18 Schaden |
+| Überdruckventil | Selten | 5 | ja | Bei Treffer: Druckwelle 25 Schaden |
+| Kettenreaktion | Selten | 5 | Archiv, 7 Kerne | Besiegte Gegner explodieren (20 Schaden je Stufe) |
+| Nanitenkultur | Selten | 5 | ja | Lebensraub: 4 % des Schadens |
+| Barrierenfeld | Selten | 5 | ja | Blockt den ersten Treffer in jedem Raum |
+| Lumineszenz | Selten | 4 | Archiv, 7 Kerne | +20 % Schaden an Gegnern im Lichtkegel |
+| Tiefenrausch | Selten | 5 | Archiv, 7 Kerne | Alle 10 Abschüsse: +3 % Schaden (Run) |
+| Schildzelle | Selten | 5 | ja | +20 Schild, lädt ausserhalb von Treffern |
+| Zielsucher | Selten | 3 | Archiv, 7 Kerne | Geschosse lenken nach +20 % Geschossschaden |
+| Hohlspitzen | Selten | 5 | ja | +40 % kritischer Schaden |
+| Klingenwelle | Selten | 5 | ja | Schläge schleudern eine Druckklinge (40 % Schaden) |
+| Kreiselmesser | Selten | 6 | ja | +1 kreisende Klinge (12 Schaden je Treffer) |
+| Teslafeld | Selten | 5 | ja | Blitzt alle 1,2 s auf 2 Gegner (+1 je Stufe) |
+| Mehrfachlader | Selten | 4 | ja | +1 Geschoss für Harpune, Klingen, Drohne, Torpedo |
+| Messingkompass | Legendär | 2 | Archiv, 12 Kerne | +1 Auswahl bei jeder Bergung |
 | Notfallkapsel | Legendär | 1 | ja | Einmal wiederbeleben mit 50 % Integrität |
-| Phasenkern | Legendär | 1 | Archiv, 12 Kerne | Ausweichen hinterlässt ein explodierendes Nachbild |
-| Singularitätszelle | Legendär | 1 | Archiv, 12 Kerne | −50 % Modul-Abklingzeit +25 % Modulschaden |
-| Leviathanzahn | Legendär | 1 | Archiv, 12 Kerne | Kritische Treffer: Kettenblitz und +2 Integrität |
+| Phasenkern | Legendär | 3 | Archiv, 12 Kerne | Ausweichen hinterlässt ein explodierendes Nachbild |
+| Singularitätszelle | Legendär | 2 | Archiv, 12 Kerne | −50 % Modul-Abklingzeit +25 % Modulschaden |
+| Leviathanzahn | Legendär | 3 | Archiv, 12 Kerne | Kritische Treffer: Kettenblitz und +2 Integrität |
+| Überladungskern | Legendär | 999 | ja | +6 % Schaden, +6 % Tempo +6 Integrität (unbegrenzt) |
+| Druckwellenkern | Legendär | 3 | Archiv, 12 Kerne | Alle 12 Abschüsse: Nova (weniger je Stufe) |
 | Gläserner Rumpf | Verflucht | 1 | nur Kapelle | +40 % Schaden −30 % max. Integrität |
 | Gier der Tiefe | Verflucht | 1 | nur Kapelle | +60 % Schrott Gegner +15 % Schaden |
 | Druckfieber | Verflucht | 1 | nur Kapelle | +25 % Angriffstempo −1 Energie pro Sekunde |
@@ -100,6 +109,9 @@ Automatisch aus dem Quellcode erzeugt (`./gradlew contentCatalog`).
 | Sicherheitsautomat | 120 | 4 | 3 | 6 |
 | Suchlichtsonde | 50 | 4 | 2 | 3 |
 | Schmugglerdrohne | 70 | 1 | 0 | 26 |
+| Rostmilbe | 10 | 1 | 0 | 0 |
+| Glimmfisch | 8 | 3 | 0 | 0 |
+| Nanodrohne | 12 | 2 | 0 | 0 |
 | Der Schottmeister (Boss) | 600 | 1 | 0 | 35 |
 | Der Reaktorkern (Boss) | 720 | 2 | 0 | 40 |
 | Die Brutmutter (Boss) | 820 | 3 | 0 | 45 |

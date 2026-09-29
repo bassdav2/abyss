@@ -89,7 +89,7 @@ public enum Weapon {
             false);
 
     /** Höchste Werkstattstufe einer Waffe. */
-    public static final int MAX_LEVEL = 3;
+    public static final int MAX_LEVEL = 8;
 
     private final String title, description;
     private final List<Swing> combo;
@@ -182,7 +182,7 @@ public enum Weapon {
      * @return Schadensfaktor der Stufe
      */
     public static double levelMultiplier(int level) {
-        return 1 + .15 * Math.max(0, Math.min(MAX_LEVEL, level));
+        return 1 + .2 * Math.max(0, Math.min(MAX_LEVEL, level));
     }
 
     /**

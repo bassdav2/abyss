@@ -159,8 +159,13 @@ public final class WorldRenderer {
     public double takeHitStop() {
         double value = feel.hitStop;
         feel.hitStop = 0;
+        // Im Schwarm träfe sonst fast jedes Bild: nach einer Pause ruht sie kurz.
+        if (value <= 0 || time < hitStopReady) return 0;
+        hitStopReady = time + (value >= .06 ? .12 : .35);
         return value;
     }
+
+    private double hitStopReady;
 
     /**
      * @return Zeitfaktor für Zeitlupe, 1 bedeutet normal
@@ -204,6 +209,7 @@ public final class WorldRenderer {
      */
     public void update(double dt, GameRun run, Settings settings) {
         time += dt;
+        events.frame();
         actors.prepare(time, look);
         feel.update(dt);
         fadeIn = Math.max(0, fadeIn - dt);
@@ -473,6 +479,7 @@ public final class WorldRenderer {
         for (var e : run.enemies()) if (e.alive()) drawTelegraph(e, run, camX, camY);
         for (var e : run.enemies()) if (e.alive()) actors.drawEnemy(e, camX, camY);
         actors.drawPlayer(run, camX, camY);
+        drawOrbitals(run, camX, camY);
         for (var q : run.projectiles()) drawProjectile(q, run, camX, camY);
         for (var pickup : run.pickups()) drawPickup(pickup, camX, camY);
         actors.drawSmear(run.player(), camX, camY);
@@ -857,6 +864,19 @@ public final class WorldRenderer {
                 frame.line(x - (right ? 3 : -3), y, x, y, Pal.TEAL_5);
                 emissive.glow(x, y, 3, Pal.TEAL_5, .9);
             }
+            case BLADE -> {
+                // Druckklinge: sichelförmiger Bogen, der mit dem Alter verblasst
+                int dir = right ? 1 : -1;
+                int h = Math.max(3, (int) Math.round(q.radius() * PX * 1.4));
+                double fade = Math.max(.35, 1 - q.age() * 1.2);
+                for (int k = -h; k <= h; k++) {
+                    int bend = (int) Math.round((1 - (k * k) / (double) (h * h)) * 3) * dir;
+                    int color = Math.abs(k) < h / 2 ? Pal.TEAL_6 : Pal.TEAL_4;
+                    frame.pixel(x + bend, y + k, Frame.alpha(color, fade));
+                    frame.pixel(x + bend - dir, y + k, Frame.alpha(Pal.TEAL_3, fade * .6));
+                    emissive.add(x + bend, y + k, Pal.TEAL_5, .7 * fade);
+                }
+            }
             case ARC -> {
                 var r = fx.random();
                 for (int k = 0; k < 4; k++) {
@@ -946,18 +966,54 @@ public final class WorldRenderer {
 
     private void drawPickup(Pickup pickup, int camX, int camY) {
         int x = px(pickup.x()) - camX, y = px(pickup.y()) + camY - 2;
+        if (pickup.kind() == Pickup.Kind.SHARD) {
+            drawShard(pickup, x, y);
+            return;
+        }
         String name =
                 switch (pickup.kind()) {
                     case SCRAP -> ((int) (time * 8 + pickup.id())) % 2 == 0 ? "scrap0" : "scrap1";
                     case HEALTH -> "health";
                     case ENERGY -> "energy";
-                    case CORE -> "core";
+                    case CORE, SHARD -> "core";
                 };
         var sprite = PropArt.small(name);
         frame.draw(sprite, x, y, false);
         if (sprite.glow() != null) emissive.drawAdd(sprite.glow(), x, y, false, 1);
         if (pickup.kind() == Pickup.Kind.CORE)
             emissive.glow(x, y, 8, Pal.TEAL_5, .5 + .3 * Math.sin(time * 6));
+    }
+
+    /** Kreiselmesser: rotierende Stahlklingen auf ihrer Bahn um die Figur. */
+    private void drawOrbitals(GameRun run, int camX, int camY) {
+        var blades = run.orbitals();
+        for (int i = 0; i < blades.length; i += 2) {
+            int x = px(blades[i]) - camX, y = px(blades[i + 1]) + camY;
+            double a = time * 16 + i;
+            for (int k = -3; k <= 3; k++) {
+                int bx = x + (int) Math.round(Math.cos(a) * k);
+                int by = y + (int) Math.round(Math.sin(a) * k);
+                frame.pixel(bx, by, Math.abs(k) >= 2 ? Pal.STEEL_7 : Pal.STEEL_5);
+            }
+            frame.pixel(x, y, Pal.RUST_6);
+            emissive.glow(x, y, 4, Pal.RUST_5, .45);
+        }
+    }
+
+    /** Energiesplitter: kleiner Kristall, der mit seinem Wert wächst und pulsiert. */
+    private void drawShard(Pickup pickup, int x, int y) {
+        int size = pickup.value() >= 25 ? 3 : pickup.value() >= 6 ? 2 : 1;
+        boolean blink = ((int) (time * 10 + pickup.id())) % 6 == 0;
+        int core = blink ? Pal.WHITE : Pal.VIOLET_5;
+        int cy = y - 3 - size;
+        for (int dy = -size; dy <= size; dy++) {
+            int half = size - Math.abs(dy);
+            for (int dx = -half; dx <= half; dx++)
+                frame.pixel(x + dx, cy + dy, dx == 0 && dy <= 0 ? core : Pal.VIOLET_4);
+        }
+        frame.pixel(x, cy - size - 1, Pal.TEAL_6);
+        emissive.glow(
+                x, cy, 3 + size * 2, Pal.VIOLET_4, .55 + .2 * Math.sin(time * 7 + pickup.id()));
     }
 
     private void lightScene(GameRun run, RoomArt room, int camX, boolean calm) {
@@ -1039,9 +1095,17 @@ public final class WorldRenderer {
                 0xFFFFE6C0,
                 .75);
         if (p.shieldTime() > 0) lights.point(px, py - 17, 40, Pal.TEAL_5, .6);
+        int swarmLights = 0;
         for (var e : run.enemies()) {
             if (!e.alive() || e.state() == Enemy.State.HIDDEN) continue;
             int ex = px(e.x()) - camX, ey = px(e.y() - e.height() * .7);
+            if (e.kind().swarm()) {
+                // Schwärme: kleine Augenlichter, bei grossen Horden nur ein Teil davon
+                if (ex < -20 || ex > W + 20 || ++swarmLights > 90) continue;
+                int glow = e.kind() == EnemyKind.GLOWFISH ? Pal.TEAL_5 : Pal.RED_4;
+                lights.point(ex, ey, 11, glow, e.state() == Enemy.State.WINDUP ? .7 : .3);
+                continue;
+            }
             int color =
                     e.kind() == EnemyKind.JELLY
                             ? Pal.VIOLET_4
@@ -1068,7 +1132,7 @@ public final class WorldRenderer {
         for (var q : run.projectiles()) {
             int color =
                     switch (q.kind()) {
-                        case ARC, DRONE_SHOT, CRYO -> Pal.TEAL_5;
+                        case ARC, DRONE_SHOT, CRYO, BLADE -> Pal.TEAL_5;
                         case ACID -> Pal.GREEN_4;
                         case AFTERIMAGE -> Pal.VIOLET_4;
                         case SHOCKWAVE -> q.friendly() ? Pal.TEAL_5 : Pal.RUST_5;
@@ -1178,7 +1242,7 @@ public final class WorldRenderer {
 
     private void drawOffscreenMarkers(GameRun run, int camX) {
         for (var e : run.enemies()) {
-            if (!e.alive() || e.state() == Enemy.State.HIDDEN) continue;
+            if (!e.alive() || e.state() == Enemy.State.HIDDEN || e.kind().swarm()) continue;
             int x = px(e.x()) - camX;
             if (x >= -4 && x <= W + 4) continue;
             int y = Math.max(40, Math.min(RoomArt.FLOOR - 6, px(e.centerY())));

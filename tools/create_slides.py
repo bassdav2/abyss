@@ -500,9 +500,11 @@ def m1_slides() -> list[Slide]:
             ['Q-02', 'Robustheit', 'defekter Spielstand blockiert Start nicht'],
             ['Q-03', 'Performance', 'Bild deutlich unter 16 ms (60 FPS)'],
             ['Q-04', 'Bedienbarkeit', '4 von 5 Testpersonen erkennen Angriffsankündigung'],
-            ['Q-05', 'Nachvollziehbarkeit', 'KI-Einsatz, Quellen, Tests dokumentiert']], 24)
-        c.panel(90, 800, 1740, 170, accent=VIOLET)
-        c.text(130, 830, 1660, '**Weiterführende Ideen:** Gamepad (braucht Bibliothek und Freigabe), frei belegbare Tasten, weitere Sektionen und Bosse, Story-Fragmente mit alternativen Enden.', 29)
+            ['Q-05', 'Nachvollziehbarkeit', 'KI-Einsatz, Quellen, Tests dokumentiert'],
+            ['Q-06', 'Portabilität', 'läuft auf allen Teamrechnern'],
+            ['Q-07', 'Datenschutz', 'keine Daten verlassen den Rechner']], 22, row_pad=9)
+        c.panel(90, 845, 1740, 140, accent=VIOLET)
+        c.text(130, 870, 1660, '**Weiterführende Ideen:** Gamepad (braucht Bibliothek und Freigabe), frei belegbare Tasten, weitere Sektionen und Bosse, Story-Fragmente mit alternativen Enden.', 29)
     s.append(Slide('6 · Weitere Anforderungen', 'Was muss das Spiel können?', anforderungen, [
         'Links die Kernfunktionen, Details in ANFORDERUNGEN.md (F-01 bis F-15).',
         'Rechts die Qualitätsanforderungen mit Messgrösse. So können wir am Ende prüfen, ob wir sie erfüllt haben.',
@@ -555,20 +557,21 @@ def m1_slides() -> list[Slide]:
             c.d.line([(x, y0), (x, y0 + 290)], fill=col, width=3)
             c.d.polygon([(x, y0 - 16), (x + 16, y0 + 3), (x, y0 + 22), (x - 16, y0 + 3)], fill=col)
             c.d.text((x, y0 + 300), label, font=font(24, True), fill=col, anchor='ma')
-        bars = [(3, 5.5, 'Iteration 1 · Spielgefühl', AMBER), (5.5, 8.3, 'Iteration 2 · Durchlauf', TEAL), (8.7, 12.3, 'Iteration 3 · Inhalt, Spieltests', VIOLET)]
+        bars = [(1, 3, '1 · Idee, Skizze', AMBER), (3, 5, '2 · Kern verstehen', TEAL), (5, 7, '3 · Durchlauf', GREEN),
+                (7, 9, '4 · Architektur', VIOLET), (9, 11, '5 · Inhalte', RED), (11, 13, '6 · Abschluss', BONE)]
         for i, (a, b, t, col) in enumerate(bars):
-            y = y0 + 60 + i * 70
-            c.d.rectangle([x0 + a * step, y, x0 + b * step, y + 50], fill=col)
-            c.d.text((x0 + a * step + 14, y + 11), t, font=font(24, True), fill=(10, 12, 14))
+            y = y0 + 60 + (i % 2) * 70
+            c.d.rectangle([x0 + a * step + 3, y, x0 + b * step - 3, y + 50], fill=col)
+            c.d.text((x0 + a * step + 14, y + 12), t, font=font(22, True), fill=(10, 12, 14))
         c.d.text((x0 + 2.5 * step, y0 + 335), 'ab 28.09.2026', font=font(22), fill=MUTED, anchor='ma')
         c.d.text((x0 + 8.5 * step, y0 + 335), 'ab 09.11.2026', font=font(22), fill=MUTED, anchor='ma')
         c.d.text((x0 + 12.5 * step, y0 + 335), 'ab 07.12.2026', font=font(22), fill=MUTED, anchor='ma')
         c.panel(90, 730, 1740, 260, accent=TEAL)
         c.text(130, 755, 1660, '**Use Cases:** Tauchgang vorbereiten, **zum nächsten Raum vordringen (Kernfall)**, Bergung wählen, handeln, unterbrechen und fortsetzen, Brücke erobern, erneut tauchen, freischalten, Aussehen anpassen, Optionen.', 29)
-        c.text(130, 890, 1660, 'Ein weit fortgeschrittener Prototyp (1.1) existiert bereits. Die Iterationen dienen deshalb vor allem dem **Verständnis im Team**, Spieltests und Verfeinerung.', 26, MUTED)
+        c.text(130, 890, 1660, 'Sechs Iterationen zu je zwei Wochen, Reviews in SW 5, 7 und 11. Da ein Prototyp (1.1) bereits existiert, dienen sie vor allem dem **Verständnis im Team**, Spieltests und Verfeinerung.', 26, MUTED)
     s.append(Slide('9 · Grobplanung', 'Meilensteine und Iterationen', planung, [
         'Drei Meilensteine laut HS26-Plan: M1 in SW3, M2 in SW9, M3 in SW13.',
-        'Iteration 1 prüft das Spielgefühl, Iteration 2 einen kurzen vollständigen Durchlauf, Iteration 3 Inhalt und Spieltests.',
+        'Sechs Iterationen zu je zwei Wochen laut Kursprozess: 1 Idee und Skizze, 2 Prototyp verstehen und Kernablauf absichern, 3 Durchlauf mit ersten Spieltests, 4 Architektur und Technischer Bericht I, 5 Inhalte und Balancing, 6 Stabilisierung und Technischer Bericht II.',
         'Der Kernfall ist „zum nächsten Raum vordringen“. Um ihn herum sind alle anderen Use Cases angeordnet.',
         'Offen gesagt: Ein Prototyp existiert schon. Wir nutzen die Zeit, um ihn zu verstehen, zu testen und zu verbessern.'], 1))
 
@@ -591,7 +594,7 @@ def m1_slides() -> list[Slide]:
         c.veil(470, 260)
         PX.draw(c.img, (W // 2, 110), 'FRAGEN?', 12, BONE, anchor='c', glow=TEAL)
         c.d.text((W // 2, 290), 'Unser Antrag: ABYSS als PM3-Projekt umsetzen.', font=font(44, True), fill=BONE, anchor='ma')
-        c.d.text((W // 2, 360), 'Nächste Schritte: Freigabe · Rollen verteilen · Iteration 1 „Spielgefühl“ · erste Spieltests', font=font(30), fill=MUTED, anchor='ma')
+        c.d.text((W // 2, 360), 'Nächste Schritte: Freigabe · Rollen verteilen · Iteration 2: Prototyp verstehen · erste Spieltests', font=font(30), fill=MUTED, anchor='ma')
     s.append(Slide('', 'Fragen', schluss, [
         'Kurz zusammenfassen: Idee, Nutzen für Lina, Alleinstellung, Plan.',
         'Um die Freigabe bitten und Fragen beantworten.'], 0.25, plain=True))

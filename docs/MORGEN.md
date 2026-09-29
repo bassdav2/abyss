@@ -1,4 +1,4 @@
-# ABYSS 1.1 – Überblick für David
+# ABYSS 1.2 – Überblick für David
 
 Stand 25.09.2026, Nachmittag. Version 1.1 baut auf dem Nachtstand 1.0 auf; was dazugekommen ist, steht direkt unter der Steuerung. Aus deinem Prototyp ist über Nacht ein vollständiges Pixel-Art-Roguelite geworden. Es bleibt dabei: ein riesiges U-Boot, du startest ganz hinten im Heck und kämpfst dich Raum für Raum bis zur Brücke vor. Geschrieben ist alles in Java mit JavaFX, ohne Frameworks und ohne neue Bibliotheken.
 
@@ -23,6 +23,27 @@ Aus dem Quellcode: `./run.command` oder `./gradlew run` (JDK 25).
 | Menüs | Pfeile/WASD oder Maus, Enter/Leertaste wählt, Ziffern wählen Karten direkt |
 
 Für den ersten Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen**. Bis du zum ersten Mal einen Raum sicherst, läuft vor dem Tauchgang ein kurzer Auftakt, den jede Taste überspringt. Wer es gemütlicher will, schaltet in der Vorbereitung **Entdecker** ein.
+
+## Neu in Version 1.2 · Schwarm-Update
+
+**Schwärme.** Neben den bekannten Gegnern strömen jetzt Rostmilben (Heck), Nanodrohnen (Maschinen- und Kommandodeck) und Glimmfische (Forschungsdeck) in Pulks aus Lüftungen und Schotts. Oben in der Mitte zählt „SCHWARM“ mit, wie viele noch kommen. Schon der erste Raum hat fünf Gegner, im Endgame sind es mehrere hundert gleichzeitig. Schwarmbisse unterbrechen deine Angriffe nicht.
+
+**Überladung und Levelaufstiege.** Jeder Abschuss lässt einen violetten Energiesplitter fallen. Die violette Leiste unter der Energie füllt sich; ist sie voll, steht die Zeit still und du wählst eine von drei Karten (Ziffern 1–3). Ein normaler Tauchgang bringt etwa 16–20 Aufstiege, spätere Zyklen viel mehr.
+
+**Viel stärkere Upgrades.** Module stapeln bis zu 8-fach (selten 5-fach) und multiplikativ. Neue Horden-Werkzeuge:
+- Klingenwelle: jeder Schlag schleudert eine Druckklinge.
+- Kreiselmesser: Klingen kreisen um dich.
+- Teslafeld: blitzt regelmässig mehrere Gegner an.
+- Mehrfachlader: zusätzliche Harpunen, Klingen, Drohnenschüsse und Torpedos.
+- Druckwellenkern: eine Nova nach einigen Abschüssen.
+- Blutrausch: Abschüsse beschleunigen deine Angriffe.
+- Druckkammer: grössere Schläge und Explosionen.
+
+Kettenreaktion und Teslaspule springen jetzt durch ganze Schwärme. Werkstattstufen gehen bis 8. Ist dein Build ausgereizt, bietet jeder Aufstieg den unbegrenzt stapelbaren Überladungskern an.
+
+**Tiefenbaum.** Im Archiv unter „Tiefenbaum“ kaufst du mit Datenkernen dauerhafte Stufen: Schneidwerk (Schaden), Taktgeber (Tempo), Druckverstärker (Fläche), Datenlink (Überladung), Magnetspule, Zielsystem und „Erweiterte Auswahl“ für eine vierte Karte.
+
+**Härter mit der Tiefe.** Gegner werden mit jeder Raumtiefe und jedem Zyklus exponentiell zäher. Der Testspieler gewinnt den ersten Zyklus immer; auf Druckstufe 5 stirbt er im zweiten Zyklus. Wie schwer es für Menschen ist, ist noch nicht getestet.
 
 ## Neu in Version 1.1
 

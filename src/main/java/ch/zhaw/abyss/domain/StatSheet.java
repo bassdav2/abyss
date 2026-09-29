@@ -53,7 +53,10 @@ public record StatSheet(
         double burnPower,
         double maxShield,
         int maxRepairKits,
-        double magnetRadius) {
+        double magnetRadius,
+        double area,
+        double xpGain,
+        int extraProjectiles) {
 
     /**
      * Berechnet die Werte einer Figur.
@@ -71,29 +74,61 @@ public record StatSheet(
             int weaponLevel,
             Map<Item, Integer> items,
             double bonusHealth) {
+        return compute(diver, weapon, weaponLevel, items, bonusHealth, MetaBonus.NONE);
+    }
+
+    /**
+     * Berechnet die Werte einschliesslich dauerhafter Verstärkungen. Gleichartige Module stapeln
+     * multiplikativ, damit sich ein spezialisierter Build deutlich stärker anfühlt.
+     *
+     * @param diver Klasse
+     * @param weapon Waffe
+     * @param weaponLevel Werkstattstufe
+     * @param items installierte Module mit Stufen
+     * @param bonusHealth zusätzliche Integrität
+     * @param meta Verstärkungen aus dem Tiefenbaum
+     * @return Werte
+     */
+    public static StatSheet compute(
+            DiverClass diver,
+            Weapon weapon,
+            int weaponLevel,
+            Map<Item, Integer> items,
+            double bonusHealth,
+            MetaBonus meta) {
         var s = new Stacks(items);
         var resonance = Synergy.activeIn(items);
         double health =
-                (diver.health() + bonusHealth + 20 * s.of(Item.MEDICAL))
+                (diver.health() + bonusHealth + 20 * s.of(Item.MEDICAL) + 6 * s.of(Item.OVERCHARGE))
                         * (s.has(Item.GLASS_HULL) ? .7 : 1);
         double energy = 100 + 20 * s.of(Item.CAPACITOR) + (diver == DiverClass.SPARK ? 40 : 0);
         double damage =
-                (1 + .15 * s.of(Item.SERVO) + (s.has(Item.GLASS_HULL) ? .4 : 0))
-                        * Weapon.levelMultiplier(weaponLevel);
+                Math.pow(1.15, s.of(Item.SERVO))
+                        * (s.has(Item.GLASS_HULL) ? 1.4 : 1)
+                        * Weapon.levelMultiplier(weaponLevel)
+                        * meta.damage()
+                        * Math.pow(1.06, s.of(Item.OVERCHARGE));
         double ability =
-                (1 + .15 * s.of(Item.CAPACITOR) + (s.has(Item.SINGULARITY) ? .25 : 0))
-                        * Weapon.levelMultiplier(weaponLevel / 2);
-        double attackSpeed = 1 + .10 * s.of(Item.OVERCLOCK) + (s.has(Item.FEVER) ? .25 : 0);
+                Math.pow(1.15, s.of(Item.CAPACITOR))
+                        * (s.has(Item.SINGULARITY) ? 1 + .25 * s.of(Item.SINGULARITY) : 1)
+                        * Weapon.levelMultiplier(weaponLevel / 2)
+                        * meta.damage();
+        double attackSpeed =
+                Math.pow(1.1, s.of(Item.OVERCLOCK))
+                        * (s.has(Item.FEVER) ? 1.25 : 1)
+                        * meta.attackSpeed()
+                        * Math.pow(1.06, s.of(Item.OVERCHARGE));
         double reach = 1 + .15 * s.of(Item.LANCE);
         double move = diver.speed() * (1 + .10 * s.of(Item.THRUSTER));
         double cooldown = Math.pow(.88, s.of(Item.COOLANT));
-        double moduleCooldown = s.has(Item.SINGULARITY) ? .5 : 1;
+        double moduleCooldown = Math.pow(.5, s.of(Item.SINGULARITY));
         double taken = Math.pow(.9, s.of(Item.PLATING)) * (diver == DiverClass.TITAN ? .8 : 1);
         double crit =
                 .05
                         + .07 * s.of(Item.LENS)
                         + weapon.critBonus()
-                        + (diver == DiverClass.HARPOONER ? .10 : 0);
+                        + (diver == DiverClass.HARPOONER ? .10 : 0)
+                        + meta.crit();
         double critDamage = 2 + .4 * s.of(Item.CRIT_DAMAGE);
         double knockback = 1 + .35 * s.of(Item.BALLAST);
         double lifesteal = .04 * s.of(Item.NANITES);
@@ -141,10 +176,10 @@ public record StatSheet(
                 cooldown,
                 moduleCooldown,
                 taken,
-                Math.min(.75, crit),
-                critDamage,
+                Math.min(1, crit),
+                critDamage + Math.max(0, crit - 1) * 2,
                 knockback,
-                lifesteal,
+                Math.min(.25, lifesteal),
                 s.of(Item.JETPACK),
                 Math.max(0, regen),
                 scrap,
@@ -153,7 +188,10 @@ public record StatSheet(
                 burnPower,
                 shield,
                 kits,
-                180 + 90 * s.of(Item.MAGNET));
+                (180 + 90 * s.of(Item.MAGNET)) * meta.pickup(),
+                Math.pow(1.12, s.of(Item.AREA)) * meta.area(),
+                (1 + .15 * s.of(Item.CHARGER)) * meta.xpGain(),
+                s.of(Item.MULTISHOT));
     }
 
     private record Stacks(Map<Item, Integer> items) {

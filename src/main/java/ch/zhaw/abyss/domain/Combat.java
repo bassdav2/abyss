@@ -1,5 +1,7 @@
 package ch.zhaw.abyss.domain;
 
+import java.util.ArrayDeque;
+
 /**
  * Schadensregeln des Tauchgangs: Treffer auf Gegner mit Kritik, Panzerung, Zuständen und
  * Modul-Auslösern; Treffer auf die Figur mit Schild, Barriere und Wiederbelebung; Explosionen und
@@ -17,10 +19,27 @@ final class Combat {
         DASH,
         DRONE,
         /** Raumtechnik: ohne Werte der Figur, durchschlägt Panzerung. */
-        MACHINE
+        MACHINE,
+        /** Kreiselmesser: Werkzeugschaden, aber ohne Kritik und Lebensraub. */
+        ORBIT
     }
 
+    /** Wartende Explosion; Kettenreaktionen laufen iterativ statt rekursiv. */
+    private record Blast(
+            double x,
+            double y,
+            double radius,
+            double damage,
+            boolean hurtsPlayer,
+            boolean hurtsEnemies,
+            Status status) {}
+
+    /** Höchstzahl ausgewerteter Explosionen pro Simulationsschritt; der Rest folgt danach. */
+    static final int BLASTS_PER_STEP = 160;
+
     private final GameRun run;
+    private final ArrayDeque<Blast> blasts = new ArrayDeque<>();
+    private int blastDepth;
 
     Combat(GameRun run) {
         this.run = run;
@@ -43,7 +62,8 @@ final class Combat {
         boolean direct = source == Source.MELEE || source == Source.PROJECTILE;
         double damage = base;
         switch (source) {
-            case MELEE, PROJECTILE, CHAIN, DASH -> damage *= s.damage() * (p.explorer ? 1.2 : 1);
+            case MELEE, PROJECTILE, CHAIN, DASH, ORBIT ->
+                    damage *= s.damage() * (p.explorer ? 1.2 : 1);
             case ABILITY, EXPLOSION, DRONE -> damage *= s.abilityDamage();
             case BURN, MACHINE -> {}
         }
@@ -170,9 +190,16 @@ final class Combat {
     private void killed(Enemy e) {
         var p = run.player;
         run.countKill();
-        boolean summoned = run.enemies.stream().anyMatch(o -> o.children.contains(e.id));
+        boolean summoned = e.parentId != 0;
         int salvage = summoned ? 1 : e.kind.salvage() + (e.affix.elite() ? 8 : 0);
-        run.dropScrap(e.x, e.centerY(), salvage);
+        if (salvage > 0) run.dropScrap(e.x, e.centerY(), salvage);
+        double shard =
+                e.kind.boss()
+                        ? 30
+                        : e.kind.swarm() || summoned
+                                ? 1
+                                : 1 + e.kind.threat() + (e.affix.elite() ? 8 : 0);
+        run.drop(Pickup.Kind.SHARD, shard, e.x, e.centerY());
         if (e.affix.elite() || e.kind == EnemyKind.SMUGGLER)
             run.drop(Pickup.Kind.CORE, 1, e.x, e.centerY());
         if (e.kind == EnemyKind.SMUGGLER) {
@@ -180,6 +207,7 @@ final class Combat {
             run.emit(new GameEvent(GameEvent.Type.MACHINE, e.x, e.centerY(), 0, "CAUGHT"));
         }
         if (e.kind.boss()) {
+            run.cancelHordes();
             run.drop(Pickup.Kind.CORE, e.kind == EnemyKind.CAPTAIN ? 5 : 3, e.x, e.centerY());
             for (var minion : run.enemies)
                 if (e.children.contains(minion.id) && minion.alive()) {
@@ -193,8 +221,25 @@ final class Combat {
             p.killsTowardRush = 0;
             p.rushStacks += p.stacks(Item.DEPTH_RUSH);
         }
+        if (p.stacks(Item.BLOODRUSH) > 0) {
+            p.frenzy = Math.min(20, p.frenzy + 1);
+            p.frenzyTime = 4;
+        }
+        if (p.stacks(Item.NOVA) > 0 && ++p.novaKills >= 14 - 3 * p.stacks(Item.NOVA)) {
+            p.novaKills = 0;
+            double radius = (260 + 50 * p.stacks(Item.NOVA)) * p.stats.area();
+            run.emit(new GameEvent(GameEvent.Type.NOVA, p.x, p.centerY(), radius, ""));
+            explode(p.x, p.centerY(), radius, 30 + 25 * p.stacks(Item.NOVA), false, true, null);
+        }
         if (p.stacks(Item.CHAIN_REACTION) > 0)
-            explode(e.x, e.centerY(), 115, 20 * p.stacks(Item.CHAIN_REACTION), false, true, null);
+            explode(
+                    e.x,
+                    e.centerY(),
+                    (100 + 15 * p.stacks(Item.CHAIN_REACTION)) * p.stats.area(),
+                    20 * p.stacks(Item.CHAIN_REACTION),
+                    false,
+                    true,
+                    null);
         if (e.kind == EnemyKind.BOMBER) explode(e.x, e.centerY(), 130, 30, false, true, null);
         if (e.affix == Affix.VOLATILE)
             explode(e.x, e.centerY(), 125, 16 * run.enemyDamage(), true, false, null);
@@ -222,6 +267,7 @@ final class Combat {
      */
     boolean hurtPlayer(double amount, double sourceX, Enemy source, boolean melee) {
         var p = run.player;
+        boolean swarm = source != null && source.kind.swarm();
         if (!p.alive() || p.invulnerableTime > 0 || run.phase() != GameRun.Phase.RUNNING)
             return false;
         if (p.barrierCharges > 0) {
@@ -239,14 +285,17 @@ final class Combat {
         }
         p.health = Math.max(0, p.health - damage);
         p.hurtTime = .25;
-        p.invulnerableTime = .8;
+        p.invulnerableTime = swarm ? .5 : .8;
         p.lastHitTime = 0;
         p.shieldRegenDelay = 4;
-        p.swing = null;
-        p.slamming = false;
         double direction = p.x == sourceX ? -p.facing : Math.signum(p.x - sourceX);
-        p.lungeVelocity = direction * 420;
-        if (p.grounded) p.vy = -260;
+        if (!swarm) {
+            // Schwarmbisse unterbrechen keine Angriffe, sonst wäre man in Horden wehrlos.
+            p.swing = null;
+            p.slamming = false;
+            p.lungeVelocity = direction * 420;
+            if (p.grounded) p.vy = -260;
+        }
         run.emit(new GameEvent(GameEvent.Type.PLAYER_HIT, p.x, p.y - 70, damage, ""));
         if (melee && source != null && source.alive()) {
             if (p.stacks(Item.SPIKES) > 0)
@@ -284,6 +333,30 @@ final class Combat {
             boolean hurtsPlayer,
             boolean hurtsEnemies,
             Status status) {
+        blasts.add(new Blast(x, y, radius, damage, hurtsPlayer, hurtsEnemies, status));
+        if (blastDepth == 0) flush();
+    }
+
+    /**
+     * Wertet wartende Explosionen aus. Explosionen, die währenddessen durch Abschüsse entstehen,
+     * werden angehängt statt verschachtelt ausgeführt; mehr als {@value #BLASTS_PER_STEP} pro
+     * Schritt werden auf den nächsten Schritt verschoben.
+     */
+    void flush() {
+        if (blastDepth > 0) return;
+        blastDepth++;
+        try {
+            int budget = BLASTS_PER_STEP;
+            while (!blasts.isEmpty() && budget-- > 0) detonate(blasts.poll());
+        } finally {
+            blastDepth--;
+        }
+    }
+
+    private void detonate(Blast b) {
+        double x = b.x(), y = b.y(), radius = b.radius(), damage = b.damage();
+        boolean hurtsPlayer = b.hurtsPlayer(), hurtsEnemies = b.hurtsEnemies();
+        Status status = b.status();
         run.emit(
                 new GameEvent(
                         status == Status.FREEZE ? GameEvent.Type.FREEZE : GameEvent.Type.EXPLOSION,
@@ -292,8 +365,7 @@ final class Combat {
                         radius,
                         hurtsPlayer ? "hostile" : "friendly"));
         if (hurtsEnemies) {
-            for (int i = 0; i < run.enemies.size(); i++) {
-                var e = run.enemies.get(i);
+            for (var e : run.grid().around(x, y, radius + 120)) {
                 if (!e.alive() || e.untargetable()) continue;
                 if (Math.hypot(e.x - x, e.centerY() - y) > radius + e.width / 2) continue;
                 if (status != null) applyStatus(e, status, status == Status.FREEZE ? 2.2 : 3);
@@ -317,17 +389,47 @@ final class Combat {
      * @param range maximale Reichweite
      */
     void chain(Enemy origin, double damage, double range) {
-        Enemy target = null;
-        double best = range;
-        for (var e : run.enemies) {
-            if (e == origin || !e.alive() || e.untargetable()) continue;
-            double d = Math.hypot(e.x - origin.x, e.centerY() - origin.centerY());
-            if (d < best) {
-                best = d;
-                target = e;
+        chain(origin, damage, range, 1);
+    }
+
+    /**
+     * Kettenblitz über mehrere Sprünge; jeder Gegner wird höchstens einmal getroffen.
+     *
+     * @param origin Ausgangsgegner
+     * @param damage Schaden je Sprung
+     * @param range Sprungweite
+     * @param jumps Anzahl Sprünge
+     */
+    void chain(Enemy origin, double damage, double range, int jumps) {
+        var visited = new java.util.HashSet<Long>();
+        visited.add(origin.id);
+        var from = origin;
+        for (int jump = 0; jump < jumps; jump++) {
+            Enemy target = null;
+            double best = range;
+            for (var e : run.grid().around(from.x, from.centerY(), range)) {
+                if (visited.contains(e.id) || !e.alive() || e.untargetable()) continue;
+                double d = Math.hypot(e.x - from.x, e.centerY() - from.centerY());
+                if (d < best) {
+                    best = d;
+                    target = e;
+                }
             }
+            if (target == null) return;
+            visited.add(target.id);
+            link(from, target, damage);
+            from = target;
         }
-        if (target == null) return;
+    }
+
+    /**
+     * Zeichnet einen Blitz von Gegner zu Gegner und trifft das Ziel.
+     *
+     * @param origin Ausgangspunkt
+     * @param target Ziel
+     * @param damage Schaden
+     */
+    private void link(Enemy origin, Enemy target, double damage) {
         run.emit(
                 GameEvent.link(
                         GameEvent.Type.CHAIN,

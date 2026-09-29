@@ -23,6 +23,9 @@ import java.util.Comparator;
 public final class CampaignPilot {
     private static final double FLOOR = GameRun.FLOOR;
 
+    /** Wählt Levelaufstiege selbst; die Oberflächenprüfung schaltet das ab. */
+    public static boolean autoLevel = true;
+
     private CampaignPilot() {}
 
     /**
@@ -32,6 +35,7 @@ public final class CampaignPilot {
      * @return Eingabe
      */
     public static InputFrame input(GameRun run) {
+        if (autoLevel) levelUp(run);
         var p = run.player();
         var b = InputFrame.builder();
         if (p.vy() < 0) b.holdJump();
@@ -214,6 +218,21 @@ public final class CampaignPilot {
         return run.chooseNextRoom(branch);
     }
 
+    /**
+     * Wählt offene Levelaufstiege nach derselben Bewertung wie Bergungen.
+     *
+     * @param run Tauchgang
+     */
+    public static void levelUp(GameRun run) {
+        for (int guard = 0; guard < 50 && run.pendingLevelUps() > 0; guard++) {
+            var best =
+                    run.levelOffers().stream()
+                            .max(Comparator.comparingInt(o -> score(run, o)))
+                            .orElse(null);
+            if (best == null || !run.chooseLevelUp(best)) break;
+        }
+    }
+
     private static boolean useful(GameRun run, Offer offer) {
         var p = run.player();
         return switch (offer.type()) {
@@ -241,6 +260,7 @@ public final class CampaignPilot {
             case SERVO, PLATING, MEDICAL, NANITES, SECOND_HEART, BARRIER -> 90;
             case RECOVERY, REGEN, OVERCLOCK, LENS, SHIELD_CELL, ADRENALINE -> 75;
             case ARC_COIL, CHAIN_REACTION, CRIT_DAMAGE, AMBUSH, LEVIATHAN_TOOTH -> 65;
+            case BLADE_WAVE, ORBITAL, TESLA_FIELD, MULTISHOT, NOVA, AREA, BLOODRUSH -> 80;
             case GLASS_HULL, GREED, FEVER -> 0;
             default -> 45;
         };

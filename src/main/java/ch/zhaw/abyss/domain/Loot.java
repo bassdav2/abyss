@@ -66,6 +66,7 @@ final class Loot {
             case HEALTH -> p.heal(pickup.value);
             case ENERGY -> p.addEnergy(pickup.value);
             case CORE -> p.cores += (int) pickup.value;
+            case SHARD -> run.gainXp(pickup.value);
         }
         run.emit(
                 new GameEvent(
@@ -104,6 +105,7 @@ final class Loot {
      * @param y Ursprung
      */
     void drop(Pickup.Kind kind, double value, double x, double y) {
+        if (run.pickups.size() >= MAX_PICKUPS && merge(kind, value, x, y)) return;
         double angle = -Math.PI / 2 + (run.rng.nextDouble() - .5) * 1.8;
         double speed = 260 + run.rng.nextDouble() * 280;
         run.pickups.add(
@@ -115,6 +117,26 @@ final class Loot {
                         Math.min(y, GameRun.FLOOR - 10),
                         Math.cos(angle) * speed,
                         Math.sin(angle) * speed));
+    }
+
+    /** Ab dieser Menge liegender Beute verschmelzen neue Splitter und Schrott mit alter Beute. */
+    static final int MAX_PICKUPS = 220;
+
+    private boolean merge(Pickup.Kind kind, double value, double x, double y) {
+        if (kind != Pickup.Kind.SHARD && kind != Pickup.Kind.SCRAP) return false;
+        Pickup best = null;
+        double distance = Double.MAX_VALUE;
+        for (var pickup : run.pickups) {
+            if (pickup.kind != kind || pickup.collected) continue;
+            double d = Math.abs(pickup.x - x) + Math.abs(pickup.y - y);
+            if (d < distance) {
+                distance = d;
+                best = pickup;
+            }
+        }
+        if (best == null) return false;
+        best.value += value;
+        return true;
     }
 
     /**

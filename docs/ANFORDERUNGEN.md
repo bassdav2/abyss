@@ -110,6 +110,7 @@ Primärer Akteur: Spieler/in. Nachbarsystem: lokales Dateisystem. Kein Konto, ke
 - **Q-04 Bedienbarkeit:** Vorwarnungen, Interaktionshinweise und Einstiegshilfe im ersten Raum; menschlicher Erstnutzertest offen.
 - **Q-05 Nachvollziehbarkeit:** KI-Einsatz, Quellen, Tests und Build-Schritte dokumentiert.
 - **Q-06 Portabilität:** Java-Quellcode plattformneutral; geprüft nur auf Apple-Silicon-macOS.
+- **Q-07 Datenschutz:** Kein Netzwerkzugriff; Profil und Spielstände liegen ausschliesslich lokal.
 
 ## Nicht im Umfang
 

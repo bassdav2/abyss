@@ -54,6 +54,14 @@ class GameRunTest {
         }
         assertTrue(run.room().waveCount() >= 2, "Sektor 2 hat mehrere Wellen");
         run.drainEvents();
+        assertTrue(run.hordeRemaining() > 0, "Schwärme strömen nach");
+        for (var enemy : run.enemies) enemy.health = 0;
+        run.update(TestRuns.STEP, InputFrame.NONE);
+        assertTrue(
+                run.drainEvents().stream()
+                        .noneMatch(e -> e.type() == GameEvent.Type.REINFORCEMENTS),
+                "solange der Schwarm nachströmt, bleibt die Welle offen");
+        run.clearHordes();
         for (var enemy : run.enemies) enemy.health = 0;
         run.update(TestRuns.STEP, InputFrame.NONE);
         assertTrue(
@@ -130,7 +138,10 @@ class GameRunTest {
                 c.reviveUsed(),
                 c.rushStacks(),
                 c.healthPenalty(),
-                c.bonusHealth());
+                c.bonusHealth(),
+                c.level(),
+                c.xp(),
+                c.pendingLevelUps());
     }
 
     @Test

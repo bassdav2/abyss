@@ -1,7 +1,5 @@
 package ch.zhaw.abyss.domain;
 
-import java.util.Comparator;
-
 /**
  * Angriffe der spielenden Figur: Waffenkombinationen mit Aushol-, Treffer- und Nachlauffenster,
  * Luftangriffe, Bodenstampfer, Harpunen mit Zielhilfe, aktive Module und die Begleitdrohne.
@@ -37,7 +35,17 @@ final class Arsenal {
 
     private double attackSpeed() {
         var p = run.player;
-        return p.stats.attackSpeed() * (p.overdriveTime > 0 ? 1.4 : 1);
+        return p.stats.attackSpeed() * (p.overdriveTime > 0 ? 1.4 : 1) * (1 + frenzyBonus(p));
+    }
+
+    /**
+     * @param p Figur
+     * @return Angriffstempo-Bonus des Blutrauschs
+     */
+    static double frenzyBonus(Player p) {
+        int stacks = p.stacks(Item.BLOODRUSH);
+        if (stacks == 0 || p.frenzy == 0) return 0;
+        return Math.min(.25 + .1 * stacks, p.frenzy * (.015 + .005 * stacks));
     }
 
     private void startSwing() {
@@ -59,6 +67,7 @@ final class Arsenal {
         p.swingHits.clear();
         p.swingCrates.clear();
         p.swingFired = false;
+        p.waveFired = false;
         p.chainedThisSwing = false;
         p.comboTimer = swing.duration() / attackSpeed() + .4;
         if (!air && !swing.ranged()) p.lungeVelocity = p.facing * swing.lunge() * 11;
@@ -91,6 +100,10 @@ final class Arsenal {
             }
         } else if (p.swingTime >= swing.windup()
                 && p.swingTime <= swing.windup() + swing.active()) {
+            if (!p.waveFired && p.stacks(Item.BLADE_WAVE) > 0) {
+                p.waveFired = true;
+                bladeWaves(swing, p.facing);
+            }
             meleeHits(swing, false);
             if (p.weapon == Weapon.ANCHOR && p.swingIndex == 1 && !p.swingFired) anchorWaves(swing);
         }
@@ -117,25 +130,56 @@ final class Arsenal {
         run.emit(new GameEvent(GameEvent.Type.SLAM, p.x + p.facing * 80, p.y, 120, "player"));
     }
 
+    /**
+     * Druckklingen der Klingenwelle: mit dem Mehrfachlader fächern mehrere Klingen auf.
+     *
+     * @param swing aktueller Schlag
+     * @param direction Flugrichtung
+     */
+    private void bladeWaves(Swing swing, int direction) {
+        var p = run.player;
+        int stacks = p.stacks(Item.BLADE_WAVE);
+        int count = 1 + p.stats.extraProjectiles();
+        double area = p.stats.area();
+        for (int i = 0; i < count; i++) {
+            double spread = (i - (count - 1) / 2.0) * .14;
+            var blade =
+                    run.shoot(
+                            Projectile.Kind.BLADE,
+                            true,
+                            p.x + direction * 50,
+                            p.y - 62,
+                            direction * Math.cos(spread) * 980,
+                            Math.sin(spread) * 980,
+                            swing.damage() * (.4 + .1 * (stacks - 1)),
+                            26 * area,
+                            .5 + .06 * stacks);
+            blade.pierce = 2 + stacks;
+            blade.knockback = swing.knockback() * .4;
+        }
+    }
+
     private void meleeHits(Swing swing, boolean slam) {
         var p = run.player;
-        double reach = swing.reach() * p.stats.reach();
+        double area = p.stats.area();
+        double reach = swing.reach() * p.stats.reach() * area;
+        double height = swing.height() * Math.sqrt(area);
         Bounds zone;
-        if (slam) zone = new Bounds(p.x - 60, p.y - 80, 120, 110);
+        if (slam) zone = new Bounds(p.x - 60 * area, p.y - 80, 120 * area, 110);
         else if (swing.style() == Swing.Style.AIR_SLASH)
             zone =
                     new Bounds(
                             p.facing > 0 ? p.x - 30 : p.x - reach,
-                            p.y - swing.height() + 40,
+                            p.y - height + 40,
                             reach + 30,
-                            swing.height());
+                            height);
         else
             zone =
                     new Bounds(
                             p.facing > 0 ? p.x - 16 : p.x - reach + 16,
-                            p.y - swing.height() - 4,
+                            p.y - height - 4,
                             reach,
-                            swing.height());
+                            height);
         double damage = swing.damage() * (slam ? .5 : 1);
         for (var crate : run.crates)
             if (crate.intact()
@@ -144,8 +188,14 @@ final class Arsenal {
                 p.swingCrates.add(crate);
                 if (crate.hit(damage * p.stats.damage())) run.loot.breakCrate(crate);
             }
-        for (int i = 0; i < run.enemies.size(); i++) {
-            var e = run.enemies.get(i);
+        var candidates =
+                run.grid()
+                        .query(
+                                zone.x(),
+                                zone.y(),
+                                zone.x() + zone.width(),
+                                zone.y() + zone.height());
+        for (var e : candidates) {
             if (!e.alive() || e.untargetable() || p.swingHits.contains(e.id)) continue;
             if (!zone.intersects(e.bounds())) continue;
             p.swingHits.add(e.id);
@@ -157,7 +207,7 @@ final class Arsenal {
             }
             if (p.swingIndex == 2 && p.stacks(Item.ARC_COIL) > 0) {
                 p.chainedThisSwing = true;
-                run.combat.chain(e, 15 * p.stacks(Item.ARC_COIL), 300);
+                run.combat.chain(e, 15 * p.stacks(Item.ARC_COIL), 300, p.stacks(Item.ARC_COIL));
             }
         }
     }
@@ -169,13 +219,17 @@ final class Arsenal {
         p.slamming = false;
         if (swing == null) return;
         p.swingTime = swing.windup() + swing.active();
-        run.emit(new GameEvent(GameEvent.Type.SLAM, p.x, p.y, 170, "player"));
+        double radius = 170 * p.stats.area();
+        run.emit(new GameEvent(GameEvent.Type.SLAM, p.x, p.y, radius, "player"));
         if (run.phase() != GameRun.Phase.RUNNING) return;
-        for (int i = 0; i < run.enemies.size(); i++) {
-            var e = run.enemies.get(i);
+        if (p.stacks(Item.BLADE_WAVE) > 0) {
+            bladeWaves(swing, -1);
+            bladeWaves(swing, 1);
+        }
+        for (var e : run.grid().around(p.x, p.y - 60, radius + 120)) {
             if (e.alive()
                     && !e.untargetable()
-                    && Math.abs(e.x - p.x) < 170 + e.width / 2
+                    && Math.abs(e.x - p.x) < radius + e.width / 2
                     && Math.abs(e.y - p.y) < 140)
                 run.combat.hitEnemy(e, swing.damage(), Combat.Source.MELEE, swing.knockback(), p.x);
         }
@@ -187,21 +241,25 @@ final class Arsenal {
     private void fireHarpoon(Swing swing) {
         var p = run.player;
         double originX = p.x + p.facing * 40, originY = p.y - 62;
-        double angle = aimAssist(originX, originY);
-        var harpoon =
-                run.shoot(
-                        Projectile.Kind.HARPOON,
-                        true,
-                        originX,
-                        originY,
-                        p.facing * Math.cos(angle) * 1150,
-                        Math.sin(angle) * 1150,
-                        swing.damage() * (p.stacks(Item.HOMING) > 0 ? 1.2 : 1),
-                        12,
-                        1.1);
-        harpoon.pierce = p.swingIndex == 2 ? 3 : 1;
-        harpoon.knockback = swing.knockback();
-        harpoon.homing = p.stacks(Item.HOMING) > 0;
+        double aim = aimAssist(originX, originY);
+        int count = 1 + p.stats.extraProjectiles();
+        for (int i = 0; i < count; i++) {
+            double angle = aim + (i - (count - 1) / 2.0) * .12;
+            var harpoon =
+                    run.shoot(
+                            Projectile.Kind.HARPOON,
+                            true,
+                            originX,
+                            originY,
+                            p.facing * Math.cos(angle) * 1150,
+                            Math.sin(angle) * 1150,
+                            swing.damage() * (1 + .2 * p.stacks(Item.HOMING)),
+                            12,
+                            1.1);
+            harpoon.pierce = (p.swingIndex == 2 ? 3 : 1) + p.stacks(Item.BLADE_WAVE);
+            harpoon.knockback = swing.knockback();
+            harpoon.homing = p.stacks(Item.HOMING) > 0;
+        }
         p.lungeVelocity = p.facing * swing.lunge() * 11;
         run.emit(GameEvent.at(GameEvent.Type.HARPOON, originX, originY));
     }
@@ -254,19 +312,22 @@ final class Arsenal {
                 run.emit(GameEvent.at(GameEvent.Type.SHIELD, p.x, p.centerY()));
             }
             case TORPEDO -> {
-                var torpedo =
-                        run.shoot(
-                                Projectile.Kind.TORPEDO,
-                                true,
-                                p.x + p.facing * 40,
-                                p.y - 60,
-                                p.facing * 540,
-                                0,
-                                60,
-                                16,
-                                3);
-                torpedo.homing = true;
-                torpedo.explosionRadius = 185;
+                int count = 1 + p.stats.extraProjectiles();
+                for (int i = 0; i < count; i++) {
+                    var torpedo =
+                            run.shoot(
+                                    Projectile.Kind.TORPEDO,
+                                    true,
+                                    p.x + p.facing * 40,
+                                    p.y - 60 - i * 26,
+                                    p.facing * 540,
+                                    (i - (count - 1) / 2.0) * 120,
+                                    60,
+                                    16,
+                                    3);
+                    torpedo.homing = true;
+                    torpedo.explosionRadius = 185 * p.stats.area();
+                }
                 run.emit(GameEvent.at(GameEvent.Type.TORPEDO, p.x, p.y - 60));
             }
             case SONAR -> {
@@ -286,7 +347,7 @@ final class Arsenal {
                                 12,
                                 3);
                 grenade.gravity = 1500;
-                grenade.explosionRadius = 175;
+                grenade.explosionRadius = 175 * p.stats.area();
                 grenade.status = Status.FREEZE;
                 run.emit(GameEvent.at(GameEvent.Type.SHOT, p.x, p.y - 90));
             }
@@ -303,10 +364,10 @@ final class Arsenal {
     }
 
     private void pulse(Player p) {
-        run.emit(new GameEvent(GameEvent.Type.PULSE, p.x, p.centerY(), 290, ""));
-        for (int i = 0; i < run.enemies.size(); i++) {
-            var e = run.enemies.get(i);
-            if (!e.alive() || Math.hypot(e.x - p.x, e.centerY() - p.centerY()) > 300) continue;
+        double radius = 300 * p.stats.area();
+        run.emit(new GameEvent(GameEvent.Type.PULSE, p.x, p.centerY(), radius - 10, ""));
+        for (var e : run.grid().around(p.x, p.centerY(), radius + 100)) {
+            if (!e.alive() || Math.hypot(e.x - p.x, e.centerY() - p.centerY()) > radius) continue;
             run.combat.hitEnemy(e, 34, Combat.Source.ABILITY, 380, p.x);
             if (!e.kind.boss() && e.alive() && e.state != Enemy.State.HIDDEN) {
                 e.state = Enemy.State.STUNNED;
@@ -329,24 +390,100 @@ final class Arsenal {
         p.droneCooldown -= dt;
         if (p.droneCooldown > 0 || run.phase() != GameRun.Phase.RUNNING) return;
         double originX = p.x - p.facing * 40, originY = p.y - 150;
-        run.enemies.stream()
-                .filter(e -> e.alive() && !e.untargetable())
-                .filter(e -> Math.abs(e.x - p.x) < 720)
-                .min(Comparator.comparingDouble(e -> Math.abs(e.x - p.x)))
-                .ifPresent(
-                        e -> {
-                            double angle = Math.atan2(e.centerY() - originY, e.x - originX);
-                            run.shoot(
-                                    Projectile.Kind.DRONE_SHOT,
-                                    true,
-                                    originX,
-                                    originY,
-                                    Math.cos(angle) * 900,
-                                    Math.sin(angle) * 900,
-                                    9,
-                                    7,
-                                    1.2);
-                            p.droneCooldown = .42;
-                        });
+        var targets = run.grid().nearest(p.x, p.centerY(), 720, 1 + p.stats.extraProjectiles());
+        for (var e : targets) {
+            double angle = Math.atan2(e.centerY() - originY, e.x - originX);
+            run.shoot(
+                    Projectile.Kind.DRONE_SHOT,
+                    true,
+                    originX,
+                    originY,
+                    Math.cos(angle) * 900,
+                    Math.sin(angle) * 900,
+                    9,
+                    7,
+                    1.2);
+            p.droneCooldown = .42;
+        }
+    }
+
+    // --- Horden-Werkzeuge: Blutrausch, Kreiselmesser, Teslafeld -------------------------------
+
+    /** Umlaufgeschwindigkeit der Kreiselmesser in Radiant pro Sekunde. */
+    static final double ORBIT_SPEED = 3.4;
+
+    /**
+     * @param p Figur
+     * @return Bahnradius der Kreiselmesser
+     */
+    static double orbitRadius(Player p) {
+        return (95 + 10 * p.stacks(Item.ORBITAL)) * p.stats.area();
+    }
+
+    /**
+     * Positionen der Kreiselmesser als Paare (x, y).
+     *
+     * @param time Tauchzeit
+     * @return Koordinaten, leer ohne Kreiselmesser
+     */
+    double[] orbitals(double time) {
+        var p = run.player;
+        int count = p.stacks(Item.ORBITAL);
+        var result = new double[count * 2];
+        double radius = orbitRadius(p);
+        for (int i = 0; i < count; i++) {
+            double angle = time * ORBIT_SPEED + i * Math.PI * 2 / count;
+            result[i * 2] = p.x + Math.cos(angle) * radius;
+            result[i * 2 + 1] = p.centerY() + Math.sin(angle) * radius * .7;
+        }
+        return result;
+    }
+
+    /**
+     * Wirkt die dauerhaften Horden-Werkzeuge der Figur.
+     *
+     * @param dt Schrittweite
+     */
+    void updateHordeWeapons(double dt) {
+        var p = run.player;
+        if (p.frenzy > 0) {
+            p.frenzyTime -= dt;
+            if (p.frenzyTime <= 0) {
+                p.frenzy = Math.max(0, p.frenzy - 3);
+                p.frenzyTime = .5;
+            }
+        }
+        int orbitals = p.stacks(Item.ORBITAL);
+        if (orbitals > 0) {
+            var blades = orbitals(run.elapsed());
+            double reach = 34 * p.stats.area();
+            for (int i = 0; i < blades.length; i += 2) {
+                double bx = blades[i], by = blades[i + 1];
+                for (var e : run.grid().around(bx, by, reach + 100)) {
+                    if (!e.alive() || e.untargetable()) continue;
+                    if (Math.abs(e.x - bx) > reach + e.width / 2
+                            || Math.abs(e.centerY() - by) > reach + e.height / 2) continue;
+                    double last = p.orbitHits.getOrDefault(e.id, -9.0);
+                    if (run.elapsed() - last < .35) continue;
+                    p.orbitHits.put(e.id, run.elapsed());
+                    run.combat.hitEnemy(e, 12, Combat.Source.ORBIT, 140, p.x);
+                }
+            }
+            if (p.orbitHits.size() > 600) p.orbitHits.clear();
+        }
+        int tesla = p.stacks(Item.TESLA_FIELD);
+        if (tesla > 0) {
+            p.teslaTime -= dt;
+            if (p.teslaTime <= 0) {
+                p.teslaTime = 1.2 * Math.pow(.9, tesla - 1);
+                var targets = run.grid().nearest(p.x, p.centerY(), 340 * p.stats.area(), 1 + tesla);
+                for (var e : targets) {
+                    run.emit(
+                            GameEvent.link(
+                                    GameEvent.Type.CHAIN, p.x, p.centerY() - 20, e.x, e.centerY()));
+                    run.combat.hitEnemy(e, 14 + 3 * tesla, Combat.Source.CHAIN, 40, p.x);
+                }
+            }
+        }
     }
 }

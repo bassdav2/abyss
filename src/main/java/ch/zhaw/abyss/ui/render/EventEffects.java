@@ -19,6 +19,15 @@ final class EventEffects {
     private final HudRenderer hud;
     private final ScreenFeel feel;
 
+    /** Effektbudget pro Bild: im Schwarm bleiben Funken, Trümmer und Wackeln im Rahmen. */
+    private int hits, downs;
+
+    /** Setzt das Effektbudget für ein neues Bild zurück. */
+    void frame() {
+        hits = 0;
+        downs = 0;
+    }
+
     EventEffects(Effects fx, Camera camera, HudRenderer hud, ScreenFeel feel) {
         this.fx = fx;
         this.camera = camera;
@@ -40,10 +49,20 @@ final class EventEffects {
         switch (e.type()) {
             case HIT -> {
                 boolean burn = "BURN".equals(e.text());
-                if (!burn) {
-                    fx.burst(Effects.Kind.SPARK, x, y, 6, 110, direction(run, x), 1.6, Pal.RUST_7);
-                    feel.hitStop = Math.max(feel.hitStop, .035);
-                    camera.shake(.06 * shake);
+                if (!burn && ++hits <= 24) {
+                    fx.burst(
+                            Effects.Kind.SPARK,
+                            x,
+                            y,
+                            hits <= 8 ? 6 : 2,
+                            110,
+                            direction(run, x),
+                            1.6,
+                            Pal.RUST_7);
+                    if (hits <= 2) {
+                        feel.hitStop = Math.max(feel.hitStop, .035);
+                        camera.shake(.06 * shake);
+                    }
                 }
                 if (settings.damageNumbers() && (e.amount() >= 1 || !burn))
                     fx.text(
@@ -81,6 +100,27 @@ final class EventEffects {
                     fx.text("GEBLOCKT", x, y - 12, .6, Pal.TEAL_5, 1);
             }
             case ENEMY_DOWN, ELITE_DOWN -> {
+                if (e.amount() >= EnemyKind.MITE.ordinal()
+                        && e.amount() <= EnemyKind.NANODRONE.ordinal()) {
+                    // Schwarmgegner zerplatzen klein, damit hundert Abschüsse lesbar bleiben
+                    if (++downs > 40) return;
+                    int color =
+                            (int) e.amount() == EnemyKind.GLOWFISH.ordinal()
+                                    ? Pal.VIOLET_4
+                                    : Pal.RUST_4;
+                    fx.burst(
+                            Effects.Kind.DEBRIS,
+                            x,
+                            y,
+                            downs <= 12 ? 6 : 3,
+                            120,
+                            -Math.PI / 2,
+                            2.6,
+                            color);
+                    if (downs <= 6) fx.explosion(x, y, 5, false);
+                    if (downs <= 3) camera.shake(.04 * shake);
+                    return;
+                }
                 var kind =
                         EnemyKind.values()[
                                 (int)
@@ -226,10 +266,40 @@ final class EventEffects {
                 camera.shake(.35 * shake);
             }
             case SPAWN -> {
+                if ("vent".equals(e.text())) {
+                    // Lüftung speit einen Schwarm aus
+                    fx.burst(Effects.Kind.SMOKE, x, y - 4, 8, 60, -Math.PI / 2, 2.2, 0xFF3A3434);
+                    fx.burst(Effects.Kind.DEBRIS, x, y - 4, 5, 110, -Math.PI / 2, 2, Pal.STEEL_4);
+                    fx.ring(x, y - 6, 2, 18, .3, Pal.RED_4);
+                    return;
+                }
                 fx.burst(Effects.Kind.BUBBLE, x, y - 6, 10, 40, -Math.PI / 2, 2.4, Pal.TEAL_6);
                 fx.ring(x, y - 8, 2, 14, .35, Pal.RED_4);
                 if ((int) e.amount() == EnemyKind.SMUGGLER.ordinal())
                     hud.toast("SCHMUGGLERDROHNE MIT BEUTE · 15 SEKUNDEN", Pal.RUST_6);
+            }
+            case LEVEL_UP -> {
+                double px = run.player().x() * PX, py = run.player().centerY() * PX;
+                fx.ring(px, py, 6, 70, .6, Pal.VIOLET_4);
+                fx.ring(px, py, 4, 40, .45, Pal.VIOLET_5);
+                fx.burst(Effects.Kind.STAR, px, py, 24, 110, 0, 6.3, Pal.VIOLET_5);
+                fx.flash(px, py, 60, Pal.VIOLET_4, 1, .25);
+                feel.flash = Math.max(feel.flash, .2);
+                feel.flashColor = Pal.VIOLET_4;
+                hud.banner(
+                        "ÜBERLADUNG · STUFE " + (int) e.amount(),
+                        "Wähle eine Verstärkung",
+                        Pal.VIOLET_4,
+                        1.6);
+            }
+            case NOVA -> {
+                double radius = e.amount() * PX;
+                fx.ring(x, y, 8, radius, .5, Pal.RUST_6);
+                fx.ring(x, y, 4, radius * .7, .4, Pal.WHITE);
+                fx.flash(x, y, radius, Pal.RUST_6, .9, .2);
+                camera.shake(.3 * shake);
+                feel.flash = Math.max(feel.flash, .12);
+                feel.flashColor = Pal.RUST_6;
             }
             case ROOM_CLEAR -> {
                 hud.banner(

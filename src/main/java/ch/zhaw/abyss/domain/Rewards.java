@@ -201,6 +201,16 @@ final class Rewards {
         return true;
     }
 
+    /**
+     * Verbucht ein Angebot ohne Preis und ohne Raumbedingung, etwa beim Levelaufstieg.
+     *
+     * @param offer Angebot
+     * @return {@code true}, wenn es angewendet wurde
+     */
+    boolean grant(Offer offer) {
+        return apply(run.player, offer);
+    }
+
     private boolean apply(Player p, Offer offer) {
         switch (offer.type()) {
             case ITEM -> {

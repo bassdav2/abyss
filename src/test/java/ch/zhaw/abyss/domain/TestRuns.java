@@ -37,6 +37,7 @@ final class TestRuns {
 
     /** Entfernt alle Gegner und Gefahren, ohne den Raum zu sichern. */
     static void empty(GameRun run) {
+        run.clearHordes();
         run.enemies.clear();
         run.projectiles.clear();
         run.hazards.clear();
@@ -70,6 +71,7 @@ final class TestRuns {
     /** Besiegt alle Wellen des aktuellen Raums ohne Eingaben. */
     static void clear(GameRun run) {
         for (int tick = 0; tick < 120 * 30 && run.phase() == GameRun.Phase.RUNNING; tick++) {
+            run.clearHordes();
             for (var enemy : run.enemies) enemy.health = 0;
             run.update(STEP, InputFrame.NONE);
         }

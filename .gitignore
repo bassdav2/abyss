@@ -12,3 +12,4 @@ docs/qa/*.mp4
 release/
 __pycache__/
 *.pyc
+bin/

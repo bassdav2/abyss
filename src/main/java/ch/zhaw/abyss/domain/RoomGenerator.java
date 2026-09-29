@@ -130,7 +130,7 @@ public final class RoomGenerator {
                 && condition != RoomCondition.BREACH
                 && smuggler.nextInt(100) < 14
                 && !waves.isEmpty()
-                && waves.getFirst().size() < 6) {
+                && waves.getFirst().size() < MAX_CORE) {
             var first = new ArrayList<>(waves.getFirst());
             first.add(
                     new RoomPlan.Spawn(
@@ -149,7 +149,7 @@ public final class RoomGenerator {
                 var reinforced = new ArrayList<List<RoomPlan.Spawn>>();
                 for (var wave : waves) {
                     var spawns = new ArrayList<>(wave);
-                    if (spawns.size() < 6)
+                    if (spawns.size() < MAX_CORE)
                         spawns.add(
                                 place(
                                         pick(sector, depth, special),
@@ -193,7 +193,95 @@ public final class RoomGenerator {
                 crates,
                 salvage,
                 condition,
-                fixtures(kind, depth, sector, layout, hazards, random(depth, branch).nextLong()));
+                fixtures(kind, depth, sector, layout, hazards, random(depth, branch).nextLong()),
+                hordes(
+                        kind,
+                        depth,
+                        sector,
+                        waves.size(),
+                        condition,
+                        random(depth, branch).nextLong()));
+    }
+
+    /** Höchstzahl fest platzierter Gegner pro Welle; Schwärme kommen zusätzlich. */
+    static final int MAX_CORE = 10;
+
+    /**
+     * Schwarmkontingente je Welle. Sie wachsen mit Raumtiefe, Zyklus und Druckstufe: früh begleiten
+     * eine Handvoll Milben die Patrouille, im Endgame strömen hunderte Gegner nach. Eigener
+     * Zufallsstrom, damit die übrigen Raumdaten unverändert bleiben.
+     */
+    private List<List<RoomPlan.Horde>> hordes(
+            RoomPlan.Kind kind,
+            int depth,
+            int sector,
+            int waveCount,
+            RoomCondition condition,
+            long seed) {
+        var result = new ArrayList<List<RoomPlan.Horde>>();
+        var random = new Random(seed ^ 0x6D1E5A11L);
+        double scale = hordeScale();
+        for (int wave = 0; wave < waveCount; wave++) {
+            double base =
+                    switch (kind) {
+                        case COMBAT, ELITE -> 3 + depth * 1.6;
+                        case BOSS, BRIDGE -> sector == 0 ? 0 : 5 + 5 * sector;
+                        default -> 0;
+                    };
+            if (kind == RoomPlan.Kind.ELITE) base *= 1.5;
+            if (condition == RoomCondition.ALARM) base *= 1.5;
+            if (condition == RoomCondition.BREACH) base *= .6;
+            int total = depth == 0 ? 3 : (int) Math.round(base * scale * (1 + wave * .25));
+            result.add(total <= 0 ? List.of() : split(sector, total, random));
+        }
+        return result;
+    }
+
+    /**
+     * @return Vervielfacher der Schwarmgrösse aus Zyklus und Druckstufe
+     */
+    double hordeScale() {
+        return Math.min(20, (1 + cycle * 1.4) * (1 + .4 * pressure));
+    }
+
+    private static List<RoomPlan.Horde> split(int sector, int total, Random random) {
+        EnemyKind[] kinds;
+        double[] share;
+        switch (sector) {
+            case 0 -> {
+                kinds = new EnemyKind[] {EnemyKind.MITE};
+                share = new double[] {1};
+            }
+            case 1 -> {
+                kinds = new EnemyKind[] {EnemyKind.MITE, EnemyKind.NANODRONE};
+                share = new double[] {.7, .3};
+            }
+            case 2 -> {
+                kinds = new EnemyKind[] {EnemyKind.GLOWFISH, EnemyKind.MITE};
+                share = new double[] {.6, .4};
+            }
+            default -> {
+                kinds = new EnemyKind[] {EnemyKind.NANODRONE, EnemyKind.MITE, EnemyKind.GLOWFISH};
+                share = new double[] {.45, .35, .2};
+            }
+        }
+        var result = new ArrayList<RoomPlan.Horde>();
+        int left = total;
+        for (int i = 0; i < kinds.length; i++) {
+            int count =
+                    i == kinds.length - 1
+                            ? left
+                            : Math.min(
+                                    left,
+                                    (int)
+                                            Math.round(
+                                                    total
+                                                            * share[i]
+                                                            * (.85 + random.nextDouble() * .3)));
+            left -= count;
+            if (count > 0) result.add(new RoomPlan.Horde(kinds[i], count));
+        }
+        return result;
     }
 
     /**
@@ -487,14 +575,14 @@ public final class RoomGenerator {
             return spawns;
         }
         double budget =
-                2
-                        + sector * 1.6
-                        + (depth % SECTOR_ROOMS) * .5
-                        + wave * .5
-                        + Math.min(6, cycle * 1.2)
-                        + pressure * .6;
+                2.5
+                        + sector * 1.8
+                        + (depth % SECTOR_ROOMS) * .6
+                        + wave * .6
+                        + Math.min(12, cycle * 1.6)
+                        + pressure * .8;
         int eliteIndex = elite ? 0 : -1;
-        while (budget >= 1 && spawns.size() < 6) {
+        while (budget >= 1 && spawns.size() < MAX_CORE) {
             var kind = pick(sector, depth, random);
             if (kind.threat() > budget + .5 && spawns.size() > 0) {
                 kind = EnemyKind.SCUTTLER;

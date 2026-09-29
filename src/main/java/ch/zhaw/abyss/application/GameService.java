@@ -88,7 +88,8 @@ public final class GameService {
                         profile.weaponPool(loadout.diver()),
                         profile.bonusHealth(),
                         profile.bonusKits(),
-                        profile.startSalvage());
+                        profile.startSalvage(),
+                        profile.meta());
         run = new GameRun(setup);
         accountedKills = 0;
         accountedCores = 0;
@@ -114,7 +115,10 @@ public final class GameService {
             var checkpoint = saved.get();
             run =
                     GameRun.restore(
-                            checkpoint, profile.itemPool(), profile.weaponPool(checkpoint.diver()));
+                            checkpoint,
+                            profile.itemPool(),
+                            profile.weaponPool(checkpoint.diver()),
+                            profile.meta());
             accountedKills = run.kills();
             accountedCores = run.player().cores();
             outcomeRecorded = false;

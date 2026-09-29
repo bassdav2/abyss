@@ -77,6 +77,9 @@ In 1.0 waren Menüs JavaFX-Controls mit CSS über der Pixelfläche; sie wirkten 
 ### ADR-10 · Raumtechnik als Aggregat-Mitarbeiter (neu in 1.1)
 Förderbänder, Dampfdüsen, Turbinenwind, Pressen, Lasergitter und Notschalter sind `Fixture`s im `GameRun`. `Fixture` kennt nur Art, Lage und Takt; `Machinery` berechnet Schub, Starts, Treffer und Schalter-Effekte. Anlagen-Treffer nutzen die Quelle `MACHINE`, die die Panzerung von Wächtern durchschlägt und ihren Kern kurz freilegt. So werden Bossarenen interaktiv, ohne die Bossverhalten anzufassen. Der Generator verteilt Anlagen aus einem eigenen Zufallsstrom.
 
+### ADR-11 · Schwärme: räumliches Raster, Hordenkontingente und Explosionswarteschlange (neu in 1.2)
+Hunderte Gegner gleichzeitig verlangen, dass keine Abfrage über alle Gegner läuft. `EnemyGrid` teilt den Raum in Zellen von 160 Einheiten und wird pro Schritt einmal aufgebaut; Nahkampf, Geschosse, Explosionen, Kettenblitze, Zielsucher und Horden-Werkzeuge fragen nur Zellen in Reichweite ab. Treffer werden in Spawn-Reihenfolge geliefert, damit Zufallszüge und damit ganze Tauchgänge deterministisch bleiben. Schwärme stehen als `RoomPlan.Horde` je Welle im Raumplan; `GameRun` lässt sie schubweise bis zu einer Obergrenze gleichzeitiger Gegner nachströmen, eine Welle endet erst, wenn auch ihr Kontingent besiegt ist. `Combat` wertet Explosionen über eine Warteschlange aus: Kettenreaktionen laufen iterativ statt rekursiv und höchstens 160 pro Schritt. Die Darstellung begrenzt Funken, Trümmer, Lichter und Trefferpausen pro Bild. Gemessen: mit 200–299 lebenden Gegnern ≈ 2,2 ms Zeichenzeit und 0,06 ms Simulation pro Bild (`./gradlew swarmBench`).
+
 ## Verantwortlichkeiten
 
 | Klasse | Verantwortung | Bewusst nicht zuständig |

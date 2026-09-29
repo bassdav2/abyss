@@ -151,7 +151,10 @@ public final class AudioSystem implements AutoCloseable {
                     case HARPOON -> "harpoon";
                     case EXPLOSION, SLAM -> "explosion";
                     case FREEZE -> "freeze";
-                    case DRONE, SPAWN -> "spawn";
+                    case DRONE -> "spawn";
+                    case SPAWN -> "swarm".equals(event.text()) ? null : "spawn";
+                    case LEVEL_UP -> "upgrade";
+                    case NOVA -> "explosion";
                     case TELEGRAPH, REINFORCEMENTS -> "warning";
                     case ROOM_CLEAR -> "clear";
                     case UPGRADE, WEAPON, HEAL, SUPPLY, PURCHASE, SYNERGY -> "upgrade";

@@ -76,7 +76,7 @@ public record Offer(Type type, Item item, Weapon weapon, int price) {
             case WEAPON -> weapon.description();
             case REPAIR_KIT -> "+1 Reparaturset\nQ: +35 Integrität";
             case HEAL -> "+40 Integrität sofort";
-            case WEAPON_UPGRADE -> "+15 % Waffenschaden\nnächste Stufe";
+            case WEAPON_UPGRADE -> "+20 % Waffenschaden\nnächste Stufe";
             case SUPPLIES -> "+25 Integrität, +35 Energie\n+10 Schrott";
         };
     }

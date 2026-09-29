@@ -1,40 +1,48 @@
 {
-  "version": "1.1.0",
-  "verifiedUtc": "2026-09-25T11:08:11+00:00",
+  "version": "1.2.0",
+  "verifiedUtc": "2026-09-29T08:45:00+00:00",
   "environment": "macOS 27 Apple Silicon, OpenJDK 25, JavaFX 26.0.2, Gradle 9.3.1",
   "junit": {
-    "tests": 106,
+    "tests": 118,
     "failures": 0,
     "errors": 0,
     "skipped": 0,
-    "seconds": 6.5
+    "seconds": 11.1
   },
   "checks": {
     "checkJavaFormat": "passed",
-    "javadoc -Xdoclint": "passed, no warnings"
+    "javadoc -Xdoclint": "passed, no warnings",
+    "uiSmoke": "42/42"
   },
   "balance30Seeds": {
     "MECHANIC": "30/30",
     "HARPOONER": "30/30",
     "WELDER": "30/30",
-    "TITAN": "26/30",
+    "TITAN": "30/30",
     "SPARK": "30/30"
+  },
+  "swarmBench": {
+    "pressure": 5,
+    "peakAlive": 233,
+    "renderMs200to299Alive": 2.22,
+    "simulationMs200to299Alive": 0.064,
+    "note": "Testspieler, Druckstufe 5; stirbt in Zyklus 2"
   },
   "suites": [
     {
       "name": "ch.zhaw.abyss.application.GameServiceTest",
       "tests": 8,
-      "seconds": 0.18
+      "seconds": 0.3
     },
     {
       "name": "ch.zhaw.abyss.domain.CampaignSimulationTest",
       "tests": 10,
-      "seconds": 0.63
+      "seconds": 3.21
     },
     {
       "name": "ch.zhaw.abyss.domain.CombatTest",
       "tests": 18,
-      "seconds": 0.02
+      "seconds": 0.05
     },
     {
       "name": "ch.zhaw.abyss.domain.GameRunTest",
@@ -59,32 +67,37 @@
     {
       "name": "ch.zhaw.abyss.domain.RoomEventTest",
       "tests": 2,
-      "seconds": 0.01
+      "seconds": 0.03
     },
     {
       "name": "ch.zhaw.abyss.domain.RoomGeneratorTest",
       "tests": 6,
-      "seconds": 0.1
+      "seconds": 0.09
+    },
+    {
+      "name": "ch.zhaw.abyss.domain.SwarmTest",
+      "tests": 12,
+      "seconds": 0.09
     },
     {
       "name": "ch.zhaw.abyss.infrastructure.FileGameRepositoryTest",
       "tests": 8,
-      "seconds": 0.03
+      "seconds": 0.02
     },
     {
       "name": "ch.zhaw.abyss.ui.InputControllerTest",
       "tests": 6,
-      "seconds": 0.01
+      "seconds": 0.0
     },
     {
       "name": "ch.zhaw.abyss.ui.pixel.FrameTest",
       "tests": 5,
-      "seconds": 0.0
+      "seconds": 0.01
     },
     {
       "name": "ch.zhaw.abyss.ui.render.RenderSmokeTest",
       "tests": 2,
-      "seconds": 5.54
+      "seconds": 7.2
     }
   ]
 }

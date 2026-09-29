@@ -18,6 +18,15 @@ public enum EnemyKind {
     ENFORCER("Sicherheitsautomat", 120, 70, 128, 115, 3, 3, 6),
     SEEKER("Suchlichtsonde", 50, 58, 50, 125, 2, 3, 3),
     SMUGGLER("Schmugglerdrohne", 70, 56, 44, 250, 0, 0, 26),
+
+    /** Schwarm: winzige Rostmilbe, die in Horden aus Lüftungen und Schotts quillt. */
+    MITE("Rostmilbe", 10, 36, 28, 235, 0, 0, 0),
+
+    /** Schwarm: leuchtender Glimmfisch, der in Schulen durch geflutete Decks schiesst. */
+    GLOWFISH("Glimmfisch", 8, 34, 24, 250, 0, 2, 0),
+
+    /** Schwarm: Nanodrohne, kreist um die Figur und stürzt sich im Pulk herab. */
+    NANODRONE("Nanodrohne", 12, 30, 28, 230, 0, 1, 0),
     WARDEN("Der Schottmeister", 600, 150, 170, 120, 0, 0, 35),
     REACTOR("Der Reaktorkern", 720, 170, 180, 60, 0, 1, 40),
     BROOD("Die Brutmutter", 820, 200, 150, 150, 0, 2, 45),
@@ -53,10 +62,19 @@ public enum EnemyKind {
     }
 
     /**
+     * @return {@code true} für Schwarmgegner, die in Horden nachströmen
+     */
+    public boolean swarm() {
+        return this == MITE || this == GLOWFISH || this == NANODRONE;
+    }
+
+    /**
      * @return {@code true}, wenn die Art keine Schwerkraft hat
      */
     public boolean flying() {
         return this == DRONE
+                || this == GLOWFISH
+                || this == NANODRONE
                 || this == JELLY
                 || this == TURRET
                 || this == BROOD
@@ -146,6 +164,9 @@ public enum EnemyKind {
             case ENFORCER -> Behaviors.ENFORCER;
             case SEEKER -> Behaviors.SEEKER;
             case SMUGGLER -> Behaviors.SMUGGLER;
+            case MITE -> Behaviors.MITE;
+            case GLOWFISH -> Behaviors.GLOWFISH;
+            case NANODRONE -> Behaviors.NANODRONE;
             case WARDEN -> Behaviors.WARDEN;
             case REACTOR -> Behaviors.REACTOR;
             case BROOD -> Behaviors.BROOD;

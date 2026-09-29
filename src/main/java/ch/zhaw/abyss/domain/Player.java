@@ -17,7 +17,30 @@ public final class Player extends Actor {
     final ActiveModule module;
     final boolean explorer;
     final double bonusHealth;
+    final MetaBonus meta;
     final EnumMap<Item, Integer> items = new EnumMap<>(Item.class);
+
+    /** Überladungsstufe im Tauchgang, gesammelte Überladung und offene Levelaufstiege. */
+    int level, pendingLevelUps;
+
+    double xp;
+
+    /** Blutrausch: Abschüsse in Folge und verbleibende Dauer. */
+    int frenzy;
+
+    double frenzyTime;
+
+    /** Taktgeber für Teslafeld und Druckwellenkern. */
+    double teslaTime;
+
+    int novaKills;
+
+    /** Klingenwelle dieses Schlags bereits ausgelöst. */
+    boolean waveFired;
+
+    /** Letzter Treffer der Kreiselmesser je Gegner (Tauchzeit). */
+    final Map<Long, Double> orbitHits = new java.util.HashMap<>();
+
     Weapon weapon;
     int weaponLevel;
     StatSheet stats;
@@ -44,7 +67,18 @@ public final class Player extends Actor {
     double lastHitTime = 99;
 
     Player(DiverClass diver, Weapon weapon, ActiveModule module, boolean explorer, double bonus) {
+        this(diver, weapon, module, explorer, bonus, MetaBonus.NONE);
+    }
+
+    Player(
+            DiverClass diver,
+            Weapon weapon,
+            ActiveModule module,
+            boolean explorer,
+            double bonus,
+            MetaBonus meta) {
         super(1, 170, GameRun.FLOOR, 48, HEIGHT, 100);
+        this.meta = meta;
         this.diver = diver;
         this.weapon = weapon;
         this.module = module;
@@ -59,7 +93,9 @@ public final class Player extends Actor {
 
     /** Berechnet abgeleitete Werte neu und hält Ressourcen in gültigen Grenzen. */
     void recompute() {
-        stats = StatSheet.compute(diver, weapon, weaponLevel, items, bonusHealth - healthPenalty);
+        stats =
+                StatSheet.compute(
+                        diver, weapon, weaponLevel, items, bonusHealth - healthPenalty, meta);
         maxHealth = stats.maxHealth();
         health = Math.min(health, maxHealth);
         energy = Math.min(energy, stats.maxEnergy());
@@ -111,6 +147,27 @@ public final class Player extends Actor {
         int gained = (int) Math.round(amount * stats.scrapGain());
         salvage = Math.min(9999, salvage + gained);
         return gained;
+    }
+
+    /**
+     * @return Überladungsstufe im Tauchgang
+     */
+    public int level() {
+        return level;
+    }
+
+    /**
+     * @return gesammelte Überladung zur nächsten Stufe
+     */
+    public double xp() {
+        return xp;
+    }
+
+    /**
+     * @return Blutrausch-Zähler
+     */
+    public int frenzy() {
+        return frenzy;
     }
 
     /**

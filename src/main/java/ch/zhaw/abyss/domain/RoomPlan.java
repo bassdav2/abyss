@@ -35,7 +35,8 @@ public record RoomPlan(
         List<CrateSlot> crates,
         int salvageReward,
         RoomCondition condition,
-        List<FixtureSlot> fixtures) {
+        List<FixtureSlot> fixtures,
+        List<List<Horde>> hordes) {
     /** Raumarten. */
     public enum Kind {
         COMBAT,
@@ -85,10 +86,27 @@ public record RoomPlan(
      */
     public record FixtureSlot(Fixture.Kind kind, double x, int direction, double start) {}
 
+    /**
+     * Schwarmkontingent einer Welle: so viele Gegner dieser Art strömen nach, bis alle besiegt
+     * sind.
+     *
+     * @param kind Schwarmart
+     * @param count Anzahl
+     */
+    public record Horde(EnemyKind kind, int count) {
+        /** Prüft die Werte. */
+        public Horde {
+            if (kind == null || count < 0) throw new IllegalArgumentException("Ungültige Horde");
+        }
+    }
+
     /** Kopiert Listen unveränderlich. */
     public RoomPlan {
         fixtures = List.copyOf(fixtures);
         waves = waves.stream().map(List::copyOf).toList();
+        hordes = hordes.stream().map(List::copyOf).toList();
+        if (hordes.size() != waves.size())
+            throw new IllegalArgumentException("Horden passen nicht zu den Wellen");
         hazards = List.copyOf(hazards);
         crates = List.copyOf(crates);
     }
@@ -105,6 +123,20 @@ public record RoomPlan(
      */
     public int waveCount() {
         return waves.size();
+    }
+
+    /**
+     * @return alle Schwarmgegner über alle Wellen
+     */
+    public int hordeTotal() {
+        return hordes.stream().flatMap(List::stream).mapToInt(Horde::count).sum();
+    }
+
+    /**
+     * @return alle Gegner über alle Wellen inklusive Schwärmen
+     */
+    public int enemyTotal() {
+        return waves.stream().mapToInt(List::size).sum() + hordeTotal();
     }
 
     /**

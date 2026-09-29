@@ -48,6 +48,10 @@ public record GameEvent(
         SPAWN,
         ROOM_CLEAR,
         UPGRADE,
+        /** Überladung voll: Levelaufstieg, Betrag ist die neue Stufe. */
+        LEVEL_UP,
+        /** Druckwellenkern entlädt sich, Betrag ist der Radius. */
+        NOVA,
         SYNERGY,
         CONDITION,
         MACHINE,

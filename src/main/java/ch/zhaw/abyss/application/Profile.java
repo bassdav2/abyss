@@ -3,6 +3,7 @@ package ch.zhaw.abyss.application;
 import ch.zhaw.abyss.domain.ActiveModule;
 import ch.zhaw.abyss.domain.DiverClass;
 import ch.zhaw.abyss.domain.Item;
+import ch.zhaw.abyss.domain.MetaBonus;
 import ch.zhaw.abyss.domain.RoomGenerator;
 import ch.zhaw.abyss.domain.RunSetup;
 import ch.zhaw.abyss.domain.Weapon;
@@ -178,6 +179,26 @@ public record Profile(
      */
     public int startSalvage() {
         return unlocks.contains("perk:scrap") ? 25 : 0;
+    }
+
+    /**
+     * @return Verstärkungen aus dem Tiefenbaum für jeden Tauchgang
+     */
+    public MetaBonus meta() {
+        return new MetaBonus(
+                1 + .08 * ranks("perk:dmg", 5),
+                1 + .06 * ranks("perk:spd", 3),
+                1 + .08 * ranks("perk:area", 3),
+                1 + .12 * ranks("perk:xp", 3),
+                1 + .25 * ranks("perk:mag", 2),
+                .04 * ranks("perk:crit", 2),
+                unlocks.contains("perk:choice") ? 1 : 0);
+    }
+
+    private int ranks(String prefix, int max) {
+        int ranks = 0;
+        for (int i = 1; i <= max; i++) if (unlocks.contains(prefix + i)) ranks++;
+        return ranks;
     }
 
     /**

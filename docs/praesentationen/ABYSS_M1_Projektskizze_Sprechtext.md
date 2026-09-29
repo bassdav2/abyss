@@ -66,7 +66,7 @@ Geplante Redezeit: etwa 10 Minuten, 12 Folien. PDF: [ABYSS_M1_Projektskizze.pdf]
 ## 10 · Meilensteine und Iterationen (≈ 1 min)
 
 - Drei Meilensteine laut HS26-Plan: M1 in SW3, M2 in SW9, M3 in SW13.
-- Iteration 1 prüft das Spielgefühl, Iteration 2 einen kurzen vollständigen Durchlauf, Iteration 3 Inhalt und Spieltests.
+- Sechs Iterationen zu je zwei Wochen laut Kursprozess: 1 Idee und Skizze, 2 Prototyp verstehen und Kernablauf absichern, 3 Durchlauf mit ersten Spieltests, 4 Architektur und Technischer Bericht I, 5 Inhalte und Balancing, 6 Stabilisierung und Technischer Bericht II.
 - Der Kernfall ist „zum nächsten Raum vordringen“. Um ihn herum sind alle anderen Use Cases angeordnet.
 - Offen gesagt: Ein Prototyp existiert schon. Wir nutzen die Zeit, um ihn zu verstehen, zu testen und zu verbessern.
 

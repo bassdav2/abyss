@@ -169,7 +169,7 @@ public final class HudRenderer {
         // Integrität mit nachlaufender Schadensanzeige
         if (shownHealth < 0 || shownHealth < p.health()) shownHealth = p.health();
         shownHealth += (p.health() - shownHealth) * .08;
-        panel(f, 4, 4, 122, 27);
+        panel(f, 4, 4, 122, 34);
         f.draw(IconArt.misc("heart"), 13, 12, false);
         bar(
                 f,
@@ -208,6 +208,21 @@ public final class HudRenderer {
             } else f.rect(x, y, 6, 5, 0xFF3A4450);
         }
         font.drawShadow(f, "Q", 22 + p.stats().maxRepairKits() * 8 + 1, 22, MUTED, SHADOW, 1);
+        // Überladung: violette Leiste zur nächsten Stufe
+        double need = GameRun.xpToNext(p.level());
+        int xpWidth = (int) Math.round(90 * Math.min(1, p.xp() / need));
+        f.fill(22, 31, 92, 4, Pal.OUTLINE);
+        f.fill(23, 32, xpWidth, 2, Pal.VIOLET_4);
+        f.fill(23, 32, xpWidth, 1, Pal.VIOLET_5);
+        boolean pending = run.pendingLevelUps() > 0 && ((int) (time * 6)) % 2 == 0;
+        font.drawShadow(
+                f,
+                "" + p.level(),
+                17 - font.width("" + p.level()) / 2,
+                30,
+                pending ? Pal.WHITE : Pal.VIOLET_5,
+                SHADOW,
+                1);
 
         // Ressourcen oben rechts
         panel(f, 382, 4, 94, 27);
@@ -248,12 +263,19 @@ public final class HudRenderer {
             String wave = "WELLE " + (run.wave() + 1) + "/" + run.room().waveCount();
             font.drawCentered(f, wave, 240, 6, MUTED, SHADOW, 1);
         }
+        if (run.phase() == GameRun.Phase.RUNNING) {
+            int swarm = run.hordeRemaining();
+            for (var e : run.enemies()) if (e.alive() && e.kind().swarm()) swarm++;
+            if (swarm > 0)
+                font.drawCentered(
+                        f, "SCHWARM " + swarm, 240, breach > 0 ? 20 : 15, Pal.RED_4, SHADOW, 1);
+        }
 
         // Waffe, Modul und Ausweichen unten links
         int by = 238;
         slot(f, 6, by, IconArt.weapon(p.weapon()), "J", 0, TEXT);
         for (int i = 0; i < Weapon.MAX_LEVEL; i++)
-            f.fill(8 + i * 5, by + 21, 4, 2, i < p.weaponLevel() ? Pal.RUST_6 : 0xFF3A4450);
+            f.fill(7 + i * 3, by + 21, 2, 2, i < p.weaponLevel() ? Pal.RUST_6 : 0xFF3A4450);
         double cooldown = p.abilityCooldown() / Math.max(.01, p.abilityCooldownTotal());
         boolean ready = cooldown <= 0 && p.energy() >= p.module().cost();
         slot(f, 30, by, IconArt.module(p.module()), "K", cooldown, ready ? Pal.TEAL_5 : MUTED);

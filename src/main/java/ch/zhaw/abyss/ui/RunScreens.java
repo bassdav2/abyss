@@ -133,6 +133,59 @@ final class RunScreens {
         if (g.button("leave", 374, 238, 98, 18, leave, Tone.STEEL, true)) nav.play();
     }
 
+    // --- Überladung: Levelaufstieg mitten im Kampf
+    // ------------------------------------------------
+
+    /** Während der Levelauswahl lösen Karten {@link #chooseLevel(int)} statt einer Bergung aus. */
+    private boolean levelMode;
+
+    void levelUp(Gui g) {
+        var run = nav.run();
+        var p = run.player();
+        int shown = p.level() - run.pendingLevelUps() + 1;
+        g.header(
+                "ÜBERLADUNG · STUFE " + shown,
+                run.pendingLevelUps() > 1
+                        ? "WÄHLE · NOCH " + (run.pendingLevelUps() - 1) + " WEITERE"
+                        : "WÄHLE EINE VERSTÄRKUNG",
+                Tone.VIOLET);
+        var offers = run.levelOffers();
+        levelMode = true;
+        int count = Math.max(1, offers.size());
+        int w = count >= 4 ? 106 : 124, gap = count >= 4 ? 6 : 10;
+        int left = 240 - (count * w + (count - 1) * gap) / 2;
+        for (int i = 0; i < offers.size(); i++) {
+            int bob = (int) Math.round(Math.sin(g.time() * 2 + i * 1.3) * 1.2);
+            fullCard(g, offers.get(i), i, left + i * (w + gap), 42 + bob, w, 176);
+        }
+        levelMode = false;
+        g.prefer("offer.0");
+        var f = g.frame();
+        f.fill(0, 230, 480, 40, 0xF0070B10);
+        f.fill(0, 230, 480, 1, 0xFF2A3440);
+        g.big(8, 244, "STUFE " + p.level(), Pal.VIOLET_4, 1);
+        g.text(
+                96,
+                244,
+                "MODULE "
+                        + p.items().values().stream().mapToInt(Integer::intValue).sum()
+                        + "  ·  INTEGRITÄT "
+                        + Math.round(p.health())
+                        + "/"
+                        + Math.round(p.maxHealth())
+                        + "  ·  DIE ZEIT STEHT STILL",
+                Gui.MUTED);
+    }
+
+    void chooseLevel(int index) {
+        var run = nav.run();
+        var offers = run.levelOffers();
+        if (index < 0 || index >= offers.size()) return;
+        if (run.chooseLevelUp(offers.get(index))) {
+            if (run.pendingLevelUps() == 0) nav.play();
+        } else nav.toast("Nicht möglich");
+    }
+
     private void footer(Gui g, int salvage, int kits, int maxKits, double health, double max) {
         var f = g.frame();
         f.fill(0, 230, 480, 40, 0xF0070B10);
@@ -158,7 +211,10 @@ final class RunScreens {
         boolean enabled = possible(offer);
         int accent = accent(offer);
         String id = "offer." + index;
-        if (g.card(id, x, y, w, h, accent, enabled)) choose(index);
+        if (g.card(id, x, y, w, h, accent, enabled)) {
+            if (levelMode) chooseLevel(index);
+            else choose(index);
+        }
         boolean focused = g.focused(id);
         var f = g.frame();
         g.text(x + 4, y + 2, tag(offer), Pal.mix(accent, Pal.WHITE, .2));
@@ -447,11 +503,13 @@ final class RunScreens {
         int count = room.waves().stream().mapToInt(List::size).sum();
         boolean elite =
                 room.waves().stream().flatMap(List::stream).anyMatch(s -> s.affix().elite());
+        int swarm = room.hordeTotal();
         return room.waveCount()
                 + (room.waveCount() == 1 ? " WELLE" : " WELLEN")
                 + " · "
                 + count
                 + " GEGNER"
+                + (swarm > 0 ? " + " + swarm + " SCHWARM" : "")
                 + (elite ? " · ELITE" : "");
     }
 

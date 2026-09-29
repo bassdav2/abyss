@@ -10,12 +10,14 @@ public final class Pickup {
         SCRAP,
         HEALTH,
         ENERGY,
-        CORE
+        CORE,
+        /** Energiesplitter: füllt die Überladung. */
+        SHARD
     }
 
     final long id;
     final Kind kind;
-    final double value;
+    double value;
     double x, y, vx, vy, age;
     boolean collected;
 

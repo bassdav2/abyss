@@ -1,8 +1,8 @@
 # ABYSS · Vom Heck bis zur Brücke
 
-Ein Pixel-Art-Roguelite in Java/JavaFX: Du beginnst im Heck eines riesigen U-Boots und kämpfst dich durch vier Sektionen und 24 Räume bis zur Brücke nach vorn – mit Laufstegen, Kombos, Ausweichen, acht aktiven Modulen, 41 Items, fünf Taucherklassen, vier Sektorwächtern und dauerhafter Meta-Progression.
+Ein Pixel-Art-Roguelite in Java/JavaFX: Du beginnst im Heck eines riesigen U-Boots und kämpfst dich durch vier Sektionen und 24 Räume bis zur Brücke nach vorn – gegen Schwärme aus hunderten Gegnern, mit Laufstegen, Kombos, Ausweichen, acht aktiven Modulen, 49 stapelbaren Modulen, Levelaufstiegen, fünf Taucherklassen, vier Sektorwächtern und einem Tiefenbaum für dauerhafte Verstärkungen.
 
-**Version 1.1 vom 25.09.2026.** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
+**Version 1.2 vom 29.09.2026 (Schwarm-Update).** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
 
 ## Sofort spielen
 
@@ -28,6 +28,8 @@ Erster Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen.** Der erste 
 Rote Markierungen kündigen Angriffe an. Bosse tragen Panzerung; in ihrer Erholung ist der Kern offen („KERN OFFEN · JETZT ANGREIFEN“).
 
 ## Inhalt
+
+**Neu in 1.2 – Schwarm-Update:** Wellen sind nicht mehr auf sechs Gegner begrenzt. Aus Lüftungen und Schotts strömen Rostmilben, Glimmfische und Nanodrohnen in Pulks nach: im ersten Raum eine Handvoll, im Endgame mehrere hundert gleichzeitig. Jeder Abschuss lässt einen Energiesplitter fallen; eine volle Überladung bringt einen Levelaufstieg mit drei Karten, die Zeit steht dabei still. Module stapeln bis zu achtfach und multiplikativ, dazu kommen Horden-Werkzeuge (Klingenwelle, Kreiselmesser, Teslafeld, Mehrfachlader, Druckwellenkern, Blutrausch, Druckkammer), mehrfach springende Kettenblitze und Kettenreaktionen, die durch ganze Schwärme laufen. Werkstattstufen gehen bis 8, und der unbegrenzt stapelbare Überladungskern hält ausgereizte Builds am Wachsen. Im Archiv wächst der Tiefenbaum (Schaden, Tempo, Fläche, Überladung, Magnet, Kritik, zusätzliche Karte). Gegner werden mit jeder Raumtiefe und jedem Zyklus exponentiell stärker.
 
 - **Vier Sektionen, 24 Raumpositionen:** Hecksektion (Rost, Amber), Maschinendeck (Turbinen, Grün), Forschungsdeck (Labore, Violett), Kommandodeck (Blau). 33 Abteilungen (Raumthemen) wie Kombüse, Kesselraum, Datenarchiv, Kryolabor oder Waffenkammer, Routenwahl mit Vorschau, Räume bis zu 1,75 Bildschirme breit mit Laufstegen.
 - **Raumarten:** Patrouille, Elite (drei Wellen und Elitegegner), Versorgung, Schwarzmarkt, Druckkapelle (Handel mit Fluch), Werkstatt (Reparatur, Waffenstufen), Sektorwächter, Brücke.
@@ -71,6 +73,7 @@ Voraussetzung: **JDK 25**; beim ersten Build lädt Gradle JavaFX 26.0.2.
 ./gradlew test checkJavaFormat javadoc
 ./gradlew uiSmoke                 # JavaFX-Komponentenprüfung aller Bildschirme
 ./gradlew renderSoak --args='--seconds=60'
+./gradlew swarmBench              # Zeichenzeit bei hunderten Gegnern (Druckstufe 5)
 ./gradlew balance --args='30'     # Testspieler: Siegquote je Klasse
 ./gradlew artSheet                # Pixelgrafiken als Übersichtsbögen nach build/art
 ./gradlew sceneShot               # echte Spielszenen ohne Fenster nach build/scenes

@@ -89,18 +89,33 @@ public enum Item {
             "+1 Reparaturset\n+1 Kapazität",
             "Mehr Taschen, mehr Überleben.",
             Rarity.COMMON,
-            2),
+            4),
     SPIKES(
             "Dornenpanzer",
             "Nahkampfangreifer\nerleiden 14 Schaden",
             "Wer dich packt, blutet Öl.",
             Rarity.COMMON),
+    AREA(
+            "Druckkammer",
+            "+12 % Wirkungsbereich\nvon Schlägen und Explosionen",
+            "Mehr Druck, mehr Fläche.",
+            Rarity.COMMON),
+    CHARGER(
+            "Ladungsverstärker",
+            "+15 % Überladung\naus Energiesplittern",
+            "Saugt jeden Funken aus den Trümmern.",
+            Rarity.COMMON),
+    BLOODRUSH(
+            "Blutrausch",
+            "Abschüsse beschleunigen\nAngriffe kurzzeitig",
+            "Je mehr fallen, desto schneller wirst du.",
+            Rarity.COMMON),
     ARC_COIL(
             "Teslaspule",
-            "Dritter Treffer:\nKettenblitz 15 Schaden",
-            "Springt auf einen zweiten Gegner über.",
+            "Dritter Treffer: Kettenblitz\n15 Schaden, +1 Sprung je Stufe",
+            "Springt von Gegner zu Gegner.",
             Rarity.RARE,
-            3),
+            6),
     JETPACK(
             "Druckluftdüse",
             "+1 Sprung in der Luft",
@@ -133,10 +148,10 @@ public enum Item {
             Rarity.RARE),
     CHAIN_REACTION(
             "Kettenreaktion",
-            "Besiegte Gegner\nexplodieren (20 Schaden)",
+            "Besiegte Gegner explodieren\n(20 Schaden je Stufe)",
             "Instabile Batterien überall.",
             Rarity.RARE,
-            2,
+            5,
             false),
     NANITES(
             "Nanitenkultur",
@@ -153,14 +168,14 @@ public enum Item {
             "+20 % Schaden an Gegnern\nim Lichtkegel",
             "Deine Lampe zeigt die Schwachstellen.",
             Rarity.RARE,
-            2,
+            4,
             false),
     DEPTH_RUSH(
             "Tiefenrausch",
             "Alle 10 Abschüsse:\n+3 % Schaden (Run)",
             "Je tiefer, desto klarer.",
             Rarity.RARE,
-            2,
+            5,
             false),
     SHIELD_CELL(
             "Schildzelle",
@@ -172,42 +187,78 @@ public enum Item {
             "Geschosse lenken nach\n+20 % Geschossschaden",
             "Ein kleiner Kreisel in jeder Spitze.",
             Rarity.RARE,
-            1,
+            3,
             false),
     CRIT_DAMAGE(
             "Hohlspitzen", "+40 % kritischer Schaden", "Wenn es sitzt, dann richtig.", Rarity.RARE),
+    BLADE_WAVE(
+            "Klingenwelle",
+            "Schläge schleudern eine\nDruckklinge (40 % Schaden)",
+            "Die Luft selbst wird zur Schneide.",
+            Rarity.RARE),
+    ORBITAL(
+            "Kreiselmesser",
+            "+1 kreisende Klinge\n(12 Schaden je Treffer)",
+            "Drei Rotorblätter, die nie stillstehen.",
+            Rarity.RARE,
+            6),
+    TESLA_FIELD(
+            "Teslafeld",
+            "Blitzt alle 1,2 s auf\n2 Gegner (+1 je Stufe)",
+            "Die Luft um dich knistert.",
+            Rarity.RARE),
+    MULTISHOT(
+            "Mehrfachlader",
+            "+1 Geschoss für Harpune,\nKlingen, Drohne, Torpedo",
+            "Ein Magazin mit zu vielen Kammern.",
+            Rarity.RARE,
+            4),
     COMPASS(
             "Messingkompass",
             "+1 Auswahl bei\njeder Bergung",
             "Zeigt immer auf das Wertvollste.",
             Rarity.LEGENDARY,
-            1,
+            2,
             false),
     SECOND_HEART(
             "Notfallkapsel",
             "Einmal wiederbeleben\nmit 50 % Integrität",
             "Ein zweiter Atemzug in der Tiefe.",
-            Rarity.LEGENDARY),
+            Rarity.LEGENDARY,
+            1),
     PHASE_CORE(
             "Phasenkern",
             "Ausweichen hinterlässt ein\nexplodierendes Nachbild",
             "Du bist schon weg, wenn es knallt.",
             Rarity.LEGENDARY,
-            1,
+            3,
             false),
     SINGULARITY(
             "Singularitätszelle",
             "−50 % Modul-Abklingzeit\n+25 % Modulschaden",
             "Ein Stern im Taschenformat.",
             Rarity.LEGENDARY,
-            1,
+            2,
             false),
     LEVIATHAN_TOOTH(
             "Leviathanzahn",
             "Kritische Treffer: Kettenblitz\nund +2 Integrität",
             "Vom grössten Wesen der Tiefe.",
             Rarity.LEGENDARY,
-            1,
+            3,
+            false),
+    OVERCHARGE(
+            "Überladungskern",
+            "+6 % Schaden, +6 % Tempo\n+6 Integrität (unbegrenzt)",
+            "Wenn nichts mehr passt, wird es heisser.",
+            Rarity.LEGENDARY,
+            999),
+    NOVA(
+            "Druckwellenkern",
+            "Alle 12 Abschüsse: Nova\n(weniger je Stufe)",
+            "Das Boot atmet aus. Alles fliegt.",
+            Rarity.LEGENDARY,
+            3,
             false),
     GLASS_HULL(
             "Gläserner Rumpf",
@@ -257,9 +308,10 @@ public enum Item {
 
     private static int defaultStacks(Rarity rarity) {
         return switch (rarity) {
-            case COMMON -> 3;
-            case RARE -> 2;
-            case LEGENDARY, CURSED -> 1;
+            case COMMON -> 8;
+            case RARE -> 5;
+            case LEGENDARY -> 2;
+            case CURSED -> 1;
         };
     }
 
@@ -328,7 +380,9 @@ public enum Item {
      * @return alle Module, die im normalen Bergungspool auftauchen können
      */
     public static List<Item> lootable() {
-        return Arrays.stream(values()).filter(item -> !item.cursed()).toList();
+        return Arrays.stream(values())
+                .filter(item -> !item.cursed() && item != OVERCHARGE)
+                .toList();
     }
 
     /**

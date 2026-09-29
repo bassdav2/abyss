@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'ch.zhaw.abyss'
-version = '1.1.0'
+version = '1.2.0'
 
 repositories { mavenCentral() }
 
@@ -76,13 +76,19 @@ tasks.register('contentCatalog', JavaExec) {
     mainClass = 'ch.zhaw.abyss.qa.ContentCatalog'
 }
 
+tasks.register('swarmBench', JavaExec) {
+    description = 'Lastprobe: Zeichen- und Simulationszeit nach Zahl lebender Gegner (Druckstufe 5).'
+    classpath = sourceSets.qa.runtimeClasspath
+    mainClass = 'ch.zhaw.abyss.qa.SwarmBench'
+}
+
 tasks.register('sceneShot', JavaExec) {
     description = 'Rendert Spielszenen ohne Fenster als PNG.'
     classpath = sourceSets.qa.runtimeClasspath
     mainClass = 'ch.zhaw.abyss.qa.SceneShot'
 }
 
-tasks.withType(JavaExec).matching { it.name in ['run', 'renderSoak', 'uiSmoke', 'renderDemo', 'balance', 'artSheet', 'sceneShot', 'contentCatalog'] }.configureEach {
+tasks.withType(JavaExec).matching { it.name in ['run', 'renderSoak', 'uiSmoke', 'renderDemo', 'balance', 'artSheet', 'sceneShot', 'contentCatalog', 'swarmBench'] }.configureEach {
     if (project.hasProperty('silent')) systemProperty 'abyss.silent', 'true'
     if (project.hasProperty('qaSave')) systemProperty 'abyss.saveDir', project.property('qaSave')
     doFirst {

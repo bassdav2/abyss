@@ -23,7 +23,13 @@ class RoomGeneratorTest {
                     assertEquals(depth, room.depth());
                     assertEquals(depth / RoomGenerator.SECTOR_ROOMS, room.sector());
                     assertTrue(room.waveCount() <= 3);
-                    room.waves().forEach(wave -> assertTrue(wave.size() <= 6 && !wave.isEmpty()));
+                    room.waves()
+                            .forEach(
+                                    wave ->
+                                            assertTrue(
+                                                    wave.size() <= RoomGenerator.MAX_CORE
+                                                            && !wave.isEmpty()));
+                    assertEquals(room.waves().size(), room.hordes().size());
                     for (var wave : room.waves())
                         for (var spawn : wave) {
                             assertTrue(spawn.x() > 0 && spawn.x() < room.layout().width());

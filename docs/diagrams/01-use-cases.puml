@@ -19,7 +19,7 @@ skinparam stateBorderColor #355863
 hide empty members
 left to right direction
 actor "Spieler/in" as Player
-rectangle "ABYSS 1.0 · lokales Desktopspiel" {
+rectangle "ABYSS 1.1 · lokales Desktopspiel" {
  usecase "UC-01\nTauchgang vorbereiten\nund beginnen" as Start
  usecase "UC-02\nZum nächsten Raum\nvordringen" as Progress
  usecase "UC-03\nBergung wählen" as Reward

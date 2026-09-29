@@ -49,6 +49,7 @@ public final class SceneShot {
             menu.renderEnding(t, settings);
             save(menu, out.resolve(String.format("ending-%.0f.png", t)));
         }
+        swarmShots(out, font, bank, settings);
         for (var condition : RoomCondition.values()) {
             if (condition == RoomCondition.NONE) continue;
             long seed = findSeed(condition);
@@ -128,6 +129,48 @@ public final class SceneShot {
             renderer.render(run, settings, true);
             save(renderer, out.resolve(String.format("scene-%02d.png", target)));
         }
+    }
+
+    /** Endgame-Schwarm auf Druckstufe 5: der Testspieler spielt vor, bis hunderte Gegner leben. */
+    private static void swarmShots(Path out, PixelFont font, SpriteBank bank, Settings settings)
+            throws IOException {
+        var base = RunSetup.standard(4242, DiverClass.values()[0]);
+        var setup =
+                new RunSetup(
+                        base.seed(),
+                        base.diver(),
+                        base.weapon(),
+                        base.module(),
+                        false,
+                        5,
+                        base.itemPool(),
+                        base.weaponPool(),
+                        0,
+                        0,
+                        0);
+        var run = new GameRun(setup);
+        var renderer = new WorldRenderer(font, bank);
+        int shots = 0, peak = 0;
+        for (int guard = 0; guard < 120 * 60 * 30 && shots < 3; guard++) {
+            if (run.phase() == GameRun.Phase.DEFEAT || run.phase() == GameRun.Phase.VICTORY) break;
+            run.update(1.0 / 120, CampaignPilot.input(run));
+            boolean draw = guard % 2 == 0;
+            for (var event : run.drainEvents()) if (draw) renderer.event(event, run, settings);
+            if (draw) renderer.update(1.0 / 60, run, settings);
+            if (run.phase() == GameRun.Phase.ROOM_CLEARED) CampaignPilot.advance(run, 1);
+            long alive = run.enemies().stream().filter(e -> e.alive()).count();
+            peak = (int) Math.max(peak, alive);
+            int threshold = shots == 0 ? 40 : shots == 1 ? 90 : 140;
+            if (draw && alive >= threshold) {
+                renderer.render(run, settings, true);
+                save(renderer, out.resolve("swarm-" + shots + ".png"));
+                System.out.printf(
+                        "SWARM shot %d depth %d alive %d level %d%n",
+                        shots, run.room().depth(), alive, run.player().level());
+                shots++;
+            }
+        }
+        System.out.println("SWARM peak alive " + peak);
     }
 
     private static long findSeed(RoomCondition condition) {

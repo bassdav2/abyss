@@ -78,7 +78,7 @@ class CombatTest {
         boosted.player.stats = withoutCrit(boosted.player.stats);
         double dealtPlain = plain.combat.hitEnemy(a, 20, Combat.Source.MELEE, 0, 800);
         double dealtBoosted = boosted.combat.hitEnemy(b, 20, Combat.Source.MELEE, 0, 800);
-        assertEquals(dealtPlain * 1.3, dealtBoosted, 1e-6);
+        assertEquals(dealtPlain * 1.15 * 1.15, dealtBoosted, 1e-6, "Servos stapeln multiplikativ");
         var armored = TestRuns.standard();
         armored.player.install(Item.PLATING);
         armored.player.invulnerableTime = 0;
@@ -113,7 +113,10 @@ class CombatTest {
                 s.burnPower(),
                 s.maxShield(),
                 s.maxRepairKits(),
-                s.magnetRadius());
+                s.magnetRadius(),
+                s.area(),
+                s.xpGain(),
+                s.extraProjectiles());
     }
 
     @Test
@@ -123,8 +126,9 @@ class CombatTest {
         assertThrows(IllegalStateException.class, () -> run.player.install(Item.SERVO));
         run.player.install(Item.SECOND_HEART);
         assertThrows(IllegalStateException.class, () -> run.player.install(Item.SECOND_HEART));
-        assertEquals(3, Item.SERVO.maxStacks());
-        assertEquals(1, Item.COMPASS.maxStacks());
+        assertEquals(8, Item.SERVO.maxStacks());
+        assertEquals(2, Item.COMPASS.maxStacks());
+        assertEquals(1, Item.SECOND_HEART.maxStacks());
     }
 
     @Test
