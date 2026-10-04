@@ -44,7 +44,7 @@ public final class RenderDemo {
                                 "-pix_fmt",
                                 "bgra",
                                 "-s",
-                                "480x270",
+                                "960x540",
                                 "-r",
                                 "" + FPS,
                                 "-i",
@@ -82,7 +82,7 @@ public final class RenderDemo {
             for (int i = 0; i < FPS * 5; i++) {
                 renderer.update(1.0 / FPS, null, settings);
                 renderer.renderTitle(settings, true);
-                write(out, renderer.frame());
+                write(out, renderer.ui());
             }
             int[][] segments = {
                 {0, 7}, {2, 6}, {4, 10}, {7, 7}, {10, 10}, {13, 7}, {16, 10}, {20, 7}, {23, 12}
@@ -101,15 +101,15 @@ public final class RenderDemo {
                     for (var event : run.drainEvents()) renderer.event(event, run, settings);
                     renderer.update(1.0 / FPS, run, settings);
                     renderer.render(run, settings, true);
-                    label(font, renderer.frame());
-                    write(out, renderer.frame());
+                    label(font, renderer.ui());
+                    write(out, renderer.ui());
                 }
             }
             for (int frame = 0; frame < FPS * 8; frame++) {
                 renderer.update(1.0 / FPS, null, settings);
                 renderer.renderEnding(frame / (double) FPS, settings);
-                label(font, renderer.frame(), 6);
-                write(out, renderer.frame());
+                label(font, renderer.ui(), 12);
+                write(out, renderer.ui());
             }
         }
         int code = process.waitFor();
@@ -119,7 +119,7 @@ public final class RenderDemo {
     }
 
     private static void label(PixelFont font, Frame frame) {
-        label(font, frame, 22);
+        label(font, frame, 44);
     }
 
     private static void label(PixelFont font, Frame frame, int y) {

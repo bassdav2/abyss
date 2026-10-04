@@ -1,6 +1,7 @@
 package ch.zhaw.abyss.ui;
 
 import ch.zhaw.abyss.ui.pixel.Frame;
+import ch.zhaw.abyss.ui.render.WorldRenderer;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.image.PixelFormat;
@@ -50,11 +51,13 @@ final class PixelView {
         g.setFill(Color.web("#020409"));
         g.fillRect(0, 0, w, h);
         g.drawImage(image, offsetX, offsetY, width * scale, height * scale);
-        if (scanlines && scale >= 2) {
+        // Röhrenfilter auf den Zeilen der Pixelwelt, nicht auf dem feinen Raster der Oberfläche.
+        double rowHeight = scale * WorldRenderer.UI;
+        if (scanlines && rowHeight >= 2) {
             g.setFill(Color.rgb(0, 0, 0, .16));
-            double line = Math.max(1, scale * .28);
-            for (int row = 1; row <= height; row++)
-                g.fillRect(offsetX, offsetY + row * scale - line, width * scale, line);
+            double line = Math.max(1, rowHeight * .28);
+            for (int row = 1; row <= height / WorldRenderer.UI; row++)
+                g.fillRect(offsetX, offsetY + row * rowHeight - line, width * scale, line);
         }
     }
 

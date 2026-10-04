@@ -36,9 +36,22 @@ public final class WorldRenderer {
     /** Bildhöhe in Pixeln. */
     public static final int H = 270;
 
+    /** Vergrösserung der Oberflächenebene gegenüber der Pixelwelt. */
+    public static final int UI = 2;
+
+    /** Breite der Oberflächenebene für HUD und Menüs. */
+    public static final int UW = W * UI;
+
+    /** Höhe der Oberflächenebene für HUD und Menüs. */
+    public static final int UH = H * UI;
+
     private static final double PX = RoomArt.PX;
 
     private final Frame frame = new Frame(W, H);
+
+    /** Oberflächenebene: die vergrösserte Welt plus HUD, Schrift und Menüs in feinem Raster. */
+    private final Frame ui = new Frame(UW, UH);
+
     private final Frame emissive = new Frame(W, H);
     private final MachinePainter machines = new MachinePainter(frame, emissive);
     private final LightMap lights = new LightMap(W, H, 2);
@@ -82,6 +95,7 @@ public final class WorldRenderer {
      */
     public void renderTitle(Settings settings, boolean showTitle) {
         submarine.title(time, settings.reducedMotion(), showTitle);
+        compose();
     }
 
     /**
@@ -92,6 +106,7 @@ public final class WorldRenderer {
      */
     public void renderIntro(double seconds, Settings settings) {
         submarine.intro(seconds, settings.reducedMotion());
+        compose();
     }
 
     /**
@@ -102,7 +117,8 @@ public final class WorldRenderer {
      */
     public void renderEnding(double seconds, Settings settings) {
         submarine.ending(seconds, settings.reducedMotion());
-        hud.drawMessagesOnly(frame);
+        compose();
+        hud.drawMessagesOnly(ui);
     }
 
     /**
@@ -112,6 +128,7 @@ public final class WorldRenderer {
      */
     public void renderMap(GameRun run) {
         submarine.map(time, run.room().depth(), true);
+        compose();
     }
 
     /**
@@ -120,14 +137,26 @@ public final class WorldRenderer {
      * @param amount Stärke 0 bis 1
      */
     public void dim(double amount) {
-        post.flash(frame, Pal.INK, amount);
+        post.flash(ui, Pal.INK, amount);
     }
 
     /**
-     * @return fertiges Bild
+     * @return Pixelwelt in 480 × 270 ohne HUD, etwa für Tests und Bildproben der Welt
      */
     public Frame frame() {
         return frame;
+    }
+
+    /**
+     * @return fertiges Bild der Oberflächenebene in 960 × 540: Welt, HUD und Menüs
+     */
+    public Frame ui() {
+        return ui;
+    }
+
+    /** Überträgt die fertige Pixelwelt vergrössert auf die Oberflächenebene. */
+    private void compose() {
+        ui.upscale(frame, UI);
     }
 
     /**
@@ -515,10 +544,11 @@ public final class WorldRenderer {
         if (feel.flash > 0) post.flash(frame, feel.flashColor, Math.min(.6, feel.flash));
         if (!calm) tilt(run.listTilt());
         if (fadeIn > 0) bulkhead(Math.min(1, fadeIn / .45), calm);
-        fx.drawTexts(frame, font, camX, camY);
+        compose();
+        fx.drawTexts(ui, font, camX, camY, UI);
         drawPrompts(run, camX, camY);
         drawOffscreenMarkers(run, camX);
-        if (showHud) hud.draw(frame, run, time);
+        if (showHud) hud.draw(ui, run, time);
     }
 
     private int[] tiltBuffer = new int[0];
@@ -1419,11 +1449,11 @@ public final class WorldRenderer {
                 if (m.kind() == Fixture.Kind.CONSOLE && Math.abs(m.x() - run.player().x()) < 80) {
                     int bob = (int) Math.round(Math.sin(time * 4) * 1.5);
                     hud.keyPrompt(
-                            frame,
+                            ui,
                             interaction.key(),
                             m.consoleEffect(),
-                            px(m.x()) - camX,
-                            RoomArt.FLOOR - 40 + camY + bob);
+                            (px(m.x()) - camX) * UI,
+                            (RoomArt.FLOOR - 40 + camY + bob) * UI);
                 }
             return;
         }
@@ -1441,7 +1471,7 @@ public final class WorldRenderer {
                             + camY;
         }
         y += (int) Math.round(Math.sin(time * 4) * 1.5);
-        hud.keyPrompt(frame, interaction.key(), interaction.label(), x, y);
+        hud.keyPrompt(ui, interaction.key(), interaction.label(), x * UI, y * UI);
     }
 
     private void drawOffscreenMarkers(GameRun run, int camX) {
@@ -1454,10 +1484,10 @@ public final class WorldRenderer {
             int dir = x < 0 ? -1 : 1;
             int color = e.kind().boss() ? Pal.RUST_6 : Pal.RED_4;
             for (int i = 0; i < 3; i++) {
-                frame.pixel(edge + dir * i, y - (2 - i), color);
-                frame.pixel(edge + dir * i, y + (2 - i), color);
+                ui.fill((edge + dir * i) * UI, (y - (2 - i)) * UI, UI, UI, color);
+                ui.fill((edge + dir * i) * UI, (y + (2 - i)) * UI, UI, UI, color);
             }
-            frame.pixel(edge, y, color);
+            ui.fill(edge * UI, y * UI, UI, UI, color);
         }
     }
 }

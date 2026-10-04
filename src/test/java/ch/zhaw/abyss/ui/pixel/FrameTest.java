@@ -68,4 +68,15 @@ class FrameTest {
         assertTrue(lines.size() > 1);
         lines.forEach(line -> assertTrue(font.width(line) <= 80 || !line.contains(" ")));
     }
+
+    @Test
+    void upscalingCopiesEveryPixelIntoASquareBlock() {
+        var small = new Frame(3, 2);
+        for (int i = 0; i < 6; i++) small.pixels()[i] = 0xFF000000 | i * 0x111111;
+        var big = new Frame(6, 4);
+        big.upscale(small, 2);
+        for (int y = 0; y < 4; y++)
+            for (int x = 0; x < 6; x++)
+                assertEquals(small.pixels()[(y / 2) * 3 + x / 2], big.pixels()[y * 6 + x]);
+    }
 }

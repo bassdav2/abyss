@@ -1,4 +1,4 @@
-# ABYSS 1.4 – Überblick für David
+# ABYSS 1.5 – Überblick für David
 
 Stand 25.09.2026, Nachmittag. Version 1.1 baut auf dem Nachtstand 1.0 auf; was dazugekommen ist, steht direkt unter der Steuerung. Aus deinem Prototyp ist über Nacht ein vollständiges Pixel-Art-Roguelite geworden. Es bleibt dabei: ein riesiges U-Boot, du startest ganz hinten im Heck und kämpfst dich Raum für Raum bis zur Brücke vor. Geschrieben ist alles in Java mit JavaFX, ohne Frameworks und ohne neue Bibliotheken.
 
@@ -23,6 +23,32 @@ Aus dem Quellcode: `./run.command` oder `./gradlew run` (JDK 25).
 | Menüs | Pfeile/WASD oder Maus, Enter/Leertaste wählt, Ziffern wählen Karten direkt |
 
 Für den ersten Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen**. Bis du zum ersten Mal einen Raum sicherst, läuft vor dem Tauchgang ein kurzer Auftakt, den jede Taste überspringt. Wer es gemütlicher will, schaltet in der Vorbereitung **Entdecker** ein.
+
+## Neu in Version 1.5 · Klare Sicht
+
+Stand 04.10.2026. Die Oberfläche war mit dem Endgame eng geworden. Deshalb liegen HUD und alle Menüs jetzt auf einer eigenen Ebene in doppelter Auflösung (960 × 540). Die Spielwelt bleibt Pixel-Art in 480 × 270. Fliesstext nutzt die Pixelschrift einfach, Überschriften und wichtige Zahlen doppelt. Auf jeden Bildschirm passt damit etwa doppelt so viel, ohne dass der Pixelstil verloren geht.
+
+- **HUD:**
+  - Oben links stehen Integrität, Energie, Sets und Überladung.
+  - Oben rechts stehen Raum, Zyklus, Eskalation, Schrott und Kerne.
+  - Oben in der Mitte zeigt **eine** Statuszeile Welle und Schwarm, darunter die Bedrohung.
+  - Unten links liegen Waffe, Modul und Ausweichen, unten rechts die Module, Entfesselungen zuerst.
+  - Schadenszahlen sind kleiner, Banner warten, bis die Raumkarte weg ist.
+- **Bergung und Levelaufstieg:** Die Wirkung steht gross auf der Karte. Darunter siehst du, zu welcher Entfesselung ein Modul führt.
+- **Ausrüstung:**
+  - 15 Werte, darunter Fläche, Modulschaden, Schild, zusätzliche Geschosse und Überladung.
+  - Ein Raster für 60 Module.
+  - Zu jedem Modul der Stand seiner Entfesselung, z. B. „Kreiselmesser 5/6 · Druckkammer fehlt“.
+- **Laufbahn:** Die Reiter sind ausgeschrieben und in Konto und Klassen getrennt. Die Knoten zeigen ihre Wirkung direkt, die Rangleiste steht in der Fusszeile.
+- **Weitere Bildschirme:**
+  - Routenkarten mit grossem Kamerabild, Bedrohung und Build-Check.
+  - Eine Pause mit Überblick über den Tauchgang.
+  - Ein Archiv mit 20 Einträgen pro Seite.
+  - Ein Logbuch in drei Spalten.
+  - In der Schleuse der Laufbahnrang jeder Klasse.
+- **Meldungen** aus dem Tauchgang verschwinden beim Wechsel ins Menü.
+
+Die Zeichenzeit steigt dadurch nur leicht: im Mittel 2,2 statt 2,0 ms pro Bild.
 
 ## Neu in Version 1.4 · Entfesselt (Endgame)
 

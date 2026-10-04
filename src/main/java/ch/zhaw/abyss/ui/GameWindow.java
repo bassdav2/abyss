@@ -71,7 +71,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
     private final SpriteBank bank = new SpriteBank();
     private final WorldRenderer renderer = new WorldRenderer(font, bank);
     private final Canvas canvas = new Canvas(1280, 720);
-    private final PixelView view = new PixelView(canvas, WorldRenderer.W, WorldRenderer.H);
+    private final PixelView view = new PixelView(canvas, WorldRenderer.UW, WorldRenderer.UH);
     private final Gui gui = new Gui(font);
     private final InputController input = new InputController();
     private final AudioSystem audio = new AudioSystem();
@@ -209,7 +209,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
             drawScreen(dt);
         }
         audio.context(run, !inGameScreen() && screen != Screen.PLAY);
-        view.present(renderer.frame(), settings.retroFilter());
+        view.present(renderer.ui(), settings.retroFilter());
         String message = service.takeStorageMessage();
         if (!message.isBlank()) toast(message);
         for (var achievement : service.takeAchievements()) {
@@ -227,7 +227,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
 
     /** Zeichnet das Bordsystem des aktuellen Bildschirms über das fertige Weltbild. */
     private void drawScreen(double dt) {
-        gui.begin(renderer.frame(), dt);
+        gui.begin(renderer.ui(), dt);
         switch (screen) {
             case TITLE -> menus.title(gui);
             case LOADOUT -> menus.loadout(gui);
@@ -246,8 +246,8 @@ public final class GameWindow implements AutoCloseable, Navigator {
             case OUTCOME -> runScreens.outcome(gui);
             case PLAY -> {}
         }
-        if (screen == Screen.TITLE) renderer.hud().drawMessagesOnly(renderer.frame());
-        else renderer.hud().drawMessagesCompact(renderer.frame());
+        if (screen == Screen.TITLE) renderer.hud().drawMessagesOnly(renderer.ui());
+        else renderer.hud().drawMessagesCompact(renderer.ui());
         gui.end();
     }
 
@@ -288,7 +288,8 @@ public final class GameWindow implements AutoCloseable, Navigator {
     }
 
     private void pointer(MouseEvent event) {
-        input.pointer(view.toPixelX(event.getSceneX()));
+        // Zielen in der Pixelwelt, Bedienen auf der doppelt so feinen Oberflächenebene.
+        input.pointer(view.toPixelX(event.getSceneX()) / WorldRenderer.UI);
         gui.mouse(view.toPixelX(event.getSceneX()), view.toPixelY(event.getSceneY()));
     }
 
@@ -433,7 +434,10 @@ public final class GameWindow implements AutoCloseable, Navigator {
     // ---------------------------------------------------------------------------------------------
 
     private void setScreen(Screen next) {
+        boolean wasInRun = screen == Screen.PLAY || inGameScreen();
         screen = next;
+        // Meldungen aus dem Tauchgang gehören nicht in die Menüs und umgekehrt.
+        if (wasInRun != (screen == Screen.PLAY || inGameScreen())) renderer.hud().clearToasts();
         input.clear();
         gui.reset();
         gui.cursor(next != Screen.PLAY);

@@ -11,21 +11,36 @@ import ch.zhaw.abyss.ui.art.IconArt;
 import ch.zhaw.abyss.ui.art.Pal;
 import ch.zhaw.abyss.ui.pixel.Frame;
 import ch.zhaw.abyss.ui.pixel.PixelFont;
+import ch.zhaw.abyss.ui.pixel.Sprite;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 /**
- * Pixel-HUD: Integrität, Energie, Schild, Reparatursets, Ressourcen, Waffe, Modul, Ausweichen,
- * Module, Bossleiste sowie Meldungen, Banner, Raumkarten und Boss-Auftritte. Zeichnet nach der
- * Nachbearbeitung, damit die Anzeige immer scharf und unbeleuchtet bleibt.
+ * HUD auf der Oberflächenebene in doppelter Auflösung (960 × 540): Integrität, Energie, Schild,
+ * Reparatursets und Überladung oben links, Raum und Ressourcen oben rechts, eine einzige
+ * Statuszeile oben in der Mitte, Waffe und Module unten, die Bossleiste unten in der Mitte sowie
+ * Meldungen, Banner, Raumkarten und Boss-Auftritte. Zeichnet nach der Nachbearbeitung der Welt,
+ * damit die Anzeige immer scharf und unbeleuchtet bleibt.
  */
 public final class HudRenderer {
-    private static final int TEXT = Pal.BONE, MUTED = 0xFF8FA6B2, SHADOW = Pal.OUTLINE;
+    /** Breite der Oberflächenebene. */
+    public static final int W = WorldRenderer.UW;
+
+    /** Höhe der Oberflächenebene. */
+    public static final int H = WorldRenderer.UH;
+
+    private static final int TEXT = Pal.BONE, MUTED = 0xFF8FA6B2, DIM = 0xFF55646F;
+    private static final int SHADOW = Pal.OUTLINE;
+
+    /** Module, die unten rechts höchstens sichtbar sind; der Rest steht unter Tab. */
+    static final int MODULE_COLUMNS = 14, MODULE_ROWS = 2;
+
     private final PixelFont font;
     private final List<Message> toasts = new ArrayList<>();
     private Message banner, card;
-    private double toastY = 36;
+    private double toastY = 46;
     private String bossName, bossSubtitle;
     private double bossTime, scrapBump, time;
     private double shownHealth = -1;
@@ -143,6 +158,11 @@ public final class HudRenderer {
         bossName = null;
     }
 
+    /** Entfernt nur die kurzen Meldungen, etwa beim Wechsel in ein Menü ausserhalb des Spiels. */
+    public void clearToasts() {
+        toasts.clear();
+    }
+
     /**
      * @param dt Sekunden
      */
@@ -151,109 +171,145 @@ public final class HudRenderer {
         scrapBump = Math.max(0, scrapBump - dt);
         for (var t : toasts) t.age += dt;
         toasts.removeIf(t -> t.age > t.max);
-        if (banner != null && (banner.age += dt) > banner.max) banner = null;
+        // Ein Banner wartet, bis die Raumkarte verschwunden ist, damit sich nichts überlagert.
+        boolean cardShown = card != null && bossName == null;
+        if (banner != null && !cardShown && (banner.age += dt) > banner.max) banner = null;
         if (card != null && (card.age += dt) > card.max) card = null;
         if (bossName != null && (bossTime += dt) > 2.8) bossName = null;
-        double target = card != null && bossName == null ? 102 : 36;
+        double target = card != null && bossName == null ? 186 : 46;
         toastY += (target - toastY) * Math.min(1, dt * 10);
     }
 
     /**
-     * Zeichnet das HUD.
+     * Zeichnet das HUD auf die Oberflächenebene.
      *
-     * @param f Ziel
+     * @param f Ziel in 960 × 540
      * @param run Tauchgang
      * @param clock Zeit für Animationen
      */
     public void draw(Frame f, GameRun run, double clock) {
+        vitals(f, run);
+        resources(f, run);
+        status(f, run);
+        loadout(f, run);
+        modules(f, run);
+        drawHints(f, run);
+        drawBoss(f, run);
+        drawMessages(f);
+        drawBossIntro(f);
+    }
+
+    // --- Oben links: Integrität, Energie, Sets, Überladung ---------------------------------------
+
+    private void vitals(Frame f, GameRun run) {
         var p = run.player();
         // Integrität mit nachlaufender Schadensanzeige
         if (shownHealth < 0 || shownHealth < p.health()) shownHealth = p.health();
         shownHealth += (p.health() - shownHealth) * .08;
-        panel(f, 4, 4, 122, 34);
-        f.draw(IconArt.misc("heart"), 13, 12, false);
+        panel(f, 8, 8, 300, 70);
+        icon(f, IconArt.misc("heart"), 24, 22);
         bar(
                 f,
-                22,
-                7,
-                92,
-                7,
+                42,
+                16,
+                252,
+                12,
                 p.health() / p.maxHealth(),
                 shownHealth / p.maxHealth(),
                 p.health() < p.maxHealth() * .3 ? Pal.RED_4 : Pal.RED_3,
                 10 / p.maxHealth());
         if (p.stats().maxShield() > 0) {
-            int w = (int) Math.round(92 * Math.min(1, p.shield() / Math.max(1, p.maxHealth())));
-            f.fill(22, 7, w, 2, Pal.TEAL_5);
+            int w = (int) Math.round(252 * Math.min(1, p.shield() / Math.max(1, p.maxHealth())));
+            f.fill(42, 16, w, 3, Pal.TEAL_5);
         }
-        String health = Math.round(p.health()) + "/" + Math.round(p.maxHealth());
-        font.drawOutlined(f, health, 68 - font.width(health) / 2, 7, TEXT, SHADOW, 1);
-        f.draw(IconArt.misc("energy"), 13, 22, false);
+        String health = Math.round(p.health()) + " / " + Math.round(p.maxHealth());
+        font.drawOutlined(f, health, 168 - font.width(health) / 2, 19, TEXT, SHADOW, 1);
+        icon(f, IconArt.misc("energy"), 24, 41);
         bar(
                 f,
-                22,
-                18,
-                60,
-                3,
+                42,
+                38,
+                170,
+                6,
                 p.energy() / p.maxEnergy(),
                 p.energy() / p.maxEnergy(),
                 Pal.TEAL_4,
                 0);
-        font.drawShadow(f, "" + Math.round(p.energy()), 86, 16, Pal.TEAL_5, SHADOW, 1);
-        for (int i = 0; i < p.stats().maxRepairKits(); i++) {
-            int x = 22 + i * 8, y = 23;
+        font.drawShadow(f, Math.round(p.energy()) + " E", 220, 38, Pal.TEAL_5, SHADOW, 1);
+        // Reparatursets als kleine Kreuze, daneben die Taste
+        int kits = p.stats().maxRepairKits();
+        for (int i = 0; i < kits; i++) {
+            int x = 252 + (i % 4) * 11, y = 36 + (i / 4) * 10;
             if (i < p.repairKits()) {
-                f.fill(x, y, 6, 5, Pal.RED_2);
-                f.fill(x + 2, y + 1, 2, 3, Pal.BONE);
-                f.fill(x + 1, y + 2, 4, 1, Pal.BONE);
-            } else f.rect(x, y, 6, 5, 0xFF3A4450);
+                f.fill(x, y, 9, 8, Pal.RED_2);
+                f.fill(x + 3, y + 1, 3, 6, Pal.BONE);
+                f.fill(x + 1, y + 3, 7, 2, Pal.BONE);
+            } else f.rect(x, y, 9, 8, 0xFF3A4450);
         }
-        font.drawShadow(f, "Q", 22 + p.stats().maxRepairKits() * 8 + 1, 22, MUTED, SHADOW, 1);
-        // Überladung: violette Leiste zur nächsten Stufe
+        // Überladung: violette Leiste zur nächsten Stufe, Stufe als grosse Zahl
         double need = GameRun.xpToNext(p.level());
-        int xpWidth = (int) Math.round(90 * Math.min(1, p.xp() / need));
-        f.fill(22, 31, 92, 4, Pal.OUTLINE);
-        f.fill(23, 32, xpWidth, 2, Pal.VIOLET_4);
-        f.fill(23, 32, xpWidth, 1, Pal.VIOLET_5);
         boolean pending = run.pendingLevelUps() > 0 && ((int) (time * 6)) % 2 == 0;
-        font.drawShadow(
+        String level = "" + p.level();
+        font.drawOutlined(
                 f,
-                "" + p.level(),
-                17 - font.width("" + p.level()) / 2,
-                30,
+                level,
+                24 - font.width(level, 2) / 2,
+                56,
                 pending ? Pal.WHITE : Pal.VIOLET_5,
                 SHADOW,
-                1);
+                2);
+        f.fill(42, 60, 252, 8, Pal.OUTLINE);
+        int xpWidth = (int) Math.round(250 * Math.min(1, p.xp() / need));
+        f.fill(43, 61, xpWidth, 6, Pal.VIOLET_3);
+        f.fill(43, 61, xpWidth, 2, Pal.VIOLET_5);
+        font.drawShadow(f, "ÜBERLADUNG", 46, 50, Frame.alpha(Pal.VIOLET_4, .8), SHADOW, 1);
+    }
 
-        // Ressourcen oben rechts
-        panel(f, 382, 4, 94, 27);
+    // --- Oben rechts: Raum, Zyklus, Eskalation, Schrott, Kerne -----------------------------------
+
+    private void resources(Frame f, GameRun run) {
+        var p = run.player();
+        int x = W - 8 - 216;
+        panel(f, x, 8, 216, 62);
         String depth = String.format("%02d", run.room().depth() + 1);
-        font.drawShadow(f, depth, 388, 7, TEXT, SHADOW, 2);
-        font.drawShadow(f, "/" + RoomGenerator.ROOM_COUNT, 412, 13, MUTED, SHADOW, 1);
-        String cycle = "Z" + (run.cycle() + 1) + (run.pressure() > 0 ? " D" + run.pressure() : "");
-        font.drawShadow(f, cycle, 388, 22, run.pressure() > 0 ? Pal.RED_4 : MUTED, SHADOW, 1);
+        font.drawShadow(f, depth, x + 10, 14, TEXT, SHADOW, 3);
+        font.drawShadow(
+                f,
+                "/" + RoomGenerator.ROOM_COUNT,
+                x + 14 + font.width(depth, 3),
+                28,
+                MUTED,
+                SHADOW,
+                1);
+        String cycle =
+                "ZYKLUS " + (run.cycle() + 1) + (run.pressure() > 0 ? " · D" + run.pressure() : "");
+        font.drawShadow(f, cycle, x + 10, 42, run.pressure() > 0 ? Pal.RED_4 : MUTED, SHADOW, 1);
         if (run.escalation() > 0)
             font.drawShadow(
                     f,
-                    "E" + run.escalation(),
-                    388 + font.width(cycle) + 4,
-                    22,
+                    "ESKALATION " + run.escalation(),
+                    x + 10,
+                    54,
                     Pal.prism(time * .2, .45),
                     SHADOW,
                     1);
-        f.draw(IconArt.misc("scrap"), 441, 11, false);
+        icon(f, IconArt.misc("scrap"), x + 136, 24);
         font.drawShadow(
                 f,
                 "" + p.salvage(),
-                450,
-                8 - (scrapBump > 0 ? 1 : 0),
+                x + 150,
+                17 - (scrapBump > 0 ? 1 : 0),
                 scrapBump > 0 ? Pal.RUST_7 : Pal.RUST_6,
                 SHADOW,
-                1);
-        f.draw(IconArt.misc("core"), 441, 24, false);
-        font.drawShadow(f, "" + p.cores(), 450, 21, Pal.TEAL_5, SHADOW, 1);
+                2);
+        icon(f, IconArt.misc("core"), x + 136, 50);
+        font.drawShadow(f, "" + p.cores(), x + 150, 43, Pal.TEAL_5, SHADOW, 2);
+    }
 
-        // Wellenanzeige oder Countdown des Hüllenbruchs
+    // --- Oben Mitte: eine Statuszeile und die Bedrohung ------------------------------------------
+
+    private void status(Frame f, GameRun run) {
+        int cx = W / 2;
         double breach = run.breachRemaining();
         if (breach > 0) {
             boolean blink = breach < 10 && ((int) (time * 4)) % 2 == 0;
@@ -261,79 +317,120 @@ public final class HudRenderer {
             font.drawOutlined(
                     f,
                     text,
-                    240 - font.width(text) / 2,
-                    5,
+                    cx - font.width(text, 2) / 2,
+                    10,
                     blink ? Pal.WHITE : Pal.RED_4,
                     Pal.OUTLINE,
-                    1);
-            int w = 100, filled = (int) Math.round(w * breach / GameRun.BREACH_TIME);
-            f.fill(190, 15, w, 3, Pal.OUTLINE);
-            f.fill(191, 16, filled - 2, 1, Pal.RED_4);
-        } else if (run.room().waveCount() > 1 && run.phase() == GameRun.Phase.RUNNING) {
-            String wave = "WELLE " + (run.wave() + 1) + "/" + run.room().waveCount();
-            font.drawCentered(f, wave, 240, 6, MUTED, SHADOW, 1);
+                    2);
+            int w = 200, filled = (int) Math.round(w * breach / GameRun.BREACH_TIME);
+            f.fill(cx - w / 2, 30, w, 4, Pal.OUTLINE);
+            f.fill(cx - w / 2 + 1, 31, Math.max(0, filled - 2), 2, Pal.RED_4);
         }
-        if (run.phase() == GameRun.Phase.RUNNING) {
-            int swarm = run.hordeRemaining();
-            for (var e : run.enemies()) if (e.alive() && e.kind().swarm()) swarm++;
-            if (swarm > 0)
-                font.drawCentered(
-                        f, "SCHWARM " + swarm, 240, breach > 0 ? 20 : 15, Pal.RED_4, SHADOW, 1);
-            var threat = run.room().threat();
-            if (threat != Threat.NONE)
-                font.drawCentered(
-                        f,
-                        "BEDROHUNG · " + threat.title().toUpperCase(),
-                        240,
-                        breach > 0 ? 30 : 25,
-                        ((int) (time * 2)) % 2 == 0 ? Pal.RED_4 : Pal.RUST_6,
-                        SHADOW,
-                        1);
+        if (run.phase() != GameRun.Phase.RUNNING) return;
+        int swarm = run.hordeRemaining();
+        for (var e : run.enemies()) if (e.alive() && e.kind().swarm()) swarm++;
+        var parts = new ArrayList<String>();
+        if (run.room().waveCount() > 1)
+            parts.add("WELLE " + (run.wave() + 1) + "/" + run.room().waveCount());
+        if (swarm > 0) parts.add("SCHWARM " + swarm);
+        int y = breach > 0 ? 40 : 12;
+        if (!parts.isEmpty()) {
+            String line = String.join("   ·   ", parts);
+            int w = font.width(line) + 20;
+            f.fill(cx - w / 2, y - 4, w, 15, 0x9005080E);
+            font.drawCentered(f, line, cx, y, swarm > 0 ? Pal.RED_4 : MUTED, SHADOW, 1);
+            y += 16;
         }
+        var threat = run.room().threat();
+        if (threat != Threat.NONE) {
+            String text = "BEDROHUNG · " + threat.title().toUpperCase();
+            int w = font.width(text) + 24;
+            int color = ((int) (time * 2)) % 2 == 0 ? Pal.RED_4 : Pal.RUST_6;
+            f.fill(cx - w / 2, y - 3, w, 13, 0xC0200608);
+            f.rect(cx - w / 2, y - 3, w, 13, Frame.alpha(color, .8));
+            font.drawCentered(f, text, cx, y, color, SHADOW, 1);
+        }
+    }
 
-        // Waffe, Modul und Ausweichen unten links
-        int by = 238;
-        slot(f, 6, by, IconArt.weapon(p.weapon()), "J", 0, TEXT);
+    // --- Unten links: Waffe, Modul, Ausweichen ---------------------------------------------------
+
+    private void loadout(Frame f, GameRun run) {
+        var p = run.player();
+        int y = H - 8 - 42;
+        slot(f, 8, y, IconArt.weapon(p.weapon()), "J", 0, TEXT);
         for (int i = 0; i < Weapon.MAX_LEVEL; i++)
-            f.fill(7 + i * 3, by + 21, 2, 2, i < p.weaponLevel() ? Pal.RUST_6 : 0xFF3A4450);
+            f.fill(10 + i * 5, y + 44, 3, 3, i < p.weaponLevel() ? Pal.RUST_6 : 0xFF3A4450);
         double cooldown = p.abilityCooldown() / Math.max(.01, p.abilityCooldownTotal());
         boolean ready = cooldown <= 0 && p.energy() >= p.module().cost();
-        slot(f, 30, by, IconArt.module(p.module()), "K", cooldown, ready ? Pal.TEAL_5 : MUTED);
-        if (!ready && cooldown <= 0) f.fill(31, by + 21, 20, 2, Pal.RED_3);
-        slot(f, 54, by, IconArt.misc("dash"), "SH", p.dashCooldown() / .9, TEXT);
-        font.drawShadow(f, p.weapon().title(), 82, by + 3, TEXT, SHADOW, 1);
+        slot(f, 56, y, IconArt.module(p.module()), "K", cooldown, ready ? Pal.TEAL_5 : MUTED);
+        if (!ready && cooldown <= 0) f.fill(58, y + 44, 38, 3, Pal.RED_3);
+        slot(f, 104, y, IconArt.misc("dash"), "SH", p.dashCooldown() / .9, TEXT);
+        font.drawShadow(f, p.weapon().title(), 156, y + 6, TEXT, SHADOW, 1);
         font.drawShadow(
                 f,
-                p.module().title() + " · " + p.module().cost() + "E",
-                82,
-                by + 13,
+                "Stufe " + p.weaponLevel() + "/" + Weapon.MAX_LEVEL,
+                156,
+                y + 18,
+                Pal.RUST_6,
+                SHADOW,
+                1);
+        font.drawShadow(
+                f,
+                p.module().title() + " · " + p.module().cost() + " E",
+                156,
+                y + 30,
                 ready ? Pal.TEAL_5 : MUTED,
                 SHADOW,
                 1);
+    }
 
-        // Module unten rechts
+    // --- Unten rechts: Entfesselungen zuerst, dann die stärksten Module --------------------------
+
+    private void modules(Frame f, GameRun run) {
+        var p = run.player();
         var items = new ArrayList<Item>();
         for (var item : Item.values()) if (p.stacks(item) > 0) items.add(item);
-        int perRow = 10, shown = Math.min(items.size(), 20);
+        items.sort(
+                Comparator.comparing((Item item) -> !item.evolution())
+                        .thenComparing(item -> -item.rarity().ordinal())
+                        .thenComparing(item -> -p.stacks(item)));
+        int capacity = MODULE_COLUMNS * MODULE_ROWS;
+        int shown = Math.min(items.size(), items.size() > capacity ? capacity - 1 : capacity);
+        int cell = 20;
+        int right = W - 8;
         for (int i = 0; i < shown; i++) {
             var item = items.get(i);
-            int col = i % perRow, row = i / perRow;
-            int x = 474 - (perRow - col) * 17,
-                    y = shown > perRow ? 237 + row * 17 - 17 * (row == 0 ? 0 : 0) : 254;
-            if (shown > perRow) y = 237 + row * 17;
-            f.fill(x - 1, y - 1, 16, 16, 0xC00A0F18);
-            f.rect(x - 1, y - 1, 16, 16, Frame.alpha(IconArt.rarityColor(item.rarity()), .6));
-            f.draw(IconArt.item(item), x + 7, y + 7, false);
-            if (p.stacks(item) > 1)
-                font.drawOutlined(f, "" + p.stacks(item), x + 10, y + 8, TEXT, SHADOW, 1);
+            int col = i % MODULE_COLUMNS, row = i / MODULE_COLUMNS;
+            int x = right - (MODULE_COLUMNS - col) * cell;
+            int y = H - 8 - (MODULE_ROWS - row) * cell;
+            if (items.size() <= MODULE_COLUMNS) y = H - 8 - cell;
+            int border =
+                    item.evolution()
+                            ? Pal.prism(time * .3 + i * .1, .5)
+                            : IconArt.rarityColor(item.rarity());
+            f.fill(x, y, cell - 2, cell - 2, 0xC00A0F18);
+            f.rect(x, y, cell - 2, cell - 2, Frame.alpha(border, .7));
+            f.draw(IconArt.item(item), x + 9, y + 9, false);
+            if (p.stacks(item) > 1) {
+                String n = "" + p.stacks(item);
+                font.drawOutlined(f, n, x + 17 - font.width(n), y + 10, TEXT, SHADOW, 1);
+            }
         }
-        if (items.size() > shown)
-            font.drawShadow(f, "+" + (items.size() - shown), 300, 250, MUTED, SHADOW, 1);
-
-        drawHints(f, run);
-        drawBoss(f, run);
-        drawMessages(f);
-        drawBossIntro(f);
+        if (items.size() > shown) {
+            String more = "+" + (items.size() - shown);
+            int x = right - cell, y = H - 8 - cell;
+            f.fill(x, y, cell - 2, cell - 2, 0xC00A0F18);
+            f.rect(x, y, cell - 2, cell - 2, Frame.alpha(MUTED, .6));
+            font.drawCentered(f, more, x + 9, y + 6, MUTED, SHADOW, 1);
+            font.drawShadow(
+                    f,
+                    "TAB · ALLE MODULE",
+                    right - font.width("TAB · ALLE MODULE"),
+                    H - 8 - MODULE_ROWS * cell - 12,
+                    DIM,
+                    SHADOW,
+                    1);
+        }
     }
 
     private void drawHints(Frame f, GameRun run) {
@@ -354,12 +451,12 @@ public final class HudRenderer {
                             }
                             : new String[] {"RECHTS DURCHS SCHOTT: E ÖFFNET DIE ROUTENWAHL"};
         else return;
-        int y = 200;
+        int y = 392;
         for (String line : lines) {
-            int w = font.width(line) + 10;
-            f.fill(240 - w / 2, y - 2, w, 11, 0x9005080E);
-            font.drawCentered(f, line, 240, y, TEXT, SHADOW, 1);
-            y += 12;
+            int w = font.width(line, 2) + 20;
+            f.fill(W / 2 - w / 2, y - 4, w, 22, 0x9005080E);
+            font.drawCentered(f, line, W / 2, y, TEXT, SHADOW, 2);
+            y += 24;
         }
     }
 
@@ -368,25 +465,28 @@ public final class HudRenderer {
         if (boss == null
                 || boss.state() == ch.zhaw.abyss.domain.Enemy.State.SPAWNING && bossName != null)
             return;
-        int w = 240, x = 120, y = 222;
+        int w = 480, x = W / 2 - w / 2, y = H - 74;
         font.drawCentered(
                 f,
                 boss.kind().title().toUpperCase(),
-                240,
-                y - 11,
+                W / 2,
+                y - 20,
                 boss.enraged() ? Pal.RED_4 : Pal.RUST_6,
                 SHADOW,
-                1);
-        f.fill(x - 2, y - 2, w + 4, 9, Pal.OUTLINE);
-        f.fill(x, y, w, 5, Pal.RED_0);
+                2);
+        f.fill(x - 2, y - 2, w + 4, 14, Pal.OUTLINE);
+        f.fill(x, y, w, 10, Pal.RED_0);
         int filled = (int) Math.round(w * boss.healthRatio());
-        f.fill(x, y, filled, 5, boss.armored() ? Pal.RED_3 : Pal.RUST_6);
-        f.fill(x, y, filled, 1, boss.armored() ? Pal.RED_4 : Pal.RUST_7);
-        for (int k = 1; k < 3; k++) f.fill(x + w * k / 3, y, 1, 5, Pal.OUTLINE);
+        f.fill(x, y, filled, 10, boss.armored() ? Pal.RED_3 : Pal.RUST_6);
+        f.fill(x, y, filled, 2, boss.armored() ? Pal.RED_4 : Pal.RUST_7);
+        for (int k = 1; k < 3; k++) f.fill(x + w * k / 3, y, 1, 10, Pal.OUTLINE);
         String state = boss.armored() ? "PANZERUNG AKTIV" : "KERN OFFEN · JETZT ANGREIFEN";
         if (!boss.armored() || ((int) (time * 2)) % 2 == 0)
-            font.drawCentered(f, state, 240, y + 7, boss.armored() ? MUTED : Pal.RUST_7, SHADOW, 1);
+            font.drawCentered(
+                    f, state, W / 2, y + 15, boss.armored() ? MUTED : Pal.RUST_7, SHADOW, 1);
     }
+
+    // --- Meldungen -------------------------------------------------------------------------------
 
     /**
      * Zeichnet nur Meldungen, etwa über Menühintergründen.
@@ -394,7 +494,7 @@ public final class HudRenderer {
      * @param f Ziel
      */
     public void drawMessagesOnly(Frame f) {
-        drawToasts(f, 36);
+        drawToasts(f, 46);
     }
 
     /**
@@ -405,17 +505,18 @@ public final class HudRenderer {
      */
     public void drawMessagesCompact(Frame f) {
         int shown = 0;
-        for (int i = toasts.size() - 1; i >= 0 && shown < 2; i--, shown++) {
+        // Nur die neueste Meldung in der oberen Zeile; darunter liegt die Kernanzeige.
+        for (int i = toasts.size() - 1; i >= 0 && shown < 1; i--, shown++) {
             var t = toasts.get(i);
             double a = Math.min(1, Math.min(t.age * 6, (t.max - t.age) * 2));
             String text = t.text;
-            while (font.width(text) > 250 && text.length() > 4)
+            while (font.width(text) > 480 && text.length() > 4)
                 text = text.substring(0, text.length() - 2);
             if (!text.equals(t.text)) text = text + "…";
-            int w = font.width(text) + 10, y = 3 + shown * 13;
-            f.fill(476 - w, y - 1, w, 11, Frame.alpha(0xFF050A12, .92 * a));
-            f.fill(476 - w, y - 1, 1, 11, Frame.alpha(t.color, a));
-            font.draw(f, text, 471 - font.width(text), y + 1, Frame.alpha(t.color, a), 1);
+            int w = font.width(text) + 16, y = 6 + shown * 17;
+            f.fill(W - 8 - w, y - 3, w, 14, Frame.alpha(0xFF050A12, .92 * a));
+            f.fill(W - 8 - w, y - 3, 2, 14, Frame.alpha(t.color, a));
+            font.draw(f, text, W - 16 - font.width(text), y, Frame.alpha(t.color, a), 1);
         }
     }
 
@@ -424,39 +525,54 @@ public final class HudRenderer {
         drawToasts(f, (int) Math.round(toastY));
         if (cardShown) {
             double a = Math.min(1, Math.min(card.age * 3, (card.max - card.age) * 1.5));
-            int slide = (int) Math.round(Math.max(0, .3 - card.age) * 60);
-            font.drawCentered(
-                    f, card.sub, 240, 62 - slide, Frame.alpha(MUTED, a), Frame.alpha(SHADOW, a), 1);
+            int slide = (int) Math.round(Math.max(0, .3 - card.age) * 120);
             font.drawCentered(
                     f,
+                    card.sub,
+                    W / 2,
+                    112 - slide,
+                    Frame.alpha(MUTED, a),
+                    Frame.alpha(SHADOW, a),
+                    1);
+            font.drawOutlined(
+                    f,
                     card.text.toUpperCase(),
-                    240,
-                    74 - slide,
+                    W / 2 - font.width(card.text.toUpperCase(), 4) / 2,
+                    128 - slide,
                     Frame.alpha(TEXT, a),
                     Frame.alpha(SHADOW, a),
-                    2);
-            int lw = (int) (Math.min(1, card.age * 2) * 120);
-            f.fill(240 - lw, 94 - slide, lw * 2, 1, Frame.alpha(Pal.RUST_5, a * .8));
+                    4);
+            int lw = (int) (Math.min(1, card.age * 2) * 220);
+            f.fill(W / 2 - lw, 166 - slide, lw * 2, 1, Frame.alpha(Pal.RUST_5, a * .8));
         }
-        if (banner != null) {
+        if (banner != null && !cardShown) {
             double a = Math.min(1, Math.min(banner.age * 5, (banner.max - banner.age) * 2));
-            int scale = 3;
+            int scale = font.width(banner.text, 4) > W - 80 ? 3 : 4;
             int w = font.width(banner.text, scale);
-            int grow = (int) (Math.min(1, banner.age * 4) * (w / 2 + 30));
-            f.fill(240 - grow, 104, grow * 2, 34, Frame.alpha(0xFF03060C, .7 * a));
-            f.fill(240 - grow, 104, grow * 2, 1, Frame.alpha(banner.color, a));
-            f.fill(240 - grow, 137, grow * 2, 1, Frame.alpha(banner.color, a));
+            int grow = (int) (Math.min(1, banner.age * 4) * (w / 2 + 50));
+            int top = 210;
+            f.fill(W / 2 - grow, top, grow * 2, 52, Frame.alpha(0xFF03060C, .72 * a));
+            f.fill(W / 2 - grow, top, grow * 2, 2, Frame.alpha(banner.color, a));
+            f.fill(W / 2 - grow, top + 50, grow * 2, 2, Frame.alpha(banner.color, a));
             font.drawOutlined(
                     f,
                     banner.text,
-                    240 - w / 2,
-                    108,
+                    W / 2 - w / 2,
+                    top + 26 - 7 * scale / 2 - 1,
                     Frame.alpha(banner.color, a),
                     Frame.alpha(SHADOW, a),
                     scale);
-            if (!banner.sub.isEmpty())
+            if (!banner.sub.isEmpty()) {
+                int sub = font.width(banner.sub, 2) > W - 60 ? 1 : 2;
                 font.drawCentered(
-                        f, banner.sub, 240, 142, Frame.alpha(TEXT, a), Frame.alpha(SHADOW, a), 1);
+                        f,
+                        banner.sub,
+                        W / 2,
+                        top + 60,
+                        Frame.alpha(TEXT, a),
+                        Frame.alpha(SHADOW, a),
+                        sub);
+            }
         }
     }
 
@@ -464,13 +580,13 @@ public final class HudRenderer {
         int y = top;
         for (var t : toasts) {
             double a = Math.min(1, Math.min(t.age * 6, (t.max - t.age) * 2));
-            int w = font.width(t.text) + 12;
-            f.fill(240 - w / 2, y - 3, w, 13, Frame.alpha(0xFF050A12, .78 * a));
-            f.fill(240 - w / 2, y - 3, 1, 13, Frame.alpha(t.color, a));
-            f.fill(240 + w / 2 - 1, y - 3, 1, 13, Frame.alpha(t.color, a));
+            int w = font.width(t.text) + 20;
+            f.fill(W / 2 - w / 2, y - 4, w, 16, Frame.alpha(0xFF050A12, .8 * a));
+            f.fill(W / 2 - w / 2, y - 4, 2, 16, Frame.alpha(t.color, a));
+            f.fill(W / 2 + w / 2 - 2, y - 4, 2, 16, Frame.alpha(t.color, a));
             font.drawCentered(
-                    f, t.text, 240, y, Frame.alpha(t.color, a), Frame.alpha(SHADOW, a), 1);
-            y += 15;
+                    f, t.text, W / 2, y, Frame.alpha(t.color, a), Frame.alpha(SHADOW, a), 1);
+            y += 18;
         }
     }
 
@@ -478,24 +594,20 @@ public final class HudRenderer {
         if (bossName == null) return;
         double t = bossTime;
         double bars = Math.min(1, t * 3) * Math.min(1, (2.8 - t) * 3);
-        int h = (int) Math.round(35 * bars);
-        f.fill(0, 0, 480, h, Pal.INK);
-        f.fill(0, 270 - h, 480, h, Pal.INK);
+        int h = (int) Math.round(70 * bars);
+        f.fill(0, 0, W, h, Pal.INK);
+        f.fill(0, H - h, W, h, Pal.INK);
         double a = Math.min(1, Math.max(0, (t - .3) * 3)) * Math.min(1, (2.8 - t) * 2);
         if (a <= 0) return;
-        int w = font.width(bossName.toUpperCase(), 3);
-        int x = 240 - w / 2 + (int) Math.round(Math.max(0, .6 - t) * 80);
+        String name = bossName.toUpperCase();
+        int scale = font.width(name, 6) > W - 60 ? 5 : 6;
+        int w = font.width(name, scale);
+        int x = W / 2 - w / 2 + (int) Math.round(Math.max(0, .6 - t) * 160);
         font.drawOutlined(
-                f,
-                bossName.toUpperCase(),
-                x,
-                56,
-                Frame.alpha(Pal.RUST_6, a),
-                Frame.alpha(SHADOW, a),
-                3);
+                f, name, x, 110, Frame.alpha(Pal.RUST_6, a), Frame.alpha(SHADOW, a), scale);
         font.drawCentered(
-                f, bossSubtitle, 240, 84, Frame.alpha(TEXT, a), Frame.alpha(SHADOW, a), 1);
-        f.fill(240 - w / 2, 51, w, 1, Frame.alpha(Pal.RED_3, a));
+                f, bossSubtitle, W / 2, 168, Frame.alpha(TEXT, a), Frame.alpha(SHADOW, a), 2);
+        f.fill(W / 2 - w / 2, 100, w, 2, Frame.alpha(Pal.RED_3, a));
     }
 
     /**
@@ -508,17 +620,28 @@ public final class HudRenderer {
      * @param y Oberkante
      */
     public void keyPrompt(Frame f, String key, String label, int x, int y) {
-        f.fill(x - 6, y, 12, 12, Pal.OUTLINE);
-        f.fill(x - 5, y + 1, 10, 10, 0xFF1E2A36);
-        f.fill(x - 5, y + 1, 10, 1, 0xFF3E5262);
-        font.draw(f, key, x - font.width(key) / 2, y + 3, TEXT, 1);
-        font.drawCentered(f, label, x, y + 15, Pal.TEAL_5, SHADOW, 1);
+        int w = Math.max(22, font.width(key, 2) + 10);
+        f.fill(x - w / 2, y, w, 22, Pal.OUTLINE);
+        f.fill(x - w / 2 + 1, y + 1, w - 2, 20, 0xFF1E2A36);
+        f.fill(x - w / 2 + 1, y + 1, w - 2, 2, 0xFF3E5262);
+        font.draw(f, key, x - font.width(key, 2) / 2, y + 4, TEXT, 2);
+        int lw = font.width(label) + 12;
+        f.fill(x - lw / 2, y + 25, lw, 14, 0xA005080E);
+        font.drawCentered(f, label, x, y + 28, Pal.TEAL_5, SHADOW, 1);
+    }
+
+    // --- Bausteine -------------------------------------------------------------------------------
+
+    private static void icon(Frame f, Sprite sprite, int cx, int cy) {
+        f.draw(sprite, cx, cy, false);
     }
 
     private static void panel(Frame f, int x, int y, int w, int h) {
-        f.fill(x, y, w, h, 0xB0060B14);
-        f.fill(x, y, w, 1, 0x803E5262);
-        f.fill(x, y + h - 1, w, 1, 0x80000000);
+        f.fill(x, y, w, h, 0xB8060B14);
+        f.fill(x, y, w, 1, 0x903E5262);
+        f.fill(x, y + h - 1, w, 1, 0x90000000);
+        f.fill(x, y, 1, h, 0x50223040);
+        f.fill(x + w - 1, y, 1, h, 0x50000000);
     }
 
     private static void bar(
@@ -537,28 +660,21 @@ public final class HudRenderer {
         int valueW = (int) Math.round(w * Math.max(0, Math.min(1, value)));
         if (trailW > valueW) f.fill(x + valueW, y, trailW - valueW, h, Pal.BONE);
         f.fill(x, y, valueW, h, color);
-        f.fill(x, y, valueW, 1, Pal.shade(color, 1.35));
-        if (h > 3) f.fill(x, y + h - 1, valueW, 1, Pal.shade(color, .7));
-        if (tick > 0)
+        f.fill(x, y, valueW, 2, Pal.shade(color, 1.35));
+        if (h > 4) f.fill(x, y + h - 2, valueW, 2, Pal.shade(color, .7));
+        if (tick > 0 && tick * w >= 4)
             for (double t = tick; t < 1; t += tick)
-                f.fill(x + (int) Math.round(w * t), y + 1, 1, h - 1, Frame.alpha(Pal.OUTLINE, .5));
+                f.fill(x + (int) Math.round(w * t), y + 2, 1, h - 2, Frame.alpha(Pal.OUTLINE, .5));
     }
 
-    private void slot(
-            Frame f,
-            int x,
-            int y,
-            ch.zhaw.abyss.ui.pixel.Sprite icon,
-            String key,
-            double cooldown,
-            int border) {
-        f.fill(x, y, 22, 22, 0xD0080D16);
-        f.rect(x, y, 22, 22, Frame.alpha(border, .8));
-        f.draw(icon, x + 11, y + 11, false);
+    private void slot(Frame f, int x, int y, Sprite icon, String key, double cooldown, int border) {
+        f.fill(x, y, 42, 42, 0xD0080D16);
+        f.rect(x, y, 42, 42, Frame.alpha(border, .8));
+        f.drawScaled(icon, x + 5, y + 5, 2, 1);
         if (cooldown > 0) {
-            int h = (int) Math.round(20 * Math.min(1, cooldown));
-            f.fill(x + 1, y + 1, 20, h, 0xB0060A10);
+            int h = (int) Math.round(40 * Math.min(1, cooldown));
+            f.fill(x + 1, y + 1, 40, h, 0xB0060A10);
         }
-        font.drawOutlined(f, key, x + 21 - font.width(key), y + 14, MUTED, SHADOW, 1);
+        font.drawOutlined(f, key, x + 40 - font.width(key), y + 32, MUTED, SHADOW, 1);
     }
 }

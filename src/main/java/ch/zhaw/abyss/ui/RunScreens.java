@@ -17,18 +17,25 @@ import ch.zhaw.abyss.ui.gui.Gui;
 import ch.zhaw.abyss.ui.gui.Gui.Tone;
 import ch.zhaw.abyss.ui.pixel.Frame;
 import ch.zhaw.abyss.ui.pixel.Sprite;
+import ch.zhaw.abyss.ui.render.WorldRenderer;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Bildschirme während eines Tauchgangs, gezeichnet über der angehaltenen Welt: Pause, Bergung als
- * Hologramm-Karten, Händler und Werkstatt, Druckkapelle, Routenwahl mit Kamerabildern, Ausrüstung,
- * Bootskarte und Ergebnis. Sie zeigen Domänenwerte an und rufen nur öffentliche Domänenaktionen
- * auf; Preise und Regeln prüft die Domäne.
+ * Bildschirme während eines Tauchgangs, gezeichnet über der angehaltenen Welt auf der
+ * Oberflächenebene in 960 × 540: Pause, Bergung als Hologramm-Karten, Händler und Werkstatt,
+ * Druckkapelle, Routenwahl mit Kamerabildern, Ausrüstung, Bootskarte und Ergebnis. Sie zeigen
+ * Domänenwerte an und rufen nur öffentliche Domänenaktionen auf; Preise und Regeln prüft die
+ * Domäne.
  */
 final class RunScreens {
+    private static final int W = WorldRenderer.UW, H = WorldRenderer.UH, CX = W / 2;
+
+    /** Oberkante der Fusszeile mit Ressourcen und Haupttaste. */
+    private static final int FOOT = H - 50;
+
     private final Navigator nav;
 
     RunScreens(Navigator nav) {
@@ -39,10 +46,11 @@ final class RunScreens {
 
     void pause(Gui g) {
         var run = nav.run();
-        g.panel(150, 44, 180, 184);
-        g.screen(158, 52, 164, 34, Tone.TEAL);
-        g.big(240 - g.width("PAUSE"), 56, "PAUSE", Gui.TEXT, 2);
-        g.center(240, 74, "DAS BOOT WARTET.", Pal.TEAL_5);
+        var p = run.player();
+        g.panel(CX - 150, 92, 300, 330);
+        g.screen(CX - 134, 108, 268, 62, Tone.TEAL);
+        g.bigCenter(CX, 118, "PAUSE", Gui.TEXT, 4);
+        g.center(CX, 154, "DAS BOOT WARTET.", Pal.TEAL_5);
         String[] labels = {"WEITERSPIELEN", "AUSRÜSTUNG", "BOOTSKARTE", "OPTIONEN", "STEUERUNG"};
         Runnable[] actions = {
             nav::play, nav::inventory, nav::map, () -> nav.settings(true), () -> nav.help(true)
@@ -50,23 +58,56 @@ final class RunScreens {
         for (int i = 0; i < labels.length; i++)
             if (g.button(
                     "pause." + i,
-                    170,
-                    96 + i * 22,
-                    140,
-                    17,
+                    CX - 120,
+                    186 + i * 40,
+                    240,
+                    30,
                     labels[i],
                     i == 0 ? Tone.AMBER : Tone.STEEL,
                     true)) actions[i].run();
-        if (g.button("menu", 170, 208, 140, 12, "ZUM HAUPTMENÜ", Tone.QUIET, true)) nav.title();
+        if (g.button("menu", CX - 120, 390, 240, 20, "ZUM HAUPTMENÜ", Tone.QUIET, true))
+            nav.title();
         g.prefer("pause.0");
+        // Überblick über den laufenden Tauchgang
+        int x = CX + 170;
+        g.panel(x, 92, 290, 330);
+        g.text(x + 16, 106, "TAUCHGANG", Pal.TEAL_5);
+        String[][] facts = {
+            {"RAUM", String.format("%02d/%d", run.room().depth() + 1, RoomGenerator.ROOM_COUNT)},
+            {"ZYKLUS", "" + (run.cycle() + 1)},
+            {"DRUCKSTUFE", "" + run.pressure()},
+            {"ESKALATION", run.escalation() > 0 ? "" + run.escalation() : "–"},
+            {"ÜBERLADUNG", "STUFE " + p.level()},
+            {"GEGNER BESIEGT", "" + run.kills()},
+            {
+                "TAUCHZEIT",
+                String.format("%02d:%02d", (int) run.elapsed() / 60, (int) run.elapsed() % 60)
+            },
+            {"MODULE", "" + p.items().values().stream().mapToInt(Integer::intValue).sum()},
+            {"SCHROTT", "" + p.salvage()},
+            {"DATENKERNE", "" + p.cores()}
+        };
+        for (int i = 0; i < facts.length; i++) {
+            g.text(x + 16, 130 + i * 20, facts[i][0], Gui.DIM);
+            g.right(x + 274, 130 + i * 20, facts[i][1], Pal.RUST_6);
+        }
+        var threat = run.room().threat();
+        if (threat != Threat.NONE)
+            g.wrap(
+                    x + 16,
+                    340,
+                    258,
+                    "BEDROHUNG: " + threat.title() + ". Hilft: " + threat.counter(),
+                    Pal.RED_4,
+                    5);
         g.center(
-                240,
-                240,
+                CX,
+                460,
                 String.format(
                         "RAUM %02d/%d  ·  SEED %d",
                         run.room().depth() + 1, RoomGenerator.ROOM_COUNT, run.seed()),
                 Gui.DIM);
-        g.center(240, 252, "Beim Verlassen startest du später am letzten Raumeingang.", Gui.DIM);
+        g.center(CX, 476, "Beim Verlassen startest du später am letzten Raumeingang.", Gui.DIM);
     }
 
     // --- Bergung, Händlerin, Werkstatt -----------------------------------------------------------
@@ -102,26 +143,18 @@ final class RunScreens {
         g.header(kicker, title, shop ? Tone.AMBER : Tone.TEAL);
         var offers = run.offers();
         if (shop || offers.size() > 4) {
-            int columns = 4, w = 110, h = 90, gap = 6;
-            int left = 240 - (columns * w + (columns - 1) * gap) / 2;
+            int columns = 4, w = 222, h = 168, gap = 12;
+            int left = CX - (columns * w + (columns - 1) * gap) / 2;
             for (int i = 0; i < offers.size(); i++)
                 compactCard(
                         g,
                         offers.get(i),
                         i,
                         left + (i % columns) * (w + gap),
-                        40 + (i / columns) * (h + 8),
+                        72 + (i / columns) * (h + 14),
                         w,
                         h);
-        } else {
-            int count = Math.max(1, offers.size());
-            int w = count >= 4 ? 106 : 124, gap = count >= 4 ? 6 : 10;
-            int left = 240 - (count * w + (count - 1) * gap) / 2;
-            for (int i = 0; i < offers.size(); i++) {
-                int bob = (int) Math.round(Math.sin(g.time() * 2 + i * 1.3) * 1.2);
-                fullCard(g, offers.get(i), i, left + i * (w + gap), 42 + bob, w, 176);
-            }
-        }
+        } else cards(g, offers, 76);
         g.prefer("offer.0");
         footer(
                 g,
@@ -131,11 +164,22 @@ final class RunScreens {
                 p.health(),
                 p.maxHealth());
         String leave = offers.isEmpty() || shop ? "FERTIG  →" : "SPÄTER";
-        if (g.button("leave", 374, 238, 98, 18, leave, Tone.STEEL, true)) nav.play();
+        if (g.button("leave", W - 16 - 160, FOOT + 10, 160, 30, leave, Tone.STEEL, true))
+            nav.play();
     }
 
-    // --- Überladung: Levelaufstieg mitten im Kampf
-    // ------------------------------------------------
+    /** Grosse Karten nebeneinander, mittig und leicht schwebend. */
+    private void cards(Gui g, List<Offer> offers, int top) {
+        int count = Math.max(1, offers.size());
+        int w = count >= 4 ? 208 : 236, gap = count >= 4 ? 14 : 22;
+        int left = CX - (count * w + (count - 1) * gap) / 2;
+        for (int i = 0; i < offers.size(); i++) {
+            int bob = (int) Math.round(Math.sin(g.time() * 2 + i * 1.3) * 2);
+            fullCard(g, offers.get(i), i, left + i * (w + gap), top + bob, w, 386);
+        }
+    }
+
+    // --- Überladung: Levelaufstieg mitten im Kampf -----------------------------------------------
 
     /** Während der Levelauswahl lösen Karten {@link #chooseLevel(int)} statt einer Bergung aus. */
     private boolean levelMode;
@@ -150,31 +194,24 @@ final class RunScreens {
                         ? "WÄHLE · NOCH " + (run.pendingLevelUps() - 1) + " WEITERE"
                         : "WÄHLE EINE VERSTÄRKUNG",
                 Tone.VIOLET);
-        var offers = run.levelOffers();
         levelMode = true;
-        int count = Math.max(1, offers.size());
-        int w = count >= 4 ? 106 : 124, gap = count >= 4 ? 6 : 10;
-        int left = 240 - (count * w + (count - 1) * gap) / 2;
-        for (int i = 0; i < offers.size(); i++) {
-            int bob = (int) Math.round(Math.sin(g.time() * 2 + i * 1.3) * 1.2);
-            fullCard(g, offers.get(i), i, left + i * (w + gap), 42 + bob, w, 176);
-        }
+        cards(g, run.levelOffers(), 76);
         levelMode = false;
         g.prefer("offer.0");
         var f = g.frame();
-        f.fill(0, 230, 480, 40, 0xF0070B10);
-        f.fill(0, 230, 480, 1, 0xFF2A3440);
-        g.big(8, 244, "STUFE " + p.level(), Pal.VIOLET_4, 1);
+        f.fill(0, FOOT, W, H - FOOT, 0xF0070B10);
+        f.fill(0, FOOT, W, 2, 0xFF2A3440);
+        g.big(16, FOOT + 16, "STUFE " + p.level(), Pal.VIOLET_4, 2);
         g.text(
-                96,
-                244,
+                160,
+                FOOT + 20,
                 "MODULE "
                         + p.items().values().stream().mapToInt(Integer::intValue).sum()
-                        + "  ·  INTEGRITÄT "
+                        + "   ·   INTEGRITÄT "
                         + Math.round(p.health())
                         + "/"
                         + Math.round(p.maxHealth())
-                        + "  ·  DIE ZEIT STEHT STILL",
+                        + "   ·   DIE ZEIT STEHT STILL   ·   ZIFFERN 1–4 WÄHLEN",
                 Gui.MUTED);
     }
 
@@ -189,18 +226,18 @@ final class RunScreens {
 
     private void footer(Gui g, int salvage, int kits, int maxKits, double health, double max) {
         var f = g.frame();
-        f.fill(0, 230, 480, 40, 0xF0070B10);
-        f.fill(0, 230, 480, 1, 0xFF2A3440);
-        g.icon(IconArt.misc("scrap"), 8, 240, 1);
-        g.big(28, 244, salvage + " SCHROTT", Pal.RUST_6, 1);
+        f.fill(0, FOOT, W, H - FOOT, 0xF0070B10);
+        f.fill(0, FOOT, W, 2, 0xFF2A3440);
+        g.icon(IconArt.misc("scrap"), 16, FOOT + 14, 2);
+        g.big(56, FOOT + 18, salvage + " SCHROTT", Pal.RUST_6, 2);
         g.text(
-                120,
-                244,
+                280,
+                FOOT + 22,
                 "SETS "
                         + kits
                         + "/"
                         + maxKits
-                        + "  ·  INTEGRITÄT "
+                        + "   ·   INTEGRITÄT "
                         + Math.round(health)
                         + "/"
                         + Math.round(max),
@@ -225,57 +262,71 @@ final class RunScreens {
                 int px, py;
                 if (i < w) {
                     px = x + i;
-                    py = y - 1;
+                    py = y - 2;
                 } else if (i < w + h) {
-                    px = x + w;
+                    px = x + w + 1;
                     py = y + i - w;
                 } else if (i < 2 * w + h) {
                     px = x + w - (i - w - h);
-                    py = y + h;
+                    py = y + h + 1;
                 } else {
-                    px = x - 1;
+                    px = x - 2;
                     py = y + h - (i - 2 * w - h);
                 }
-                f.pixel(px, py, Pal.prism(i / 120.0 - g.time() * .6));
+                f.fill(px, py, 2, 2, Pal.prism(i / 160.0 - g.time() * .6));
             }
-        g.text(x + 4, y + 2, tag(offer), Pal.mix(accent, Pal.WHITE, .2));
+        g.text(x + 10, y + 4, tag(offer), Pal.mix(accent, Pal.WHITE, .2));
         // Symbolschacht
         int cx = x + w / 2;
-        f.fill(cx - 20, y + 16, 40, 40, 0xFF03080C);
-        f.rect(cx - 20, y + 16, 40, 40, Frame.alpha(accent, .5));
-        if (focused) f.addRect(cx - 19, y + 17, 38, 38, accent, .08 + .04 * Math.sin(g.time() * 6));
-        g.icon(icon(offer), cx - 16, y + 20, 2);
-        int ty = y + 62;
-        ty += g.wrap(x + 6, ty, w - 12, offer.title().toUpperCase(), Gui.TEXT, 2) + 3;
-        ty += g.wrap(x + 6, ty, w - 12, offer.effect().replace('\n', ' '), Pal.RUST_6, 3) + 3;
+        f.fill(cx - 40, y + 28, 80, 80, 0xFF03080C);
+        f.rect(cx - 40, y + 28, 80, 80, Frame.alpha(accent, .5));
+        if (focused) f.addRect(cx - 39, y + 29, 78, 78, accent, .08 + .04 * Math.sin(g.time() * 6));
+        g.icon(icon(offer), cx - 32, y + 36, 4);
+        int ty = y + 122;
+        ty += g.wrap(x + 12, ty, w - 24, offer.title().toUpperCase(), Gui.TEXT, 2, 2) + 8;
+        String effect = offer.effect().replace('\n', ' ');
+        // Die Wirkung ist das Wichtigste auf der Karte: gross, wenn sie hineinpasst.
+        int scale = g.fit(effect, w - 24, 4);
+        ty += g.wrap(x + 12, ty, w - 24, effect, Pal.RUST_6, scale == 2 ? 4 : 5, scale) + 8;
         if (evolution)
             g.wrap(
-                    x + 6,
+                    x + 12,
                     ty,
-                    w - 12,
+                    w - 24,
                     "Aus " + offer.item().base().title() + " + " + offer.item().partner().title(),
                     Pal.MYTHIC,
                     3);
         else if (offer.type() == Offer.Type.ITEM)
-            g.wrap(x + 6, ty, w - 12, offer.item().description(), Gui.MUTED, 3);
+            g.wrap(x + 12, ty, w - 24, offer.item().description(), Gui.MUTED, 3);
         if (offer.type() == Offer.Type.ITEM && !evolution) {
             var completes = Synergy.completedBy(p.items(), offer.item());
             if (!completes.isEmpty()) {
-                f.fill(x + 1, y + h - 30, w - 2, 11, 0x60401A60);
+                f.fill(x + 2, y + h - 62, w - 4, 18, 0x60401A60);
                 g.center(
                         cx,
-                        y + h - 28,
-                        "+ " + completes.getFirst().title().toUpperCase(),
+                        y + h - 57,
+                        "+ RESONANZ " + completes.getFirst().title().toUpperCase(),
                         Pal.VIOLET_4);
             }
+            var next = Item.evolutionOf(offer.item());
+            if (next != null && p.stacks(next) == 0)
+                g.center(
+                        cx,
+                        y + h - 76,
+                        "→ " + next.title().toUpperCase() + " mit " + next.partner().title(),
+                        Frame.alpha(Pal.MYTHIC, .8));
         }
         String action =
                 "["
                         + (index + 1)
                         + "] "
                         + (offer.type() == Offer.Type.WEAPON ? "AUSRÜSTEN" : "NEHMEN");
-        g.center(
-                cx, y + h - 14, enabled ? action : "NICHT MÖGLICH", enabled ? Pal.RUST_6 : Gui.DIM);
+        g.bigCenter(
+                cx,
+                y + h - 30,
+                enabled ? action : "NICHT MÖGLICH",
+                enabled ? Pal.RUST_6 : Gui.DIM,
+                2);
     }
 
     private void compactCard(Gui g, Offer offer, int index, int x, int y, int w, int h) {
@@ -285,26 +336,28 @@ final class RunScreens {
         int accent = accent(offer);
         String id = "offer." + index;
         if (g.card(id, x, y, w, h, accent, enabled)) choose(index);
-        g.text(x + 4, y + 2, tag(offer), Pal.mix(accent, Pal.WHITE, .2));
-        g.icon(icon(offer), x + 5, y + 16, 1);
-        g.wrap(x + 25, y + 15, w - 29, offer.title().toUpperCase(), Gui.TEXT, 2);
-        g.wrap(x + 5, y + 38, w - 10, offer.effect().replace('\n', ' '), Pal.RUST_6, 2);
+        g.text(x + 8, y + 4, tag(offer), Pal.mix(accent, Pal.WHITE, .2));
+        g.icon(icon(offer), x + 10, y + 26, 3);
+        g.wrap(x + 66, y + 28, w - 76, offer.title().toUpperCase(), Gui.TEXT, 3);
+        g.wrap(x + 10, y + 80, w - 20, offer.effect().replace('\n', ' '), Pal.RUST_6, 4);
         if (offer.type() == Offer.Type.ITEM) {
             var completes = Synergy.completedBy(p.items(), offer.item());
             if (!completes.isEmpty())
                 g.text(
-                        x + 5,
-                        y + 62,
-                        "+ " + completes.getFirst().title().toUpperCase(),
+                        x + 10,
+                        y + h - 42,
+                        "+ RESONANZ " + completes.getFirst().title().toUpperCase(),
                         Pal.VIOLET_4);
         }
         String price = offer.price() > 0 ? offer.price() + " SCHROTT" : "GRATIS";
-        g.text(x + 5, y + h - 12, "[" + (index + 1) + "]", Gui.DIM);
-        g.right(
-                x + w - 5,
-                y + h - 12,
-                possible(offer) ? price : "VOLL",
-                !possible(offer) ? Gui.DIM : affordable ? Pal.RUST_6 : Pal.RED_4);
+        g.text(x + 10, y + h - 22, "[" + (index + 1) + "]", Gui.DIM);
+        String label = possible(offer) ? price : "VOLL";
+        g.big(
+                x + w - 10 - g.font().width(label, 2),
+                y + h - 26,
+                label,
+                !possible(offer) ? Gui.DIM : affordable ? Pal.RUST_6 : Pal.RED_4,
+                2);
     }
 
     private boolean possible(Offer offer) {
@@ -378,24 +431,25 @@ final class RunScreens {
         var f = g.frame();
         g.header("DRUCKKAPELLE", "EIN OPFER, EIN HANDEL.", Tone.VIOLET);
         var deals = run.deals();
-        int w = 132, gap = 10;
-        int left = 240 - (deals.size() * w + (deals.size() - 1) * gap) / 2;
+        int w = 264, gap = 24;
+        int left = CX - (deals.size() * w + (deals.size() - 1) * gap) / 2;
         for (int i = 0; i < deals.size(); i++) {
             var deal = deals.get(i);
-            int x = left + i * (w + gap), y = 42 + (int) Math.round(Math.sin(g.time() * 1.6 + i));
-            if (g.card("offer." + i, x, y, w, 176, Pal.VIOLET_4, !run.dealTaken())) acceptDeal(i);
-            g.text(x + 4, y + 2, "HANDEL " + (i + 1), Pal.VIOLET_5);
-            g.icon(IconArt.misc("shrine"), x + w / 2 - 16, y + 18, 2);
-            f.addRect(x + w / 2 - 18, y + 16, 36, 36, Pal.VIOLET_3, .06);
-            int ty = y + 58;
-            ty += g.wrap(x + 6, ty, w - 12, deal.title().toUpperCase(), Gui.TEXT, 2) + 4;
-            g.text(x + 6, ty, "OPFER", Gui.DIM);
-            ty += Gui.LINE;
-            ty += g.wrap(x + 6, ty, w - 12, deal.cost(), Pal.RED_4, 3) + 4;
-            g.text(x + 6, ty, "GABE", Gui.DIM);
-            ty += Gui.LINE;
-            g.wrap(x + 6, ty, w - 12, deal.reward(), Pal.RUST_6, 3);
-            g.center(x + w / 2, y + 162, "[" + (i + 1) + "] ANNEHMEN", Pal.VIOLET_4);
+            int x = left + i * (w + gap),
+                    y = 80 + (int) Math.round(Math.sin(g.time() * 1.6 + i) * 2);
+            if (g.card("offer." + i, x, y, w, 372, Pal.VIOLET_4, !run.dealTaken())) acceptDeal(i);
+            g.text(x + 10, y + 4, "HANDEL " + (i + 1), Pal.VIOLET_5);
+            g.icon(IconArt.misc("shrine"), x + w / 2 - 32, y + 32, 4);
+            f.addRect(x + w / 2 - 36, y + 28, 72, 72, Pal.VIOLET_3, .06);
+            int ty = y + 116;
+            ty += g.wrap(x + 12, ty, w - 24, deal.title().toUpperCase(), Gui.TEXT, 2, 2) + 12;
+            g.text(x + 12, ty, "OPFER", Gui.DIM);
+            ty += Gui.LINE + 2;
+            ty += g.wrap(x + 12, ty, w - 24, deal.cost(), Pal.RED_4, 4) + 12;
+            g.text(x + 12, ty, "GABE", Gui.DIM);
+            ty += Gui.LINE + 2;
+            g.wrap(x + 12, ty, w - 24, deal.reward(), Pal.RUST_6, 4);
+            g.bigCenter(x + w / 2, y + 340, "[" + (i + 1) + "] ANNEHMEN", Pal.VIOLET_4, 2);
         }
         g.prefer("offer.0");
         var p = run.player();
@@ -406,7 +460,8 @@ final class RunScreens {
                 p.stats().maxRepairKits(),
                 p.health(),
                 p.maxHealth());
-        if (g.button("leave", 374, 238, 98, 18, "GEHEN", Tone.STEEL, true)) nav.play();
+        if (g.button("leave", W - 16 - 160, FOOT + 10, 160, 30, "GEHEN", Tone.STEEL, true))
+            nav.play();
     }
 
     /**
@@ -429,31 +484,39 @@ final class RunScreens {
         g.header("NAVIGATION", "DEIN WEG NACH VORN.", Tone.TEAL);
         // Routenleiste
         int count = RoomGenerator.ROOM_COUNT;
+        int step = (W - 96) / (count - 1);
         for (int i = 0; i < count; i++) {
-            int x = 22 + i * 19;
+            int x = 48 + i * step;
             boolean passed = i <= run.room().depth();
             boolean next = i == run.room().depth() + 1;
             boolean boss = RoomGenerator.bossDepth(i);
             if (i < count - 1)
-                f.fill(x + 3, 39, 16, 1, i < run.room().depth() ? Pal.RUST_3 : 0xFF1D2A38);
+                f.fill(x + 6, 75, step - 6, 2, i < run.room().depth() ? Pal.RUST_3 : 0xFF1D2A38);
             int color = next ? Pal.TEAL_5 : passed ? Pal.RUST_6 : boss ? Pal.RED_2 : 0xFF2A3440;
             if (boss) {
-                f.fill(x, 37, 5, 5, color);
-                f.pixel(x + 2, 36, color);
-                f.pixel(x + 2, 42, color);
-            } else f.fill(x + 1, 38, 3, 3, color);
-            if (next && ((int) (g.time() * 3)) % 2 == 0) f.rect(x - 1, 36, 7, 7, Pal.TEAL_5);
+                f.fill(x - 1, 71, 10, 10, color);
+                f.fill(x + 3, 68, 2, 16, color);
+            } else f.fill(x + 1, 73, 6, 6, color);
+            if (next && ((int) (g.time() * 3)) % 2 == 0) f.rect(x - 3, 69, 14, 14, Pal.TEAL_5);
+            if (i % SECTOR == 0)
+                g.text(
+                        x,
+                        88,
+                        RoomPlan.sectorName(i / SECTOR).substring(0, 4),
+                        i / SECTOR == run.room().sector() ? Pal.RUST_6 : Gui.DIM);
         }
         var choices = run.nextRooms();
-        int w = 216, gap = 12;
-        int left = 240 - (choices.size() * w + (choices.size() - 1) * gap) / 2;
+        int w = 440, gap = 24;
+        int left = CX - (choices.size() * w + (choices.size() - 1) * gap) / 2;
         for (int i = 0; i < choices.size(); i++)
-            routeCard(g, choices.get(i), i, left + i * (w + gap), 50, w, 180);
+            routeCard(g, choices.get(i), i, left + i * (w + gap), 104, w, 374);
         g.prefer("offer.0");
-        if (g.button("stay", 8, 244, 130, 14, "← NOCH IM RAUM BLEIBEN", Tone.QUIET, true))
+        if (g.button("stay", 16, FOOT + 14, 240, 24, "← NOCH IM RAUM BLEIBEN", Tone.QUIET, true))
             nav.play();
-        g.right(472, 246, "[1] / [2] ODER ENTER", Gui.DIM);
+        g.right(W - 16, FOOT + 22, "[1] / [2] ODER ENTER", Gui.DIM);
     }
+
+    private static final int SECTOR = RoomGenerator.SECTOR_ROOMS;
 
     private void routeCard(Gui g, RoomPlan room, int index, int x, int y, int w, int h) {
         var run = nav.run();
@@ -466,74 +529,83 @@ final class RunScreens {
                     default -> Pal.TEAL_5;
                 };
         if (g.card("offer." + index, x, y, w, h, accent, true)) chooseRoute(index);
-        // Kamerabild des nächsten Raums
-        int mx = x + 5, my = y + 13, mw = w - 10, mh = 84;
+        // Kamerabild des nächsten Raums, im Raster der Pixelwelt verdoppelt
+        int mx = x + 8, my = y + 20, mw = w - 16, mh = 176;
         g.screen(mx, my, mw, mh, Tone.TEAL);
         var art = nav.bank().room(room, run.seed());
-        int srcLeft = Math.max(0, Math.min(art.width() - mw, art.width() / 2 - mw / 2));
-        int srcTop = RoomArt.FLOOR - mh + 12;
+        int sw = mw / 2, sh = mh / 2;
+        int srcLeft = Math.max(0, Math.min(art.width() - sw, art.width() / 2 - sw / 2));
+        int srcTop = RoomArt.FLOOR - sh + 12;
         int[] px = art.pixels();
         double flicker = .82 + .06 * Math.sin(g.time() * 40 + index);
-        for (int yy = 1; yy < mh - 1; yy++)
-            for (int xx = 1; xx < mw - 1; xx++) {
+        for (int yy = 1; yy < sh - 1; yy++)
+            for (int xx = 1; xx < sw - 1; xx++) {
                 int c = px[(srcTop + yy) * art.width() + srcLeft + xx];
                 if (c >>> 24 == 0) c = 0xFF0C2436;
-                if (yy % 2 == 0) c = Pal.mix(c, 0xFF000000, .25);
-                f.pixel(mx + xx, my + yy, Pal.mix(0xFF000000, c, flicker));
+                if (yy % 2 == 0) c = Pal.mix(c, 0xFF000000, .2);
+                f.fill(mx + xx * 2, my + yy * 2, 2, 2, Pal.mix(0xFF000000, c, flicker));
             }
         int noise = (int) (g.time() * 60) + index * 17;
-        for (int k = 0; k < 12; k++) {
-            int nx = mx + 1 + Math.floorMod(noise * 31 + k * 97, mw - 2);
-            int ny = my + 1 + Math.floorMod(noise * 17 + k * 53, mh - 2);
-            f.pixel(nx, ny, 0x60FFFFFF);
+        for (int k = 0; k < 20; k++) {
+            int nx = mx + 2 + Math.floorMod(noise * 31 + k * 97, mw - 4);
+            int ny = my + 2 + Math.floorMod(noise * 17 + k * 53, mh - 4);
+            f.fill(nx, ny, 2, 2, 0x60FFFFFF);
         }
-        g.text(mx + 4, my + 3, String.format("CAM %02d", room.depth() + 1), Pal.TEAL_5);
-        if (((int) (g.time() * 2)) % 2 == 0) f.fill(mx + mw - 10, my + 4, 5, 5, Pal.RED_3);
+        g.text(mx + 8, my + 6, String.format("CAM %02d", room.depth() + 1), Pal.TEAL_5);
+        if (((int) (g.time() * 2)) % 2 == 0) f.fill(mx + mw - 18, my + 7, 8, 8, Pal.RED_3);
+        var threat = room.threat();
+        if (threat != Threat.NONE) {
+            f.fill(mx + 2, my + 24, mw - 4, 18, 0xD0400A30);
+            f.fill(mx + 2, my + 41, mw - 4, 1, Pal.MYTHIC);
+            g.center(
+                    mx + mw / 2,
+                    my + 29,
+                    "BEDROHUNG · " + threat.title().toUpperCase(),
+                    Pal.MYTHIC);
+        }
         if (room.condition() != RoomCondition.NONE) {
-            f.fill(mx + 1, my + mh - 13, mw - 2, 12, 0xD0601008);
-            f.fill(mx + 1, my + mh - 13, mw - 2, 1, Pal.RED_4);
+            f.fill(mx + 2, my + mh - 22, mw - 4, 20, 0xD0601008);
+            f.fill(mx + 2, my + mh - 22, mw - 4, 1, Pal.RED_4);
             boolean blink = ((int) (g.time() * 3)) % 2 == 0;
             g.center(
                     mx + mw / 2,
-                    my + mh - 11,
+                    my + mh - 16,
                     (blink ? "! " : "  ")
                             + room.condition().title().toUpperCase()
                             + (blink ? " !" : "  "),
                     Pal.RED_5);
         }
         // Beschreibung
-        int ty = y + mh + 17;
-        g.icon(IconArt.misc(iconName(room.kind())), x + 5, ty - 1, 1);
+        int ty = my + mh + 12;
+        g.icon(IconArt.misc(iconName(room.kind())), x + 10, ty - 2, 2);
         g.text(
-                x + 25,
+                x + 50,
                 ty,
                 (index + 1) + " · " + room.typeName().toUpperCase() + " · " + room.sectorName(),
                 Gui.DIM);
-        g.text(x + 25, ty + 10, room.title().toUpperCase(), Gui.TEXT);
-        var threat = room.threat();
+        g.big(x + 50, ty + 14, room.title().toUpperCase(), Gui.TEXT, 2);
+        int dy = ty + 44;
         if (threat != Threat.NONE) {
-            // Bedrohung: was der Raum verlangt und ob der aktuelle Build bereit ist
-            f.fill(mx + 1, my + 13, mw - 2, 11, 0xD0400A30);
-            f.fill(mx + 1, my + 23, mw - 2, 1, Pal.MYTHIC);
-            g.center(
-                    mx + mw / 2,
-                    my + 15,
-                    "BEDROHUNG · " + threat.title().toUpperCase(),
-                    Pal.MYTHIC);
-            int used = g.wrap(x + 6, ty + 24, w - 12, threat.description(), Pal.RED_4, 2);
+            dy += g.wrap(x + 12, dy, w - 24, threat.description(), Pal.RED_4, 2) + 4;
             boolean ready = threat.prepared(run.player());
-            g.wrap(
-                    x + 6,
-                    ty + 27 + used,
-                    w - 12,
-                    (ready ? "DEIN BUILD IST BEREIT" : "UNVORBEREITET · HILFT: " + threat.counter())
-                            .toUpperCase(),
-                    ready ? Pal.GREEN_4 : Pal.RUST_6,
-                    2);
-        } else if (room.condition() != RoomCondition.NONE)
-            g.wrap(x + 6, ty + 24, w - 12, room.condition().description(), Pal.RED_4, 3);
-        else g.wrap(x + 6, ty + 24, w - 12, room.description(), Gui.MUTED, 3);
-        g.text(x + 6, y + h - 12, threat(room), Pal.mix(accent, Pal.WHITE, .2));
+            dy +=
+                    g.wrap(
+                                    x + 12,
+                                    dy,
+                                    w - 24,
+                                    (ready
+                                                    ? "DEIN BUILD IST BEREIT"
+                                                    : "UNVORBEREITET · HILFT: " + threat.counter())
+                                            .toUpperCase(),
+                                    ready ? Pal.GREEN_4 : Pal.RUST_6,
+                                    2)
+                            + 4;
+        }
+        if (room.condition() != RoomCondition.NONE)
+            g.wrap(x + 12, dy, w - 24, room.condition().description(), Pal.RED_4, 2);
+        else if (threat == Threat.NONE)
+            g.wrap(x + 12, dy, w - 24, room.description(), Gui.MUTED, 3);
+        g.text(x + 12, y + h - 20, threat(room), Pal.mix(accent, Pal.WHITE, .2));
     }
 
     /**
@@ -555,25 +627,13 @@ final class RunScreens {
         boolean elite =
                 room.waves().stream().flatMap(List::stream).anyMatch(s -> s.affix().elite());
         int swarm = room.hordeTotal();
-        String text =
-                room.waveCount()
-                        + (room.waveCount() == 1 ? " WELLE" : " WELLEN")
-                        + " · "
-                        + count
-                        + " GEGNER"
-                        + (swarm > 0 ? " + " + swarm + " SCHWARM" : "")
-                        + (elite ? " · ELITE" : "");
-        // Endgame-Zahlen werden knapp, damit die Zeile in die Karte passt.
-        if (text.length() > 36)
-            text =
-                    room.waveCount()
-                            + "W · "
-                            + count
-                            + " + "
-                            + (swarm >= 1000 ? String.format("%.1fK", swarm / 1000.0) : swarm)
-                            + " SCHWARM"
-                            + (elite ? " · ELITE" : "");
-        return text;
+        return room.waveCount()
+                + (room.waveCount() == 1 ? " WELLE" : " WELLEN")
+                + " · "
+                + count
+                + " GEGNER"
+                + (swarm > 0 ? " + " + swarm + " SCHWARM" : "")
+                + (elite ? " · ELITE" : "");
     }
 
     private static String iconName(RoomPlan.Kind kind) {
@@ -597,17 +657,19 @@ final class RunScreens {
         var f = g.frame();
         g.header("AUSRÜSTUNG", p.diver().title().toUpperCase(), Tone.TEAL);
         // Figur und Werte
-        g.panel(4, 36, 146, 196);
-        g.screen(10, 42, 134, 60, Tone.TEAL);
+        g.panel(16, 66, 300, 414);
+        g.screen(28, 78, 276, 124, Tone.TEAL);
         var look = nav.service().profile().cosmetics();
         var idle = nav.bank().diver(look, p.weapon(), p.diver()).get(DiverArt.Anim.IDLE);
-        f.addRect(52, 46, 50, 54, 0xFFB8E0FF, .05);
-        f.draw(idle.get(((int) (g.time() * 4)) % idle.size()), 77, 98, false);
+        f.addRect(116, 84, 100, 112, 0xFFB8E0FF, .05);
+        g.sprite(idle.get(((int) (g.time() * 4)) % idle.size()), 166, 198, 2);
         String[][] stats = {
-            {"INTEGRITÄT", Math.round(p.health()) + "/" + Math.round(p.maxHealth())},
+            {"INTEGRITÄT", Math.round(p.health()) + " / " + Math.round(p.maxHealth())},
+            {"SCHILD", Math.round(p.shield()) + " / " + Math.round(s.maxShield())},
             {"SCHADEN", pct(s.damage())},
+            {"MODULSCHADEN", pct(s.abilityDamage())},
             {"ANGRIFFSTEMPO", pct(s.attackSpeed())},
-            {"REICHWEITE", pct(s.reach())},
+            {"REICHWEITE · FLÄCHE", pct(s.reach()) + " · " + pct(s.area())},
             {"LAUFTEMPO", pct(s.moveSpeed())},
             {"KRIT. CHANCE", Math.round(s.critChance() * 100) + " %"},
             {"KRIT. SCHADEN", "×" + String.format(Locale.ROOT, "%.1f", s.critDamage())},
@@ -615,73 +677,126 @@ final class RunScreens {
             {"ABKLINGZEIT", Math.round(s.cooldown() * 100) + " %"},
             {
                 "BRAND / KÄLTE",
-                Math.round(s.burnChance() * 100) + "/" + Math.round(s.chillChance() * 100) + " %"
+                Math.round(s.burnChance() * 100) + " / " + Math.round(s.chillChance() * 100) + " %"
             },
             {"LEBENSRAUB", Math.round(s.lifesteal() * 100) + " %"},
+            {"ZUSÄTZL. GESCHOSSE", "+" + s.extraProjectiles()},
+            {"ÜBERLADUNG", pct(s.xpGain())},
         };
         for (int i = 0; i < stats.length; i++) {
-            g.text(10, 108 + i * 11, stats[i][0], Gui.DIM);
-            g.right(144, 108 + i * 11, stats[i][1], Pal.RUST_6);
+            int y = 214 + i * 17;
+            g.text(30, y, stats[i][0], Gui.DIM);
+            g.right(302, y, stats[i][1], Pal.RUST_6);
         }
         // Waffe und Modul
-        g.panel(154, 36, 158, 38);
-        g.icon(IconArt.weapon(p.weapon()), 160, 45, 1);
-        g.text(180, 42, p.weapon().title().toUpperCase(), Gui.TEXT);
-        g.text(180, 54, "STUFE " + p.weaponLevel() + "/" + Weapon.MAX_LEVEL, Pal.RUST_6);
-        g.panel(316, 36, 158, 38);
-        g.icon(IconArt.module(p.module()), 322, 45, 1);
-        g.text(342, 42, p.module().title().toUpperCase(), Gui.TEXT);
-        g.text(342, 54, p.module().cost() + " ENERGIE", Pal.TEAL_5);
+        g.panel(328, 66, 302, 60);
+        g.icon(IconArt.weapon(p.weapon()), 340, 78, 2);
+        g.big(384, 78, p.weapon().title().toUpperCase(), Gui.TEXT, 2);
+        g.text(384, 100, "STUFE " + p.weaponLevel() + "/" + Weapon.MAX_LEVEL, Pal.RUST_6);
+        g.panel(642, 66, 302, 60);
+        g.icon(IconArt.module(p.module()), 654, 78, 2);
+        g.big(698, 78, p.module().title().toUpperCase(), Gui.TEXT, 2);
+        g.text(698, 100, p.module().cost() + " ENERGIE", Pal.TEAL_5);
         // Modulraster
         var items = new ArrayList<Item>();
         for (var item : Item.values()) if (p.stacks(item) > 0) items.add(item);
-        g.panel(154, 78, 320, 66);
+        g.panel(328, 134, 616, 180);
         Item shown = null;
-        for (int i = 0; i < Math.min(items.size(), 45); i++) {
+        for (int i = 0; i < Math.min(items.size(), 60); i++) {
             var item = items.get(i);
-            int x = 160 + (i % 15) * 20, y = 83 + (i / 15) * 19;
+            int x = 340 + (i % 15) * 40, y = 144 + (i / 15) * 40;
             String id = "item." + item.name();
-            g.card(id, x, y, 18, 18, MenuScreens.rarityColor(item.rarity()), true);
+            g.card(id, x, y, 36, 36, MenuScreens.rarityColor(item.rarity()), true);
             if (g.focused(id) || shown == null) shown = item;
-            g.icon(IconArt.item(item), x + 1, y + 1, 1);
+            g.icon(IconArt.item(item), x + 2, y + 2, 2);
             if (p.stacks(item) > 1) {
-                f.fill(x + 12, y + 11, 6, 7, 0xE0000000);
-                g.font().draw(f, "" + p.stacks(item), x + 13, y + 11, Pal.RUST_6, 1);
+                String n = "" + p.stacks(item);
+                f.fill(x + 34 - g.width(n) - 3, y + 24, g.width(n) + 4, 11, 0xE0000000);
+                g.font().draw(f, n, x + 34 - g.width(n) - 1, y + 26, Pal.RUST_6, 1);
             }
         }
-        g.screen(154, 148, 320, 80, Tone.TEAL);
+        g.screen(328, 322, 616, 158, Tone.TEAL);
         if (shown == null) {
             g.wrap(
-                    162,
-                    156,
-                    304,
+                    344,
+                    338,
+                    584,
                     "Noch keine Module installiert. Bergungen und Händler liefern sie.",
                     Gui.MUTED,
                     3);
-            g.target("empty", 154, 148, 1, 1);
+            g.target("empty", 328, 322, 1, 1);
         } else {
-            g.icon(IconArt.item(shown), 160, 154, 2);
+            g.icon(IconArt.item(shown), 340, 334, 3);
+            g.big(400, 334, shown.title().toUpperCase(), Gui.TEXT, 2);
             g.text(
-                    196,
-                    154,
-                    shown.title().toUpperCase() + "  " + p.stacks(shown) + "/" + p.maxStacks(shown),
-                    Gui.TEXT);
-            g.text(
-                    196,
-                    166,
-                    shown.rarity().title().toUpperCase(),
+                    400,
+                    358,
+                    shown.rarity().title().toUpperCase()
+                            + "  ·  STUFE "
+                            + p.stacks(shown)
+                            + "/"
+                            + p.maxStacks(shown),
                     MenuScreens.rarityColor(shown.rarity()));
-            g.wrap(160, 190, 308, shown.effect().replace('\n', ' '), Pal.RUST_6, 2);
-            g.wrap(160, 212, 308, shown.description(), Gui.MUTED, 1);
+            int ty = 386;
+            ty += g.wrap(340, ty, 588, shown.effect().replace('\n', ' '), Pal.RUST_6, 2) + 4;
+            ty += g.wrap(340, ty, 588, shown.description(), Gui.MUTED, 1) + 6;
+            evolutionHint(g, p, shown, 340, ty);
         }
         var resonances = Synergy.activeIn(p.items());
         var text = new StringBuilder();
         for (var synergy : resonances)
             text.append(text.isEmpty() ? "RESONANZ: " : "  ·  ")
                     .append(synergy.title().toUpperCase());
-        if (!text.isEmpty()) g.wrap(8, 240, 350, text.toString(), Pal.VIOLET_4, 2);
+        var fb = g.frame();
+        fb.fill(0, FOOT, W, H - FOOT, 0xF0070B10);
+        fb.fill(0, FOOT, W, 2, 0xFF2A3440);
+        if (!text.isEmpty()) g.wrap(16, FOOT + 12, 740, text.toString(), Pal.VIOLET_4, 2);
+        else g.text(16, FOOT + 18, "Noch keine Resonanz aktiv.", Gui.DIM);
         g.prefer(items.isEmpty() ? "resume" : "item." + items.getFirst().name());
-        if (g.button("resume", 364, 238, 110, 18, "WEITER  →", Tone.AMBER, true)) nav.play();
+        if (g.button("resume", W - 16 - 160, FOOT + 10, 160, 30, "WEITER  →", Tone.AMBER, true))
+            nav.play();
+    }
+
+    /** Zeigt, wohin ein Modul führt: die Entfesselung, ihr Partner und wie weit der Build ist. */
+    private static void evolutionHint(
+            Gui g, ch.zhaw.abyss.domain.Player p, Item item, int x, int y) {
+        Item evolution = item.evolution() ? null : Item.evolutionOf(item);
+        Item fromPartner = null;
+        for (var candidate : Item.evolutions())
+            if (candidate.partner() == item) fromPartner = candidate;
+        if (item.evolution()) {
+            g.text(
+                    x,
+                    y,
+                    "ENTFESSELT AUS " + item.base().title() + " + " + item.partner().title(),
+                    Pal.MYTHIC);
+            return;
+        }
+        var target = evolution != null ? evolution : fromPartner;
+        if (target == null) return;
+        if (p.stacks(target) > 0) {
+            g.text(x, y, "ENTFESSELT: " + target.title().toUpperCase(), Pal.MYTHIC);
+            return;
+        }
+        var base = target.base();
+        boolean full = p.stacks(base) >= base.maxStacks();
+        boolean partner = p.stacks(target.partner()) > 0;
+        g.text(
+                x,
+                y,
+                "→ "
+                        + target.title().toUpperCase()
+                        + ":  "
+                        + base.title()
+                        + " "
+                        + p.stacks(base)
+                        + "/"
+                        + base.maxStacks()
+                        + (full ? " ✓" : "")
+                        + "  ·  "
+                        + target.partner().title()
+                        + (partner ? " ✓" : " fehlt"),
+                full && partner ? Pal.MYTHIC : Frame.alpha(Pal.MYTHIC, .75));
     }
 
     private static String pct(double factor) {
@@ -698,29 +813,37 @@ final class RunScreens {
         String[] bosses = {"SCHOTTMEISTER", "REAKTORKERN", "BRUTMUTTER", "LOTSE"};
         int roomW = (440 - 110) / RoomGenerator.ROOM_COUNT;
         for (int i = 0; i < 4; i++) {
-            int cx = 20 + 40 + i * 6 * roomW + 3 * roomW;
+            // Positionen der Pixelwelt-Karte, auf die feine Ebene übertragen
+            int cx = (20 + 40 + i * 6 * roomW + 3 * roomW) * WorldRenderer.UI;
             boolean here = i == run.room().sector();
-            g.center(cx, 72, sectors[i], here ? Pal.RUST_6 : Pal.TEAL_5);
-            f.fill(cx - 30, 82, 60, 1, here ? Pal.RUST_4 : 0xFF2A3440);
-            g.center(cx, 186 + (i % 2) * 10, bosses[i], Gui.DIM);
+            g.bigCenter(cx, 136, sectors[i], here ? Pal.RUST_6 : Pal.TEAL_5, 2);
+            f.fill(cx - 60, 160, 120, 2, here ? Pal.RUST_4 : 0xFF2A3440);
+            String boss = i == 3 && run.cycle() > 0 ? "PRISMENKAISERIN" : bosses[i];
+            g.center(cx, 372 + (i % 2) * 18, boss, Gui.DIM);
         }
         var room = run.room();
-        g.panel(8, 206, 464, 26);
+        g.panel(16, 412, 928, 52);
         g.center(
-                240,
-                214,
+                CX,
+                422,
                 String.format(
-                        "RAUM %02d/%d  ·  %s  ·  %s  ·  ZYKLUS %d  ·  %d GEGNER BESIEGT",
+                        "RAUM %02d/%d  ·  %s  ·  %s",
                         room.depth() + 1,
                         RoomGenerator.ROOM_COUNT,
                         room.title().toUpperCase(),
-                        room.typeName().toUpperCase(),
-                        run.cycle() + 1,
-                        run.kills()),
+                        room.typeName().toUpperCase()),
                 Pal.RUST_6);
+        g.center(
+                CX,
+                440,
+                String.format(
+                        "ZYKLUS %d  ·  ESKALATION %d  ·  %d GEGNER BESIEGT",
+                        run.cycle() + 1, run.escalation(), run.kills()),
+                Gui.MUTED);
         g.prefer("resume");
-        if (g.button("resume", 364, 240, 110, 18, "WEITER  →", Tone.AMBER, true)) nav.play();
-        g.text(8, 246, "M · ZURÜCK", Gui.DIM);
+        if (g.button("resume", W - 16 - 160, FOOT + 10, 160, 30, "WEITER  →", Tone.AMBER, true))
+            nav.play();
+        g.text(16, FOOT + 22, "M · ZURÜCK", Gui.DIM);
     }
 
     // --- Ergebnis --------------------------------------------------------------------------------
@@ -734,7 +857,7 @@ final class RunScreens {
                 won ? "BRÜCKE EROBERT" : "SIGNAL VERLOREN",
                 won ? "DU BESTIMMST DEN KURS." : "DAS BOOT FÄHRT WEITER. DU AUCH.",
                 won ? Tone.AMBER : Tone.RED);
-        g.panel(8, 38, 464, 64);
+        g.panel(16, 66, 928, 112);
         String[] values = {
             String.format("%02d/%d", run.room().depth() + 1, RoomGenerator.ROOM_COUNT),
             "" + run.kills(),
@@ -743,26 +866,37 @@ final class RunScreens {
         };
         String[] names = {"ERREICHTER RAUM", "GEGNER BESIEGT", "TAUCHZEIT", "DATENKERNE"};
         for (int i = 0; i < 4; i++) {
-            int x = 20 + i * 114;
-            g.big(x, 48, values[i], won ? Pal.RUST_6 : Gui.TEXT, 2);
-            g.text(x, 72, names[i], Gui.DIM);
-            if (i > 0) f.fill(x - 8, 46, 1, 44, 0xFF2A3440);
+            int x = 40 + i * 228;
+            g.big(x, 86, values[i], won ? Pal.RUST_6 : Gui.TEXT, 4);
+            g.text(x, 128, names[i], Gui.DIM);
+            if (i > 0) f.fill(x - 16, 82, 1, 80, 0xFF2A3440);
         }
-        g.text(8, 110, "BUILD", Pal.TEAL_5);
+        g.text(
+                40,
+                150,
+                "ZYKLUS "
+                        + (run.cycle() + 1)
+                        + "  ·  DRUCKSTUFE "
+                        + run.pressure()
+                        + (run.escalation() > 0 ? "  ·  ESKALATION " + run.escalation() : "")
+                        + "  ·  ÜBERLADUNG STUFE "
+                        + run.player().level(),
+                Gui.MUTED);
+        g.text(16, 192, "BUILD", Pal.TEAL_5);
         int i = 0;
         for (var item : Item.values())
-            if (run.player().stacks(item) > 0 && i < 44) {
-                int x = 8 + (i % 22) * 21, y = 122 + (i / 22) * 20;
-                f.fill(x, y, 18, 18, 0xFF061018);
-                f.rect(x, y, 18, 18, Frame.alpha(MenuScreens.rarityColor(item.rarity()), .6));
-                g.icon(IconArt.item(item), x + 1, y + 1, 1);
+            if (run.player().stacks(item) > 0 && i < 48) {
+                int x = 16 + (i % 24) * 38, y = 208 + (i / 24) * 38;
+                f.fill(x, y, 34, 34, 0xFF061018);
+                f.rect(x, y, 34, 34, Frame.alpha(MenuScreens.rarityColor(item.rarity()), .6));
+                g.icon(IconArt.item(item), x + 1, y + 1, 2);
                 i++;
             }
-        if (i == 0) g.text(8, 124, "Keine Module installiert.", Gui.MUTED);
-        g.icon(IconArt.weapon(run.player().weapon()), 8, 168, 1);
+        if (i == 0) g.text(16, 212, "Keine Module installiert.", Gui.MUTED);
+        g.icon(IconArt.weapon(run.player().weapon()), 16, 290, 2);
         g.text(
-                28,
-                172,
+                58,
+                302,
                 run.player().weapon().title() + " · Stufe " + run.player().weaponLevel(),
                 Gui.MUTED);
         var report = service.lastCareer();
@@ -780,26 +914,33 @@ final class RunScreens {
                             + (report.classRankUps() > 0
                                     ? " (+" + report.classRankUps() + ")"
                                     : "");
-            g.text(
-                    8,
-                    186,
+            g.big(
+                    16,
+                    336,
                     line,
-                    report.rankUps() + report.classRankUps() > 0 ? Pal.VIOLET_5 : Pal.VIOLET_4);
+                    report.rankUps() + report.classRankUps() > 0 ? Pal.VIOLET_5 : Pal.VIOLET_4,
+                    1);
             if (!report.masteryUps().isEmpty()) {
                 var upgraded = new ArrayList<String>();
                 for (var weapon : report.masteryUps()) upgraded.add(weapon.title());
-                g.text(8, 198, "MEISTERSCHAFT ↑ " + String.join(", ", upgraded), Pal.RUST_6);
+                g.text(16, 354, "MEISTERSCHAFT ↑ " + String.join(", ", upgraded), Pal.RUST_6);
             }
         }
-        g.text(8, 212, "♦ " + service.profile().cores() + " DATENKERNE IM ARCHIV", Pal.TEAL_5);
-        if (g.button("career", 114, 238, 100, 16, "LAUFBAHN", Tone.VIOLET, true)) nav.career();
+        g.big(16, 384, "♦ " + service.profile().cores() + " DATENKERNE IM ARCHIV", Pal.TEAL_5, 2);
+        var fb = g.frame();
+        fb.fill(0, FOOT - 6, W, H - FOOT + 6, 0xF0070B10);
+        fb.fill(0, FOOT - 6, W, 2, 0xFF2A3440);
+        if (g.button("menu", 16, FOOT + 12, 170, 24, "ZUM HAUPTMENÜ", Tone.QUIET, true))
+            nav.title();
+        if (g.button("career", 300, FOOT + 6, 180, 32, "LAUFBAHN", Tone.VIOLET, true)) nav.career();
+        if (g.button("archive", 494, FOOT + 6, 180, 32, "ARCHIV", Tone.STEEL, true)) nav.archive(0);
         if (won) {
-            if (g.button("primary", 330, 236, 142, 20, "NÄCHSTER ZYKLUS  →", Tone.AMBER, true))
+            if (g.button(
+                    "primary", W - 16 - 256, FOOT, 256, 40, "NÄCHSTER ZYKLUS  →", Tone.AMBER, true))
                 nav.nextCycle();
-        } else if (g.button("primary", 330, 236, 142, 20, "ERNEUT TAUCHEN [R]", Tone.AMBER, true))
+        } else if (g.button(
+                "primary", W - 16 - 256, FOOT, 256, 40, "ERNEUT TAUCHEN [R]", Tone.AMBER, true))
             nav.startRun(service.profile().loadout(), System.nanoTime());
-        if (g.button("archive", 220, 238, 100, 16, "ARCHIV", Tone.STEEL, true)) nav.archive(0);
-        if (g.button("menu", 8, 240, 100, 14, "ZUM HAUPTMENÜ", Tone.QUIET, true)) nav.title();
         g.prefer("primary");
     }
 }

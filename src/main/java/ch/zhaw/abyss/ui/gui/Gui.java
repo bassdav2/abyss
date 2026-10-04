@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Bordsystem-Oberfläche im Pixelbild: Menüs, Karten und Regler werden in denselben 480 × 270 großen
- * Framebuffer gezeichnet wie die Spielwelt, damit sie wie ein Teil des U-Boots wirken.
+ * Bordsystem-Oberfläche auf der Oberflächenebene in 960 × 540: Menüs, Karten und Regler liegen in
+ * einem doppelt so feinen Raster über der Pixelwelt. Fliesstext nutzt die Pixelschrift einfach,
+ * Überschriften doppelt; so passt doppelt so viel Inhalt auf den Bildschirm, ohne den Pixelstil zu
+ * verlieren.
  *
  * <p>Arbeitet im Immediate-Mode: Jeder Bildschirm ruft pro Bild die Bedienelemente auf; diese
  * zeichnen sich und melden zurück, ob sie ausgelöst wurden. Maus und Tastatur werden gesammelt und
@@ -77,6 +79,9 @@ public final class Gui {
 
     /** Zeilenhöhe der Pixelschrift. */
     public static final int LINE = PixelFont.LINE;
+
+    /** Höhe der Kopfzeile eines Bildschirms. */
+    public static final int HEADER = 52;
 
     private static final String[] CURSOR = {
         "X.......",
@@ -432,18 +437,71 @@ public final class Gui {
      * @return benutzte Höhe in Pixeln
      */
     public int wrap(int x, int y, int w, String text, int color, int maxLines) {
-        var lines = font.wrap(text, w);
+        return wrap(x, y, w, text, color, maxLines, 1);
+    }
+
+    /**
+     * Bricht Text in wählbarer Grösse um.
+     *
+     * @param x linke Kante
+     * @param y Oberkante
+     * @param w maximale Breite
+     * @param text Text
+     * @param color Farbe
+     * @param maxLines höchstens so viele Zeilen
+     * @param scale Schriftgrösse
+     * @return benutzte Höhe in Pixeln
+     */
+    public int wrap(int x, int y, int w, String text, int color, int maxLines, int scale) {
+        var lines = font.wrap(text, w / scale);
         int count = Math.min(lines.size(), maxLines);
         for (int i = 0; i < count; i++) {
             String line = lines.get(i);
             if (i == count - 1 && lines.size() > count) {
-                while (!line.isEmpty() && width(line + "…") > w)
+                while (!line.isEmpty() && width(line + "…") * scale > w)
                     line = line.substring(0, line.length() - 1);
                 line = line + "…";
             }
-            text(x, y + i * LINE, line, color);
+            font.drawShadow(f, line, x, y + i * LINE * scale, color, 0xC0000000, scale);
         }
-        return count * LINE;
+        return count * LINE * scale;
+    }
+
+    /**
+     * Zeichnet grossen Text zentriert mit Kontur.
+     *
+     * @param cx Mitte
+     * @param y Oberkante
+     * @param text Text
+     * @param color Farbe
+     * @param scale Vergrösserung
+     */
+    public void bigCenter(int cx, int y, String text, int color, int scale) {
+        big(cx - font.width(text, scale) / 2, y, text, color, scale);
+    }
+
+    /**
+     * Wählt die grösste Schrift, in der ein Text in die Fläche passt.
+     *
+     * @param text Text
+     * @param w verfügbare Breite
+     * @param maxLines höchstens so viele Zeilen
+     * @return 2, wenn der Text doppelt gross passt, sonst 1
+     */
+    public int fit(String text, int w, int maxLines) {
+        return font.wrap(text, w / 2).size() <= maxLines ? 2 : 1;
+    }
+
+    /**
+     * Zeichnet ein Sprite vergrössert an seinem Ankerpunkt, etwa eine Figur aus der Pixelwelt.
+     *
+     * @param sprite Sprite
+     * @param x Zielposition des Ankers
+     * @param y Zielposition des Ankers
+     * @param scale Vergrösserung
+     */
+    public void sprite(Sprite sprite, int x, int y, int scale) {
+        f.drawScaled(sprite, x - sprite.anchorX() * scale, y - sprite.anchorY() * scale, scale, 1);
     }
 
     /**
@@ -515,14 +573,14 @@ public final class Gui {
      * @param tone Farbe der Kennung
      */
     public void header(String kicker, String title, Tone tone) {
-        f.fill(0, 0, f.width(), 30, 0xF0070B10);
-        f.fill(0, 30, f.width(), 1, 0xFF2A3440);
-        f.fill(0, 31, f.width(), 1, 0xFF000000);
-        for (int x = 0; x < 16; x++)
-            for (int y = 0; y < 30; y++) if (((x + y) / 4) % 2 == 0) f.pixel(x, y, 0xFF3A2A10);
-        text(22, 5, kicker, tone.glow);
-        big(22, 15, title, TEXT, 1);
-        f.fill(22 + width(kicker) + 4, 8, 30, 1, Frame.alpha(tone.glow, .5));
+        f.fill(0, 0, f.width(), HEADER, 0xF0070B10);
+        f.fill(0, HEADER, f.width(), 2, 0xFF2A3440);
+        f.fill(0, HEADER + 2, f.width(), 1, 0xFF000000);
+        for (int x = 0; x < 24; x++)
+            for (int y = 0; y < HEADER; y++) if (((x + y) / 6) % 2 == 0) f.pixel(x, y, 0xFF3A2A10);
+        text(38, 9, kicker, tone.glow);
+        f.fill(38 + width(kicker) + 6, 12, 60, 1, Frame.alpha(tone.glow, .5));
+        big(38, 24, title, TEXT, 2);
     }
 
     // --- Bedienelemente --------------------------------------------------------------------------
@@ -572,8 +630,10 @@ public final class Gui {
         }
         int color = enabled ? t.label : 0xFF4A5560;
         if (focused && enabled && tone == Tone.STEEL) color = Pal.RUST_7;
-        int ly = top + (h - 2 - 7) / 2;
-        font.draw(f, label, x + w / 2 - width(label) / 2, ly, color, 1);
+        // Hohe Tasten bekommen grosse Schrift, sofern sie hineinpasst.
+        int scale = h >= 30 && width(label) * 2 <= w - 16 ? 2 : 1;
+        int ly = top + (h - 2 - 7 * scale) / 2;
+        font.draw(f, label, x + w / 2 - width(label) * scale / 2, ly, color, scale);
         return hit;
     }
 
@@ -604,8 +664,8 @@ public final class Gui {
         for (int yy = y + 1; yy < y + h - 1; yy += 2)
             f.fill(x + 1, yy, w - 2, 1, Frame.alpha(accent, .035));
         f.rect(x, y, w, h, Frame.alpha(accent, focused ? .95 : .45));
-        f.fill(x + 1, y + 1, w - 2, 10, Frame.alpha(accent, focused ? .28 : .16));
-        int arm = 5 + (focused ? (int) Math.round(1 + Math.sin(time * 5)) : 0);
+        f.fill(x + 1, y + 1, w - 2, 14, Frame.alpha(accent, focused ? .28 : .16));
+        int arm = 7 + (focused ? (int) Math.round(1 + Math.sin(time * 5)) : 0);
         int bracket = focused ? Pal.mix(accent, Pal.WHITE, .4) : Frame.alpha(accent, .8);
         int o = focused ? -2 : 0;
         corner(x + o, y + o, arm, bracket, 1, 1);
@@ -644,15 +704,15 @@ public final class Gui {
         target(id, x, y, w, h);
         int delta = horizontal(id);
         boolean focused = focused(id);
-        if (!fired && click && inside(x, y, 14, h)) delta = -1;
-        if (!fired && click && inside(x + w - 14, y, 14, h)) delta = 1;
-        if (click && (inside(x, y, 14, h) || inside(x + w - 14, y, 14, h))) {
+        if (!fired && click && inside(x, y, 24, h)) delta = -1;
+        if (!fired && click && inside(x + w - 24, y, 24, h)) delta = 1;
+        if (click && (inside(x, y, 24, h) || inside(x + w - 24, y, 24, h))) {
             fired = true;
             click = false;
         }
         int color = focused ? Pal.RUST_6 : Pal.STEEL_5;
-        arrow(x + 4, y + h / 2 - 3, color, true);
-        arrow(x + w - 8, y + h / 2 - 3, color, false);
+        arrow(x + 8, y + h / 2 - 3, color, true);
+        arrow(x + w - 12, y + h / 2 - 3, color, false);
         if (focused) f.rect(x, y, w, h, Frame.alpha(Pal.RUST_6, .45 + .3 * Math.sin(time * 6)));
         if (delta != 0) onConfirm.run();
         return delta;
@@ -677,21 +737,21 @@ public final class Gui {
      * @return neuer Wert
      */
     public double slider(String id, int x, int y, int w, double value) {
-        target(id, x - 2, y - 2, w + 4, 11);
+        target(id, x - 3, y - 3, w + 6, 16);
         double next = value + horizontal(id) * .1;
-        if (mouseDown && inside(x - 2, y - 3, w + 4, 13) && !fired)
+        if (mouseDown && inside(x - 3, y - 4, w + 6, 18) && !fired)
             next = (mouseX - x) / (double) (w - 1);
         next = Math.max(0, Math.min(1, Math.round(next * 20) / 20.0));
         boolean focused = focused(id);
-        int segments = 10, seg = (w - (segments - 1)) / segments;
+        int segments = 10, seg = (w - (segments - 1) * 2) / segments;
         for (int i = 0; i < segments; i++) {
             boolean on = next > i / (double) segments + .001;
             int c = on ? Pal.mix(Pal.TEAL_4, Pal.RUST_5, i / (double) segments) : 0xFF1A232C;
-            f.fill(x + i * (seg + 1), y, seg, 7, c);
-            if (on) f.fill(x + i * (seg + 1), y, seg, 1, Pal.mix(c, Pal.WHITE, .4));
+            f.fill(x + i * (seg + 2), y, seg, 10, c);
+            if (on) f.fill(x + i * (seg + 2), y, seg, 2, Pal.mix(c, Pal.WHITE, .4));
         }
-        if (focused) f.rect(x - 2, y - 2, w + 3, 11, Frame.alpha(Pal.RUST_6, .7));
-        right(x + w + 26, y, Math.round(next * 100) + " %", focused ? TEXT : MUTED);
+        if (focused) f.rect(x - 3, y - 3, w + 5, 16, Frame.alpha(Pal.RUST_6, .7));
+        right(x + w + 44, y + 1, Math.round(next * 100) + " %", focused ? TEXT : MUTED);
         return next;
     }
 
@@ -707,16 +767,16 @@ public final class Gui {
      * @return neuer Zustand
      */
     public boolean toggle(String id, int x, int y, int w, String label, boolean value) {
-        boolean hit = activated(id, x - 2, y - 2, w, 12, true);
+        boolean hit = activated(id, x - 4, y - 4, w, 20, true);
         boolean next = hit != value;
         boolean focused = focused(id);
-        f.fill(x, y, 15, 8, Pal.OUTLINE);
-        f.fill(x + 1, y + 1, 13, 6, next ? Pal.TEAL_1 : 0xFF151B22);
-        int knob = next ? x + 8 : x + 1;
-        f.fill(knob, y + 1, 6, 6, next ? Pal.TEAL_5 : Pal.STEEL_4);
-        f.fill(knob, y + 1, 6, 1, next ? Pal.TEAL_6 : Pal.STEEL_6);
-        text(x + 21, y, label, focused ? TEXT : MUTED);
-        if (focused) f.rect(x - 2, y - 2, w, 12, Frame.alpha(Pal.RUST_6, .6));
+        f.fill(x, y, 26, 12, Pal.OUTLINE);
+        f.fill(x + 1, y + 1, 24, 10, next ? Pal.TEAL_1 : 0xFF151B22);
+        int knob = next ? x + 14 : x + 1;
+        f.fill(knob, y + 1, 11, 10, next ? Pal.TEAL_5 : Pal.STEEL_4);
+        f.fill(knob, y + 1, 11, 2, next ? Pal.TEAL_6 : Pal.STEEL_6);
+        text(x + 36, y + 3, label, focused ? TEXT : MUTED);
+        if (focused) f.rect(x - 4, y - 4, w, 20, Frame.alpha(Pal.RUST_6, .6));
         return next;
     }
 
@@ -732,8 +792,8 @@ public final class Gui {
      * @return neuer Inhalt
      */
     public String field(String id, int x, int y, int w, String value, String placeholder) {
-        target(id, x, y, w, 13);
-        if (click && inside(x, y, w, 13)) {
+        target(id, x, y, w, 20);
+        if (click && inside(x, y, w, 20)) {
             focus = id;
             click = false;
         }
@@ -744,12 +804,12 @@ public final class Gui {
                 if (Character.isDigit(c) && next.length() < 12) next = next + c;
             if (backspace && !next.isEmpty()) next = next.substring(0, next.length() - 1);
         }
-        screen(x, y, w, 13, Tone.TEAL);
-        if (focused) f.rect(x - 1, y - 1, w + 2, 15, Frame.alpha(Pal.RUST_6, .7));
-        if (next.isEmpty()) text(x + 4, y + 3, placeholder, DIM);
-        else text(x + 4, y + 3, next, Pal.TEAL_6);
+        screen(x, y, w, 20, Tone.TEAL);
+        if (focused) f.rect(x - 1, y - 1, w + 2, 22, Frame.alpha(Pal.RUST_6, .7));
+        if (next.isEmpty()) text(x + 6, y + 7, placeholder, DIM);
+        else text(x + 6, y + 7, next, Pal.TEAL_6);
         if (focused && ((int) (time * 2)) % 2 == 0)
-            f.fill(x + 5 + width(next), y + 3, 4, 7, Pal.TEAL_5);
+            f.fill(x + 8 + width(next), y + 6, 5, 9, Pal.TEAL_5);
         return next;
     }
 
@@ -757,8 +817,10 @@ public final class Gui {
         for (int row = 0; row < CURSOR.length; row++)
             for (int col = 0; col < CURSOR[row].length(); col++) {
                 char c = CURSOR[row].charAt(col);
-                if (c == 'X') f.pixel(x + col, y + row, Pal.OUTLINE);
-                else if (c == 'o') f.pixel(x + col, y + row, row < 3 ? Pal.WHITE : Pal.BONE);
+                // Der Mauszeiger bleibt so gross wie in der Pixelwelt.
+                if (c == 'X') f.fill(x + col * 2, y + row * 2, 2, 2, Pal.OUTLINE);
+                else if (c == 'o')
+                    f.fill(x + col * 2, y + row * 2, 2, 2, row < 3 ? Pal.WHITE : Pal.BONE);
             }
     }
 }

@@ -1,6 +1,6 @@
 # Dokumentation ABYSS · Wegweiser
 
-Stand 03.10.2026, Spielversion 1.4 (Entfesselt). Die Dokumentation folgt den Abgaben im Modul **PM3 Software-Projekt 3 (HS26)**: Projektskizze (M1), Technischer Bericht I zur Lösungsarchitektur (M2) und Technischer Bericht II zum Prototyp (M3), dazu die Präsentationen und die KI-Dokumentation. Die Originalunterlagen aus Moodle (Aufträge, Vorlagen, Folien der Dozierenden) liegen aus urheberrechtlichen Gründen **nicht** im Repository. Die Berichte nennen nur, welche Vorgabe sie umsetzen.
+Stand 04.10.2026, Spielversion 1.5 (Klare Sicht). Die Dokumentation folgt den Abgaben im Modul **PM3 Software-Projekt 3 (HS26)**: Projektskizze (M1), Technischer Bericht I zur Lösungsarchitektur (M2) und Technischer Bericht II zum Prototyp (M3), dazu die Präsentationen und die KI-Dokumentation. Die Originalunterlagen aus Moodle (Aufträge, Vorlagen, Folien der Dozierenden) liegen aus urheberrechtlichen Gründen **nicht** im Repository. Die Berichte nennen nur, welche Vorgabe sie umsetzen.
 
 Stellen mit `[TEAM]` ergänzt oder bestätigt das Projektteam: Namen, Rollen, Stunden, eigene Begründungen. Die finalen Abgaben entstehen in der SoE-Vorlage. Die Markdown-Fassungen hier liefern den Inhalt dafür.
 

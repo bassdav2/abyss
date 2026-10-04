@@ -106,3 +106,13 @@ Auftrag: Das Skalieren zum Endgame (ab Raum 20 bis nach Raum 24) viel stärker m
 - Laufbahn: abnehmender Ertrag für Abschüsse über 500 pro Tauchgang.
 - Prüfung: 170 Tests, 58/58 UI-Schritte, Lastprobe, Endgame-Bildproben, Balanceläufe.
 
+## Version 1.5 · Klare Sicht (04.10.2026)
+
+Auftrag: Die Oberfläche wird eng, Vorschläge machen. Gewählt wurde die Oberfläche in doppelter Auflösung.
+
+- Darstellung: zweite Ebene in 960 × 540 (`WorldRenderer.ui()`, `Frame.upscale`), Welt bleibt 480 × 270; Schadenszahlen, Tastenhinweise und Randpfeile auf der feinen Ebene; Röhrenfilter auf den Zeilen der Welt; Mausziele umgerechnet.
+- HUD neu: Lebenswerte, Ressourcen, eine Statuszeile mit Bedrohung, Waffe und Module mit Entfesselungen zuerst, Bossleiste, Meldungen, Banner ohne Überlagerung der Raumkarte.
+- Bildschirme neu angeordnet: Pause mit Tauchgang-Überblick, Bergung und Levelaufstieg mit grosser Wirkung und Entfesselungsweg, Kapelle, Route mit grossem Kamerabild, Ausrüstung mit 15 Werten und Entfesselungs-Fortschritt, Karte, Ergebnis, Titel, Laufbahn, Schleuse, Garderobe, Archiv, Optionen, Steuerung.
+- Fehler behoben: Meldungen aus dem Tauchgang ragten in Menüs; die UI-Prüfung pausiert nicht mehr, wenn das Betriebssystem den Fokus wegnimmt.
+- Prüfung: 172 Tests, 58/58 UI-Schritte, Render-Probelauf 2,2 ms im Mittel.
+

@@ -2,7 +2,7 @@
 
 Ein Pixel-Art-Roguelite in Java/JavaFX: Du beginnst im Heck eines riesigen U-Boots und kämpfst dich durch vier Sektionen und 24 Räume bis zur Brücke nach vorn – und danach immer tiefer, gegen Schwärme aus bis zu 1600 gleichzeitigen Gegnern. Mit Laufstegen, Kombos, Ausweichen, acht aktiven Modulen, stapelbaren Modulen und Entfesselungen, Levelaufstiegen, fünf Taucherklassen, vier Sektorwächtern, der Prismenkaiserin und einer dauerhaften Laufbahn.
 
-**Version 1.4 vom 03.10.2026 (Entfesselt-Update: Endgame, baut auf Laufbahn 1.3 und Schwarm-Update 1.2 auf).** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
+**Version 1.5 vom 04.10.2026 (Klare Sicht: neue Oberfläche in doppelter Auflösung, baut auf dem Endgame-Update 1.4 auf).** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
 
 ## Sofort spielen
 
@@ -28,6 +28,15 @@ Erster Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen.** Der erste 
 Rote Markierungen kündigen Angriffe an. Bosse tragen Panzerung; in ihrer Erholung ist der Kern offen („KERN OFFEN · JETZT ANGREIFEN“).
 
 ## Inhalt
+
+**Neu in 1.5 – Klare Sicht:** HUD und alle Menüs liegen jetzt auf einer eigenen Oberflächenebene in 960 × 540, doppelt so fein wie die Pixelwelt (480 × 270). Die Welt bleibt grobe Pixel-Art, Fliesstext nutzt die Pixelschrift einfach, Überschriften und wichtige Zahlen doppelt. So passt doppelt so viel auf jeden Bildschirm.
+- Das HUD ist neu geordnet. Lebenswerte stehen oben links, Raum, Zyklus, Eskalation und Ressourcen oben rechts. Oben in der Mitte fasst eine Statuszeile Welle, Schwarm und Bedrohung zusammen. Die Modulleiste zeigt Entfesselungen zuerst; Schadenszahlen und Meldungen sind kleiner und überlagern sich nicht mehr.
+- Alle Bildschirme haben mehr Platz:
+  - Levelkarten zeigen die Wirkung gross und den Weg zur Entfesselung.
+  - Die Ausrüstung zeigt 15 Werte, ein Raster für 60 Module und den Fortschritt zur nächsten Entfesselung.
+  - Die Laufbahn hat ausgeschriebene Reiter und Knoten mit Wirkung.
+  - Die Routenkarten haben grosse Kamerabilder, Archiv und Logbuch passen ohne Gedränge, und die Pause zeigt einen Überblick über den Tauchgang.
+- Meldungen aus dem Tauchgang verschwinden beim Wechsel ins Menü und ragen nicht mehr hinein.
 
 **Neu in 1.4 – Entfesselt (Endgame):**
 - **Eskalation ab Raum 20:** Ab dem 20. Raum eskaliert jeder weitere Raum, über alle Zyklen hinweg. Schwärme wachsen quadratisch (im dritten Zyklus mehrere tausend Gegner pro Raum, bis zu 1600 gleichzeitig), Kampfräume werden bis zu drei Bildschirme breiter und bekommen ein Oberdeck, es gibt bis zu vier Wellen und mehr Elitegegner. Die Besatzungen aller Decks mischen sich, und das Licht kippt ins Violette des Abgrunds.

@@ -185,8 +185,8 @@ public final class SceneShot {
     }
 
     static void save(WorldRenderer renderer, Path file) throws IOException {
-        var f = renderer.frame();
-        int scale = 3;
+        var f = renderer.ui();
+        int scale = 2;
         var image =
                 new BufferedImage(
                         f.width() * scale, f.height() * scale, BufferedImage.TYPE_INT_RGB);

@@ -89,6 +89,9 @@ Das Endgame entsteht vollständig im Generator und im Aggregat, ohne neue Schich
 ### ADR-14 · Lanzen, Strahlen und Entfesselungen als Domänenobjekte (neu in 1.4)
 Bullet-Hell-Muster brauchen Vorwarnungen, die länger leben als ein Gegnerzustand. `Lance` ist eine Warnlinie mit Ablaufzeit, die `GameRun` danach als Geschoss abfeuert. `Beam` ist eine Strecke, die eine Bossstrategie pro Schritt setzt und selbst auf Treffer prüft. Die Darstellung liest beide nur. Bossmuster bleiben in der Schablonenmethode `Brain`: Neue Muster sind weitere Zustände derselben Maschine, gesteuert über `pattern`, `step` und `clock` am Gegner. Erlernbare Gegenspiele laufen über bestehende Wege: der Notschalter über `Machinery`, Torpedos über `Ballistics`, der Anker über die Figur. Entfesselungen und Grenzbrecher sind gewöhnliche `Item`s. Rezept und Seltenheit `MYTHIC` liegen im Enum, ihre Wirkung an den bekannten Stellen in `StatSheet`, `Combat` und `Arsenal`. Spielstände brauchen dafür kein neues Feld, nur die Prüfung der Höchststufe kennt den Grenzbrecher.
 
+### ADR-15 · Oberflächenebene in doppelter Auflösung (neu in 1.5)
+Bis 1.4 zeichneten Welt, HUD und Menüs in denselben 480 × 270 grossen Framebuffer. Mit Eskalation, Bedrohungen und Entfesselungen wurde die Oberfläche zu eng. Jetzt rendert `WorldRenderer` zuerst die Pixelwelt samt Licht und Nachbearbeitung in 480 × 270. `compose()` überträgt sie per `Frame.upscale` als 2 × 2-Blöcke auf eine zweite Ebene in 960 × 540. Darauf zeichnen `HudRenderer`, Schadenszahlen, Tastenhinweise und alle `Gui`-Bildschirme im feinen Raster. `PixelView` zeigt nur noch diese Ebene; Mausziele der Welt werden durch den Faktor geteilt, und der Röhrenfilter folgt weiter den Zeilen der Pixelwelt. Domäne, Licht und Effekte bleiben unverändert. Die Kosten sind gering, gemessen ≈ 0,2 ms mehr pro Bild.
+
 ## Verantwortlichkeiten
 
 | Klasse | Verantwortung | Bewusst nicht zuständig |

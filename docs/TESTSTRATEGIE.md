@@ -1,6 +1,6 @@
-# Teststrategie und Prüfnachweise · Version 1.4
+# Teststrategie und Prüfnachweise · Version 1.5
 
-Stand 03.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2. Automatisierte Tests, Bot-Läufe und Bildschirmfotos ersetzen keine menschlichen Usability-, Spielgefühl- oder Hörtests.
+Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2. Automatisierte Tests, Bot-Läufe und Bildschirmfotos ersetzen keine menschlichen Usability-, Spielgefühl- oder Hörtests.
 
 ## Ebenen
 
@@ -28,11 +28,11 @@ Stand 03.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2.
 
 | Prüfung | Ergebnis |
 |---|---|
-| JUnit | 170 Testfälle bestanden, darunter `EndgameTest`, `BossMechanicsTest` und `EvolutionTest` (neu in 1.4), `SwarmTest`, `CareerTest` und `CareerWeaponTest` (siehe `docs/qa/test-summary.json`) |
+| JUnit | 172 Testfälle bestanden, darunter `EndgameTest`, `BossMechanicsTest` und `EvolutionTest` (neu in 1.4), Oberflächenebene in `RenderSmokeTest` und `FrameTest` (neu in 1.5), `SwarmTest`, `CareerTest` und `CareerWeaponTest` (siehe `docs/qa/test-summary.json`) |
 | Formatprüfung und Javadoc (`-Xdoclint`) | bestanden, keine Compiler-Warnungen |
-| UI-Komponentenprüfung | 58/58 inklusive Levelaufstieg, Laufbahn, Endgame-Schwarm, Routenwahl mit Bedrohung, Entfesselung und Prismenkaiserin (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
-| Endgame-Bildproben | 14 Bilder ohne Fenster: Schwarm mit über 1100 Gegnern, vier Bedrohungen, Kernschmelze, Prismenspirale, Tintenwolke, Fischzug, Kreuzfeuer und vier Muster der Prismenkaiserin (`./gradlew endgameShots`, `docs/qa/endgame`) |
-| Render-Probelauf | 60 s  29 898 Bilder  0 Fehler  Mittel 2.0 ms  95 % unter 2.2 ms; einzelne Spitze 84 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
+| UI-Komponentenprüfung | 58/58 auf der neuen Oberflächenebene, inklusive Levelaufstieg, Laufbahn, Endgame-Schwarm, Routenwahl mit Bedrohung, Entfesselung und Prismenkaiserin (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
+| Endgame-Bildproben | 14 Bilder ohne Fenster in 1920 × 1080 mit HUD: Schwarm mit über 1100 Gegnern, vier Bedrohungen, Kernschmelze, Prismenspirale, Tintenwolke, Fischzug, Kreuzfeuer und vier Muster der Prismenkaiserin (`./gradlew endgameShots`, `docs/qa/endgame`) |
+| Render-Probelauf | 60 s, 26 980 Bilder, 0 Fehler, Mittel 2,2 ms, 95 % unter 2,4 ms inklusive Oberflächenebene; einzelne Spitze 77 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
 | Schwarm-Lastprobe | Testspieler über fünf Zyklen, bis 1600 Gegner gleichzeitig. Bei 600–999 Gegnern ≈ 3,6 ms Zeichnen und 0,4 ms Simulation pro Bild, bei 1000+ Gegnern ≈ 3,9 ms und 1,0 ms. Einzelne Spitzen bis knapp 200 ms bei Raumwechseln und grossen Abschusswellen (`./gradlew swarmBench --args="777 5 0"`) |
 | Balance | Testspieler ohne Laufbahnboni gewinnt Zyklus 1 mit jeder Klasse (8/8 je Klasse). Zwei Endgame-Läufe: beide besiegen die Prismenkaiserin im zweiten Zyklus, einer fällt im dritten Zyklus an ihr, der andere gewinnt alle fünf Zyklen. Danach wurden Wächter ab Eskalation 40 zäher, weil sie dort in Sekunden fielen. Kein menschlicher Spieltest |
 | Balancebericht, 30 Seeds je Klasse | Mechanikerin, Harpunier, Schweisserin, Funkerin je 30/30; Koloss 26/30 (nach Anhebung auf 150 Integrität und 20 % Schutz); keine Hänger |

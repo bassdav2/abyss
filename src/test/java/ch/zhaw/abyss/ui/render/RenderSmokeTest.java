@@ -52,6 +52,28 @@ class RenderSmokeTest {
     }
 
     @Test
+    void theInterfaceLayerDoublesTheWorldAndDrawsTheHudOnTop() {
+        var renderer = new WorldRenderer(PixelFont.load(), new SpriteBank());
+        var settings = Settings.DEFAULT;
+        var run = new GameRun(RunSetup.standard(7, DiverClass.MECHANIC));
+        renderer.update(1.0 / 30, run, settings);
+        renderer.render(run, settings, false);
+        var world = renderer.frame();
+        var ui = renderer.ui();
+        assertEquals(WorldRenderer.W * 2, ui.width());
+        assertEquals(WorldRenderer.H * 2, ui.height());
+        // Ohne HUD ist jedes Pixel der Welt ein 2 × 2-Block der Oberflächenebene.
+        int x = 300, y = 200;
+        int color = world.pixels()[y * WorldRenderer.W + x] | 0xFF000000;
+        for (int dy = 0; dy < 2; dy++)
+            for (int dx = 0; dx < 2; dx++)
+                assertEquals(color, ui.pixels()[(y * 2 + dy) * ui.width() + x * 2 + dx]);
+        int before = ui.pixels()[30 * ui.width() + 100];
+        renderer.render(run, settings, true);
+        assertNotEquals(before, ui.pixels()[30 * ui.width() + 100], "HUD oben links");
+    }
+
+    @Test
     void titleAndMapScenesRender() {
         var renderer = new WorldRenderer(PixelFont.load(), new SpriteBank());
         var settings = Settings.DEFAULT;

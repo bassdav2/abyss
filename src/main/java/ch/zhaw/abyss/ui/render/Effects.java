@@ -590,12 +590,16 @@ public final class Effects {
      * @param font Schrift
      * @param camX Kameraversatz
      * @param camY vertikaler Versatz
+     * @param scale Vergrösserung der Zielebene gegenüber der Pixelwelt
      */
-    public void drawTexts(Frame frame, PixelFont font, int camX, int camY) {
+    public void drawTexts(Frame frame, PixelFont font, int camX, int camY, int scale) {
         for (var t : texts) {
             double k = t.age[0] / t.max;
-            int y = (int) Math.round(t.y - k * 16 - (k < .15 ? (.15 - k) * 20 : 0)) + camY;
-            int x = (int) Math.round(t.x) - camX - font.width(t.text, t.scale) / 2;
+            int y =
+                    (int)
+                            Math.round(
+                                    (t.y - k * 16 - (k < .15 ? (.15 - k) * 20 : 0) + camY) * scale);
+            int x = (int) Math.round((t.x - camX) * scale) - font.width(t.text, t.scale) / 2;
             int color = k > .7 ? Frame.alpha(t.color, 1 - (k - .7) / .3) : t.color;
             font.drawOutlined(
                     frame,

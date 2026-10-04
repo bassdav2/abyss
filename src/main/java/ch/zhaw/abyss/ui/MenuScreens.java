@@ -22,17 +22,24 @@ import ch.zhaw.abyss.ui.art.Pal;
 import ch.zhaw.abyss.ui.gui.Gui;
 import ch.zhaw.abyss.ui.gui.Gui.Tone;
 import ch.zhaw.abyss.ui.pixel.Sprite;
+import ch.zhaw.abyss.ui.render.WorldRenderer;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Menüs ausserhalb des Tauchgangs, gezeichnet als Bordsysteme im Pixelbild: Titel, Schleuse
- * (Vorbereitung), Garderobe, Archiv-Terminal, Bordcomputer-Einstellungen und Steuerung. Alle
- * Änderungen laufen über den {@link GameService}; hier liegt nur Darstellung und Auswahlzustand.
+ * Menüs ausserhalb des Tauchgangs, gezeichnet als Bordsysteme auf der Oberflächenebene in 960 ×
+ * 540: Titel, Laufbahn, Schleuse (Vorbereitung), Garderobe, Archiv-Terminal,
+ * Bordcomputer-Einstellungen und Steuerung. Alle Änderungen laufen über den {@link GameService};
+ * hier liegt nur Darstellung und Auswahlzustand.
  */
 final class MenuScreens {
+    private static final int W = WorldRenderer.UW, H = WorldRenderer.UH, CX = W / 2;
+
+    /** Oberkante der Fusszeile mit Zurück- und Haupttaste. */
+    private static final int FOOT = H - 50;
+
     private static final String[] TABS = {
         "TAUCHER",
         "WAFFEN",
@@ -85,41 +92,65 @@ final class MenuScreens {
         draft = nav.service().profile().settings();
     }
 
+    /** Dunkle Fusszeile über die ganze Breite. */
+    private static void foot(Gui g) {
+        var f = g.frame();
+        f.fill(0, FOOT - 4, W, H - FOOT + 4, 0xE0070B10);
+        f.fill(0, FOOT - 4, W, 2, 0xFF2A3440);
+    }
+
+    private static void cores(Gui g, int cores) {
+        String label = "♦ " + cores + " KERNE";
+        g.big(W - 16 - g.font().width(label, 2), 28, label, Pal.TEAL_5, 2);
+    }
+
+    private static SkillTree treeOf(DiverClass diver) {
+        for (var tree : SkillTree.values()) if (tree.diver() == diver) return tree;
+        return SkillTree.DEPTH;
+    }
+
+    /** Klassenname ohne Artikel, etwa für die Spindschilder. */
+    private static String shortName(DiverClass diver) {
+        String title = diver.title();
+        int space = title.indexOf(' ');
+        return (space > 0 ? title.substring(space + 1) : title).toUpperCase();
+    }
+
     // --- Titel -----------------------------------------------------------------------------------
 
     void title(Gui g) {
         var service = nav.service();
         var profile = service.profile();
         boolean saved = service.saved().isPresent();
-        int count = saved ? 5 : 4, w = saved ? 86 : 100, gap = 5;
-        int x = 240 - (count * w + (count - 1) * gap) / 2, y = 202;
+        int count = saved ? 5 : 4, w = saved ? 172 : 200, gap = 10;
+        int x = CX - (count * w + (count - 1) * gap) / 2, y = 400;
         g.prefer(saved ? "resume" : "new");
         if (saved) {
-            if (g.button("resume", x, y, w, 18, "FORTSETZEN", Tone.AMBER, true)) nav.resume();
+            if (g.button("resume", x, y, w, 36, "FORTSETZEN", Tone.AMBER, true)) nav.resume();
             x += w + gap;
         }
-        if (g.button("new", x, y, w, 18, "NEUER TAUCHGANG", saved ? Tone.STEEL : Tone.AMBER, true))
+        if (g.button("new", x, y, w, 36, "NEUER TAUCHGANG", saved ? Tone.STEEL : Tone.AMBER, true))
             nav.loadout();
-        if (g.button("archive", x + (w + gap), y, w, 18, "ARCHIV", Tone.STEEL, true))
+        if (g.button("archive", x + (w + gap), y, w, 36, "ARCHIV", Tone.STEEL, true))
             nav.archive(0);
-        if (g.button("wardrobe", x + 2 * (w + gap), y, w, 18, "GARDEROBE", Tone.STEEL, true))
+        if (g.button("wardrobe", x + 2 * (w + gap), y, w, 36, "GARDEROBE", Tone.STEEL, true))
             nav.wardrobe();
-        if (g.button("settings", x + 3 * (w + gap), y, w, 18, "OPTIONEN", Tone.STEEL, true))
+        if (g.button("settings", x + 3 * (w + gap), y, w, 36, "OPTIONEN", Tone.STEEL, true))
             nav.settings(false);
         if (g.button(
                 "career",
-                136,
-                226,
-                90,
-                14,
-                "LAUFBAHN · R" + profile.career().rank(),
+                CX - 250,
+                448,
+                200,
+                28,
+                "LAUFBAHN · RANG " + profile.career().rank(),
                 Tone.VIOLET,
                 true)) nav.career();
-        if (g.button("help", 232, 228, 60, 12, "STEUERUNG", Tone.QUIET, true)) nav.help(false);
-        if (g.button("quit", 296, 228, 50, 12, "BEENDEN", Tone.QUIET, true)) nav.quit();
+        if (g.button("help", CX - 34, 452, 130, 20, "STEUERUNG", Tone.QUIET, true)) nav.help(false);
+        if (g.button("quit", CX + 110, 452, 120, 20, "BEENDEN", Tone.QUIET, true)) nav.quit();
         g.center(
-                240,
-                252,
+                CX,
+                500,
                 "♦ "
                         + profile.cores()
                         + "   ·   "
@@ -129,9 +160,11 @@ final class MenuScreens {
                         + " BRÜCKEN   ·   BESTER RAUM "
                         + profile.bestRoom()
                         + "/"
-                        + RoomGenerator.ROOM_COUNT,
-                Gui.DIM);
-        g.right(474, 260, "V1.4", 0xFF3A4654);
+                        + RoomGenerator.ROOM_COUNT
+                        + "   ·   LAUFBAHNRANG "
+                        + profile.career().rank(),
+                Gui.MUTED);
+        g.right(W - 12, H - 16, "V1.5", 0xFF3A4654);
     }
 
     // --- Laufbahn: Ränge, Skill-Bäume, Waffenmeisterschaft ---------------------------------------
@@ -156,29 +189,21 @@ final class MenuScreens {
                 "RANG " + career.rank() + " · " + career.points(SkillTree.DEPTH) + " PUNKTE FREI",
                 Tone.VIOLET);
         var f = g.frame();
-        // Rangleiste unten rechts
-        int barX = 250, barW = 150;
-        g.text(barX - 44, 253, "RANG " + career.rank(), Pal.VIOLET_5);
-        f.fill(barX, 254, barW, 5, Pal.OUTLINE);
-        f.fill(
-                barX + 1,
-                255,
-                (int) Math.round((barW - 2) * Career.rankProgress(career.xp())),
-                3,
-                Pal.VIOLET_4);
-        g.right(472, 253, career.xp() + " EP", Pal.VIOLET_5);
-        int tabW = 50, gap = 3;
+        int tabW = 98, gap = 6;
+        int left = CX - ((trees.length + 1) * tabW + trees.length * gap) / 2;
         for (int i = 0; i <= trees.length; i++) {
             boolean weapons = i == trees.length;
-            String label = weapons ? "WAFFEN" : trees[i].tab();
+            String label = weapons ? "WAFFEN" : trees[i].title().toUpperCase();
             boolean open = weapons || trees[i].open(profile);
             boolean active = i == careerTab;
+            if (i == 3 || i == trees.length)
+                f.fill(left + i * (tabW + gap) - gap / 2 - 1, 64, 1, 26, 0xFF3A4654);
             if (g.button(
                     "ctab." + i,
-                    3 + i * (tabW + gap),
-                    33,
+                    left + i * (tabW + gap),
+                    64,
                     tabW,
-                    14,
+                    26,
                     open ? label : "× " + label,
                     active ? Tone.VIOLET : open ? Tone.STEEL : Tone.QUIET,
                     true)) {
@@ -186,8 +211,22 @@ final class MenuScreens {
                 careerNode = null;
             }
         }
+        g.text(left, 94, "KONTO", Gui.DIM);
+        g.text(left + 3 * (tabW + gap), 94, "KLASSEN", Gui.DIM);
         g.prefer("ctab." + careerTab);
-        if (g.button("back", 8, 250, 70, 14, "← ZURÜCK", Tone.QUIET, true)) nav.title();
+        foot(g);
+        if (g.button("back", 16, FOOT + 10, 140, 24, "← ZURÜCK", Tone.QUIET, true)) nav.title();
+        // Rangleiste in der Fusszeile
+        int barX = 420, barW = 320;
+        g.big(barX - 120, FOOT + 12, "RANG " + career.rank(), Pal.VIOLET_5, 2);
+        f.fill(barX, FOOT + 16, barW, 10, Pal.OUTLINE);
+        f.fill(
+                barX + 1,
+                FOOT + 17,
+                (int) Math.round((barW - 2) * Career.rankProgress(career.xp())),
+                8,
+                Pal.VIOLET_4);
+        g.right(W - 16, FOOT + 17, career.xp() + " EP", Pal.VIOLET_5);
         if (careerTab == trees.length) {
             masteries(g, career);
             return;
@@ -200,11 +239,11 @@ final class MenuScreens {
         var career = profile.career();
         var f = g.frame();
         boolean open = tree.open(profile);
-        g.panel(4, 50, 472, 146);
+        g.panel(8, 108, 944, 260);
         var nodes = tree.nodes();
-        int w = 72, h = 34;
-        java.util.function.IntUnaryOperator nx = c -> 12 + c * 77;
-        java.util.function.IntUnaryOperator ny = r -> 58 + r * 45;
+        int w = 144, h = 70;
+        java.util.function.IntUnaryOperator nx = c -> 24 + c * 154;
+        java.util.function.IntUnaryOperator ny = r -> 120 + r * 82;
         // Verbindungen zuerst, damit Karten darüber liegen
         for (var node : nodes)
             for (String id : node.requires()) {
@@ -216,9 +255,9 @@ final class MenuScreens {
                                 ? career.nodes().contains(node.id()) ? Pal.TEAL_5 : Pal.VIOLET_4
                                 : 0xFF3A4654;
                 int mid = (x0 + x1) / 2;
-                f.line(x0, y0, mid, y0, color);
-                f.line(mid, y0, mid, y1, color);
-                f.line(mid, y1, x1, y1, color);
+                f.fill(x0, y0, mid - x0, 2, color);
+                f.fill(mid, Math.min(y0, y1), 2, Math.abs(y1 - y0) + 2, color);
+                f.fill(mid, y1, x1 - mid, 2, color);
             }
         SkillTree.SkillNode shown = null;
         for (var node : nodes) {
@@ -235,22 +274,23 @@ final class MenuScreens {
             if (g.focused(id) && careerNode == null) shown = node;
             if (node.id().equals(careerNode)) shown = node;
             if (node.weapon() != null)
-                g.icon(IconArt.weapon(node.weapon()), x + w - 19, y + h - 18, 1);
+                g.icon(IconArt.weapon(node.weapon()), x + w - 38, y + h - 38, 2);
+            g.text(
+                    x + 8,
+                    y + 4,
+                    owned ? "AKTIV" : node.cost() + " P",
+                    owned ? Pal.TEAL_5 : buyable ? Pal.VIOLET_5 : Gui.DIM);
             g.wrap(
-                    x + 4,
-                    y + 3,
-                    w - 8,
+                    x + 8,
+                    y + 22,
+                    w - 16,
                     node.title().toUpperCase(),
                     owned ? Gui.TEXT : reachable ? Gui.MUTED : Gui.DIM,
                     2);
-            g.text(
-                    x + 4,
-                    y + h - 10,
-                    owned ? "AKTIV" : node.cost() + " P",
-                    owned ? Pal.TEAL_5 : buyable ? Pal.VIOLET_5 : Gui.DIM);
+            if (node.weapon() == null) g.wrap(x + 8, y + 46, w - 16, node.effect(), Gui.DIM, 2);
         }
         if (shown == null && !nodes.isEmpty()) shown = nodes.getFirst();
-        g.screen(4, 200, 472, 46, Tone.VIOLET);
+        g.screen(8, 376, 944, 106, Tone.VIOLET);
         String points =
                 tree.classTree()
                         ? tree.diver().title().toUpperCase()
@@ -260,26 +300,26 @@ final class MenuScreens {
                                 + career.points(tree)
                                 + " P"
                         : "KONTO · RANG " + career.rank() + " · " + career.points(tree) + " P";
-        g.right(470, 204, points, Pal.VIOLET_5);
+        g.right(940, 386, points, Pal.VIOLET_5);
         if (!open) {
-            g.big(12, 206, "GESPERRT", Pal.RED_4, 1);
-            g.text(12, 222, tree.requirement(), Gui.MUTED);
+            g.big(24, 388, "GESPERRT", Pal.RED_4, 2);
+            g.text(24, 416, tree.requirement(), Gui.MUTED);
             return;
         }
         if (shown == null) return;
-        g.big(12, 205, shown.title().toUpperCase(), Gui.TEXT, 1);
-        g.wrap(12, 219, 300, shown.effect(), Pal.RUST_6, 2);
+        g.big(24, 386, shown.title().toUpperCase(), Gui.TEXT, 2);
+        g.wrap(24, 414, 640, shown.effect(), Pal.RUST_6, 3);
         if (!shown.requires().isEmpty() && !career.reachable(shown)) {
             var names = new ArrayList<String>();
             for (String id : shown.requires())
                 if (!career.nodes().contains(id))
                     names.add(SkillTree.SkillNode.find(id).orElseThrow().title());
-            g.text(12, 236, "Benötigt: " + String.join(", ", names), Gui.DIM);
+            g.text(24, 460, "Benötigt: " + String.join(", ", names), Gui.DIM);
         }
         boolean owned = career.nodes().contains(shown.id());
         boolean buyable = career.canBuy(shown, profile);
         String label = owned ? "AKTIV" : "FREISCHALTEN · " + shown.cost() + " P";
-        if (g.button("buy", 340, 224, 130, 18, label, Tone.VIOLET, buyable && !owned)) {
+        if (g.button("buy", 732, 430, 208, 36, label, Tone.VIOLET, buyable && !owned)) {
             if (service.purchase(shown)) {
                 nav.toast(
                         shown.weapon() != null
@@ -293,27 +333,27 @@ final class MenuScreens {
     private void masteries(Gui g, Career career) {
         var profile = nav.service().profile();
         var f = g.frame();
-        g.panel(4, 50, 472, 196);
+        g.panel(8, 108, 944, 374);
         var weapons = Weapon.values();
         for (int i = 0; i < weapons.length; i++) {
             var weapon = weapons[i];
             int col = i % 2, row = i / 2;
-            int x = 10 + col * 234, y = 56 + row * 37;
+            int x = 24 + col * 468, y = 120 + row * 70;
             boolean owned = profile.owns(weapon);
             int level = career.mastery(weapon);
-            g.icon(IconArt.weapon(weapon), x, y + 4, 1);
-            g.text(x + 20, y + 2, weapon.title().toUpperCase(), owned ? Gui.TEXT : Gui.DIM);
+            g.icon(IconArt.weapon(weapon), x, y + 4, 2);
+            g.big(x + 44, y + 2, weapon.title().toUpperCase(), owned ? Gui.TEXT : Gui.DIM, 2);
             g.right(
-                    x + 224,
-                    y + 2,
+                    x + 440,
+                    y + 6,
                     "STUFE " + level + "/10",
                     level >= 10 ? Pal.RUST_6 : Pal.VIOLET_5);
-            f.fill(x + 20, y + 13, 204, 4, Pal.OUTLINE);
+            f.fill(x + 44, y + 24, 396, 8, Pal.OUTLINE);
             f.fill(
-                    x + 21,
-                    y + 14,
-                    (int) Math.round(202 * career.masteryProgress(weapon)),
-                    2,
+                    x + 45,
+                    y + 25,
+                    (int) Math.round(394 * career.masteryProgress(weapon)),
+                    6,
                     Pal.VIOLET_4);
             String note =
                     owned
@@ -326,9 +366,13 @@ final class MenuScreens {
                             : weapon.career()
                                     ? "Laufbahn: Endknoten eines Klassenbaums"
                                     : "Archiv: für Datenkerne";
-            g.text(x + 20, y + 21, note, owned ? Gui.MUTED : Gui.DIM);
+            g.text(x + 44, y + 40, note, owned ? Gui.MUTED : Gui.DIM);
         }
-        g.text(84, 244, "Abschüsse mit einer Waffe steigern ihre Meisterschaft.", 0xFF3A4654);
+        g.center(
+                CX + 80,
+                FOOT - 22,
+                "Abschüsse mit einer Waffe steigern ihre Meisterschaft.",
+                Gui.DIM);
     }
 
     // --- Schleuse: Vorbereitung ------------------------------------------------------------------
@@ -338,19 +382,19 @@ final class MenuScreens {
         var profile = service.profile();
         var f = g.frame();
         g.header("SCHLEUSE", "WER TAUCHT HEUTE?", Tone.AMBER);
-        g.right(472, 12, "♦ " + profile.cores() + " KERNE", Pal.TEAL_5);
+        cores(g, profile.cores());
         g.prefer("dive");
         // Spinde mit den Klassen
         var divers = DiverClass.values();
         DiverClass shown = loadout.diver();
         for (int i = 0; i < divers.length; i++) {
             var diver = divers[i];
-            int x = 8 + i * 61, y = 38;
+            int x = 16 + i * 122, y = 70;
             boolean owned = profile.owns(diver);
             boolean selected = loadout.diver() == diver;
             int accent = selected ? Pal.RUST_6 : owned ? Pal.STEEL_5 : Pal.RED_3;
             String id = "diver." + i;
-            if (g.card(id, x, y, 57, 88, accent, true)) {
+            if (g.card(id, x, y, 114, 178, accent, true)) {
                 if (owned) loadout = loadout.withDiver(diver);
                 else
                     Unlock.find(Unlock.of(diver))
@@ -364,35 +408,50 @@ final class MenuScreens {
             }
             if (g.focused(id)) shown = diver;
             // Spindrückwand, Lampe, Figur
-            f.fill(x + 4, y + 12, 49, 66, 0xFF0B1118);
-            for (int yy = y + 16; yy < y + 76; yy += 6) f.fill(x + 6, yy, 45, 1, 0xFF111922);
-            f.fill(x + 22, y + 12, 13, 2, selected ? Pal.RUST_6 : 0xFF2A3440);
-            if (selected) f.addRect(x + 10, y + 14, 37, 62, 0xFFFFD890, .10);
+            f.fill(x + 8, y + 22, 98, 132, 0xFF0B1118);
+            for (int yy = y + 30; yy < y + 152; yy += 12) f.fill(x + 12, yy, 90, 2, 0xFF111922);
+            f.fill(x + 44, y + 22, 26, 4, selected ? Pal.RUST_6 : 0xFF2A3440);
+            if (selected) f.addRect(x + 20, y + 26, 74, 124, 0xFFFFD890, .10);
             var sprite =
                     nav.bank()
                             .diver(profile.cosmetics(), diver.weapon(), diver)
                             .get(DiverArt.Anim.IDLE)
                             .get(selected ? ((int) (g.time() * 4)) % 4 : 0);
-            if (owned) f.draw(sprite, x + 28, y + 76, false);
+            if (owned) g.sprite(sprite, x + 57, y + 152, 2);
             else {
-                f.silhouette(sprite, x + 28, y + 76, false, 0xFF1A232C);
-                g.icon(IconArt.misc("lock"), x + 20, y + 36, 1);
+                g.sprite(silhouette(sprite), x + 57, y + 152, 2);
+                g.icon(IconArt.misc("lock"), x + 41, y + 70, 2);
             }
-            f.fill(x + 4, y + 78, 49, 6, 0xFF151B22);
-            g.center(x + 28, y + 78, "0" + (i + 1), selected ? Pal.RUST_6 : Gui.DIM);
+            f.fill(x + 8, y + 156, 98, 14, 0xFF151B22);
+            g.center(x + 57, y + 159, shortName(diver), selected ? Pal.RUST_6 : Gui.DIM);
         }
         // Personalakte der fokussierten oder gewählten Klasse
-        g.screen(316, 38, 158, 88, Tone.TEAL);
-        g.text(322, 43, shown.title().toUpperCase(), Gui.TEXT);
+        g.screen(636, 70, 308, 178, Tone.TEAL);
+        g.big(648, 80, shown.title().toUpperCase(), Gui.TEXT, 2);
         g.text(
-                322,
-                55,
+                648,
+                104,
                 Math.round(shown.health())
                         + " HP  ·  TEMPO "
                         + Math.round(shown.speed() * 100)
                         + " %",
                 Pal.TEAL_5);
-        g.wrap(322, 68, 148, shown.description(), Gui.MUTED, 4);
+        int dy = 122 + g.wrap(648, 122, 284, shown.description(), Gui.MUTED, 4) + 8;
+        var career = profile.career();
+        g.text(
+                648,
+                dy,
+                "LAUFBAHN · RANG "
+                        + career.rank(shown)
+                        + " · "
+                        + career.points(treeOf(shown))
+                        + " P FREI",
+                Pal.VIOLET_4);
+        g.text(
+                648,
+                dy + 16,
+                "START: " + shown.weapon().title() + " · " + shown.module().title(),
+                Gui.DIM);
         String status =
                 loadout.diver() == shown
                         ? "AUSGEWÄHLT"
@@ -400,8 +459,8 @@ final class MenuScreens {
                                 ? "ENTER · WÄHLEN"
                                 : "KAUFEN · " + shown.unlockCost() + " ♦";
         g.text(
-                322,
-                114,
+                648,
+                230,
                 status,
                 loadout.diver() == shown
                         ? Pal.RUST_6
@@ -419,7 +478,7 @@ final class MenuScreens {
                 selector(
                         g,
                         "weapon",
-                        8,
+                        16,
                         "WAFFE",
                         IconArt.weapon(loadout.weapon()),
                         loadout.weapon().title(),
@@ -435,7 +494,7 @@ final class MenuScreens {
                 selector(
                         g,
                         "module",
-                        164,
+                        328,
                         "MODUL · " + loadout.module().cost() + " E",
                         IconArt.module(loadout.module()),
                         loadout.module().title(),
@@ -459,7 +518,7 @@ final class MenuScreens {
                 selector(
                         g,
                         "pressure",
-                        320,
+                        640,
                         "DRUCK · MAX " + profile.maxPressure() + "/" + RunSetup.MAX_PRESSURE,
                         IconArt.misc("skull"),
                         loadout.pressure() == 0 ? "Normal" : "Druckstufe " + loadout.pressure(),
@@ -469,48 +528,49 @@ final class MenuScreens {
                     loadout.withPressure(
                             Math.floorMod(loadout.pressure() + d, profile.maxPressure() + 1));
         // Startoptionen
-        g.panel(8, 186, 306, 50);
+        g.panel(16, 368, 612, 104);
         boolean explorer =
                 g.toggle(
                         "explorer",
-                        16,
-                        194,
-                        290,
+                        36,
+                        386,
+                        576,
                         "Entdecker · mehr Integrität, mehr Schaden",
                         loadout.explorer());
         if (explorer != loadout.explorer()) loadout = loadout.withExplorer(explorer);
-        g.text(16, 214, "SEED", Gui.DIM);
-        seed = g.field("seed", 44, 211, 104, seed, "zufällig");
-        if (g.button("daily", 156, 211, 150, 14, "TAGESTAUCHGANG", Tone.TEAL, true))
+        g.text(36, 430, "SEED", Gui.DIM);
+        seed = g.field("seed", 80, 424, 220, seed, "zufällig");
+        if (g.button("daily", 316, 422, 292, 26, "TAGESTAUCHGANG", Tone.TEAL, true))
             seed = "" + GameService.dailySeed(LocalDate.now());
-        if (g.button("back", 8, 246, 70, 14, "← ZURÜCK", Tone.QUIET, true)) {
+        foot(g);
+        if (g.button("back", 16, FOOT + 10, 140, 24, "← ZURÜCK", Tone.QUIET, true)) {
             service.rememberLoadout(loadout);
             nav.title();
         }
-        if (g.button("wardrobe", 86, 244, 90, 16, "GARDEROBE", Tone.STEEL, true)) {
+        if (g.button("wardrobe", 172, FOOT + 4, 180, 32, "GARDEROBE", Tone.STEEL, true)) {
             service.rememberLoadout(loadout);
             nav.wardrobe();
         }
         // Tauchhebel
-        g.panel(322, 186, 152, 76);
-        g.text(330, 192, "SCHLEUSE BEREIT", Pal.TEAL_5);
+        g.panel(640, 368, 304, 104);
+        g.text(656, 380, "SCHLEUSE BEREIT", Pal.TEAL_5);
         boolean lamp = ((int) (g.time() * 2)) % 2 == 0;
-        f.fill(458, 193, 6, 6, lamp ? Pal.GREEN_4 : Pal.GREEN_1);
-        if (g.button("dive", 330, 208, 136, 30, "TAUCHEN  →", Tone.AMBER, true)) {
+        f.fill(920, 380, 10, 10, lamp ? Pal.GREEN_4 : Pal.GREEN_1);
+        if (g.button("dive", 656, 400, 272, 48, "TAUCHEN  →", Tone.AMBER, true)) {
             long value = seed.isBlank() ? System.nanoTime() : Long.parseLong(seed);
             nav.startRun(loadout, value);
         }
-        g.center(398, 246, seed.isBlank() ? "ZUFÄLLIGE ROUTE" : "SEED " + seed, Gui.DIM);
+        g.center(792, 456, seed.isBlank() ? "ZUFÄLLIGE ROUTE" : "SEED " + seed, Gui.DIM);
     }
 
     private int selector(
             Gui g, String id, int x, String kicker, Sprite icon, String value, String info) {
-        g.panel(x, 132, 152, 48);
-        int delta = g.stepper(id, x + 1, 133, 150, 46);
-        g.text(x + 18, 137, kicker, Pal.TEAL_5);
-        g.icon(icon, x + 16, 149, 1);
-        g.text(x + 36, 152, value, Gui.TEXT);
-        g.wrap(x + 18, 166, 118, info, Gui.MUTED, 1);
+        g.panel(x, 260, 304, 98);
+        int delta = g.stepper(id, x + 2, 262, 300, 94);
+        g.text(x + 36, 270, kicker, Pal.TEAL_5);
+        g.icon(icon, x + 34, 288, 2);
+        g.big(x + 76, 296, value, Gui.TEXT, 2);
+        g.wrap(x + 36, 326, 236, info, Gui.MUTED, 2);
         return delta;
     }
 
@@ -521,22 +581,22 @@ final class MenuScreens {
         var profile = service.profile();
         var f = g.frame();
         g.header("GARDEROBE", "DEIN ANZUG. DEINE FARBEN.", Tone.TEAL);
-        g.right(472, 12, "♦ " + profile.cores() + " KERNE", Pal.TEAL_5);
+        cores(g, profile.cores());
         var diver = loadout != null ? loadout.diver() : profile.loadout().diver();
         var weapon = loadout != null ? loadout.weapon() : profile.loadout().weapon();
         var anims = nav.bank().diver(look, weapon, diver);
         // Spiegel
-        g.panel(8, 38, 168, 198);
-        g.screen(14, 44, 156, 140, Tone.TEAL);
-        f.addRect(40, 52, 104, 128, 0xFFB8E0FF, .05);
+        g.panel(16, 68, 336, 412);
+        g.screen(28, 80, 312, 284, Tone.TEAL);
+        f.addRect(80, 96, 208, 256, 0xFFB8E0FF, .05);
         var idle = anims.get(DiverArt.Anim.IDLE);
-        g.icon(idle.get(((int) (g.time() * 4)) % idle.size()), 20, 42, 3);
+        g.sprite(idle.get(((int) (g.time() * 4)) % idle.size()), 184, 352, 6);
         var attack = anims.get(DiverArt.of(weapon.combo().getFirst().style()));
         var run = anims.get(DiverArt.Anim.RUN);
         var jump = anims.get(DiverArt.Anim.JUMP);
-        f.draw(attack.get(((int) (g.time() * 8)) % attack.size()), 42, 228, false);
-        f.draw(run.get(((int) (g.time() * 10)) % run.size()), 92, 228, false);
-        f.draw(jump.get(((int) (g.time() * 3)) % jump.size()), 142, 228, false);
+        g.sprite(attack.get(((int) (g.time() * 8)) % attack.size()), 84, 466, 2);
+        g.sprite(run.get(((int) (g.time() * 10)) % run.size()), 184, 466, 2);
+        g.sprite(jump.get(((int) (g.time() * 3)) % jump.size()), 284, 466, 2);
         // Wahlschalter
         String[] categories = {"suit", "helmet", "visor", "trim"};
         String[] titles = {"ANZUGFARBE", "HELMFORM", "VISIERFARBE", "METALLTON"};
@@ -546,25 +606,25 @@ final class MenuScreens {
         int[] values = {look.suit(), look.helmet(), look.visor(), look.trim()};
         boolean allOwned = true;
         for (int c = 0; c < 4; c++) {
-            int y = 38 + c * 46;
-            g.panel(184, y, 290, 42);
+            int y = 68 + c * 94;
+            g.panel(368, y, 576, 86);
             String id = Cosmetics.unlockId(categories[c], values[c]);
             boolean owned = profile.owns(id);
             allOwned &= owned;
-            int delta = g.stepper("look." + c, 185, y + 1, owned ? 288 : 180, 40);
+            int delta = g.stepper("look." + c, 370, y + 2, owned ? 572 : 360, 82);
             if (delta != 0) look = cycle(look, c, delta, names[c].length);
-            g.text(202, y + 8, titles[c], Pal.TEAL_5);
-            g.big(202, y + 22, names[c][values[c]].toUpperCase(), owned ? Gui.TEXT : Gui.MUTED, 1);
-            g.text(202 + 150, y + 8, (values[c] + 1) + "/" + names[c].length, Gui.DIM);
+            g.text(404, y + 16, titles[c], Pal.TEAL_5);
+            g.big(404, y + 40, names[c][values[c]].toUpperCase(), owned ? Gui.TEXT : Gui.MUTED, 2);
+            g.text(660, y + 16, (values[c] + 1) + "/" + names[c].length, Gui.DIM);
             if (!owned) {
                 var unlock = Unlock.find(id).orElseThrow();
-                g.text(372, y + 8, "GESPERRT", Pal.RED_4);
+                g.text(748, y + 16, "GESPERRT", Pal.RED_4);
                 if (g.button(
                         "buy." + c,
-                        372,
-                        y + 20,
-                        94,
-                        14,
+                        748,
+                        y + 38,
+                        184,
+                        30,
                         unlock.cost() + " ♦ KAUFEN",
                         Tone.AMBER,
                         profile.canBuy(unlock))) {
@@ -572,14 +632,16 @@ final class MenuScreens {
                 }
             }
         }
-        if (g.button("back", 184, 246, 70, 14, "← ZURÜCK", Tone.QUIET, true)) leaveWardrobe();
-        if (g.button("apply", 364, 222, 110, 20, "ÜBERNEHMEN", Tone.AMBER, allOwned)) {
+        foot(g);
+        if (g.button("back", 16, FOOT + 10, 140, 24, "← ZURÜCK", Tone.QUIET, true)) leaveWardrobe();
+        if (g.button(
+                "apply", W - 16 - 200, FOOT + 2, 200, 38, "ÜBERNEHMEN", Tone.AMBER, allOwned)) {
             if (service.cosmetics(look)) {
                 nav.toast("Aussehen gespeichert");
                 leaveWardrobe();
             }
         }
-        if (!allOwned) g.right(356, 228, "ERST FREISCHALTEN", Pal.RED_4);
+        if (!allOwned) g.right(W - 232, FOOT + 16, "ERST FREISCHALTEN", Pal.RED_4);
         g.prefer("look.0");
     }
 
@@ -620,19 +682,22 @@ final class MenuScreens {
 
     // --- Archiv-Terminal -------------------------------------------------------------------------
 
+    /** Inhaltsbereich des Archivs rechts neben den Reitern. */
+    private static final int AX = 220, AY = 66, AW = 724, AH = 300;
+
     void archive(Gui g) {
         var profile = nav.service().profile();
         g.header("ARCHIV", "WAS DU FINDEST, BLEIBT.", Tone.TEAL);
-        g.right(472, 12, "♦ " + profile.cores() + " KERNE", Pal.TEAL_5);
-        g.panel(4, 36, 96, 196);
+        cores(g, profile.cores());
+        g.panel(16, 66, 192, 416);
         for (int i = 0; i < TABS.length; i++) {
             boolean active = i == archiveTab;
             if (g.button(
                     "tab." + i,
-                    10,
-                    42 + i * 20,
-                    84,
-                    16,
+                    28,
+                    80 + i * 44,
+                    168,
+                    34,
                     TABS[i],
                     active ? Tone.AMBER : Tone.STEEL,
                     true)) {
@@ -641,8 +706,9 @@ final class MenuScreens {
             }
         }
         g.prefer("tab." + archiveTab);
-        if (g.button("back", 12, 246, 80, 14, "← ZURÜCK", Tone.QUIET, true)) nav.title();
-        g.panel(102, 34, 374, 158);
+        foot(g);
+        if (g.button("back", 16, FOOT + 10, 140, 24, "← ZURÜCK", Tone.QUIET, true)) nav.title();
+        g.panel(AX - 4, AY, AW + 8, AH);
         switch (archiveTab) {
             case 6 -> codex(g);
             case 7 -> logbook(g);
@@ -656,7 +722,7 @@ final class MenuScreens {
         var profile = service.profile();
         List<Unlock> list =
                 Unlock.catalog().stream().filter(u -> u.category() == category).toList();
-        int perPage = 12, pages = Math.max(1, (list.size() + perPage - 1) / perPage);
+        int perPage = 20, pages = Math.max(1, (list.size() + perPage - 1) / perPage);
         archivePage = Math.min(archivePage, pages - 1);
         Unlock shown = null;
         for (int i = archivePage * perPage;
@@ -664,45 +730,44 @@ final class MenuScreens {
                 i++) {
             var unlock = list.get(i);
             int slot = i - archivePage * perPage;
-            int x = 106 + (slot % 3) * 124, y = 36 + (slot / 3) * 36;
+            int x = AX + 6 + (slot % 4) * 180, y = AY + 10 + (slot / 4) * 56;
             boolean owned = profile.owns(unlock.id());
             boolean buyable = profile.canBuy(unlock);
             int accent = owned ? Pal.GREEN_4 : buyable ? Pal.RUST_6 : Pal.STEEL_4;
             String id = "unlock." + unlock.id();
-            if (g.card(id, x, y, 120, 32, accent, true) && !owned) {
+            if (g.card(id, x, y, 172, 50, accent, true) && !owned) {
                 if (service.purchase(unlock)) nav.toast(unlock.title() + " freigeschaltet");
                 else nav.toast(buyable ? "Nicht möglich" : "Nicht genug Datenkerne");
             }
             if (g.focused(id) || shown == null) shown = unlock;
             var icon = iconFor(unlock);
-            if (icon != null) g.icon(icon, x + 4, y + 8, 1);
-            g.wrap(x + 24, y + 5, 92, unlock.title(), owned ? Gui.TEXT : Gui.MUTED, 1);
+            if (icon != null) g.icon(icon, x + 8, y + 9, 2);
+            g.wrap(x + 48, y + 8, 118, unlock.title(), owned ? Gui.TEXT : Gui.MUTED, 2);
             g.text(
-                    x + 24,
-                    y + 18,
+                    x + 48,
+                    y + 34,
                     owned ? "FREI" : unlock.cost() + " ♦",
                     owned ? Pal.GREEN_4 : buyable ? Pal.RUST_6 : Gui.DIM);
         }
+        g.screen(AX, 376, AW, 106, Tone.TEAL);
         if (pages > 1) {
-            if (g.button("prev", 380, 180, 20, 12, "<", Tone.STEEL, true))
+            if (g.button("prev", AX + AW - 116, 384, 30, 22, "<", Tone.STEEL, true))
                 archivePage = Math.floorMod(archivePage - 1, pages);
-            g.center(416, 182, (archivePage + 1) + "/" + pages, Gui.MUTED);
-            if (g.button("next", 434, 180, 20, 12, ">", Tone.STEEL, true))
+            g.center(AX + AW - 66, 390, (archivePage + 1) + "/" + pages, Gui.MUTED);
+            if (g.button("next", AX + AW - 46, 384, 30, 22, ">", Tone.STEEL, true))
                 archivePage = Math.floorMod(archivePage + 1, pages);
         }
         if (shown == null) {
-            g.screen(106, 196, 368, 60, Tone.TEAL);
-            g.text(114, 204, "Keine Einträge.", Gui.MUTED);
+            g.text(AX + 16, 392, "Keine Einträge.", Gui.MUTED);
             return;
         }
-        g.screen(106, 196, 368, 60, Tone.TEAL);
-        g.text(114, 202, shown.title().toUpperCase(), Gui.TEXT);
-        g.wrap(114, 214, 352, shown.description(), Gui.MUTED, 2);
+        g.big(AX + 16, 388, shown.title().toUpperCase(), Gui.TEXT, 2);
+        g.wrap(AX + 16, 414, AW - 160, shown.description(), Gui.MUTED, 3);
         boolean owned = profile.owns(shown.id());
         boolean requirement = shown.requires() == null || profile.owns(shown.requires());
         g.text(
-                114,
-                240,
+                AX + 16,
+                462,
                 owned
                         ? "FREIGESCHALTET"
                         : !requirement
@@ -732,48 +797,49 @@ final class MenuScreens {
         var profile = nav.service().profile();
         var items = Item.values();
         g.text(
-                106,
-                38,
+                AX + 8,
+                AY + 10,
                 "ENTDECKT "
                         + profile.discovered().size()
                         + "/"
                         + items.length
-                        + "  ·  "
+                        + "   ·   "
                         + profile.totalKills()
-                        + " GEGNER  ·  "
+                        + " GEGNER   ·   "
                         + profile.wins()
                         + " SIEGE",
                 Pal.TEAL_5);
         Item shown = null;
         for (int i = 0; i < items.length; i++) {
             var item = items[i];
-            int x = 106 + (i % 18) * 20, y = 52 + (i / 18) * 20;
+            int x = AX + 8 + (i % 18) * 40, y = AY + 28 + (i / 18) * 40;
             boolean known = profile.discovered().contains(item);
             String id = "item." + item.name();
-            g.card(id, x, y, 18, 18, known ? rarityColor(item.rarity()) : Pal.STEEL_3, true);
+            g.card(id, x, y, 36, 36, known ? rarityColor(item.rarity()) : Pal.STEEL_3, true);
             if (g.focused(id) || shown == null) shown = item;
             var icon = IconArt.item(item);
-            g.icon(known ? icon : silhouette(icon), x + 1, y + 1, 1);
+            g.icon(known ? icon : silhouette(icon), x + 2, y + 2, 2);
         }
-        g.screen(106, 140, 368, 116, Tone.TEAL);
+        g.screen(AX, 376, AW, 106, Tone.TEAL);
         boolean known = profile.discovered().contains(shown);
         var icon = IconArt.item(shown);
-        g.icon(known ? icon : silhouette(icon), 114, 148, 2);
+        g.icon(known ? icon : silhouette(icon), AX + 14, 388, 4);
+        int tx = AX + 96;
         if (!known) {
-            g.big(152, 150, "???", Gui.MUTED, 2);
+            g.big(tx, 392, "???", Gui.MUTED, 2);
             g.wrap(
-                    152,
-                    172,
-                    312,
+                    tx,
+                    420,
+                    AW - 120,
                     "Noch nicht gefunden. Bergungen, Händler und Kapellen liefern neue Module.",
                     Gui.MUTED,
                     3);
             return;
         }
-        g.text(152, 148, shown.title().toUpperCase(), Gui.TEXT);
+        g.big(tx, 386, shown.title().toUpperCase(), Gui.TEXT, 2);
         g.text(
-                152,
-                160,
+                tx,
+                410,
                 shown.evolution()
                         ? "ENTFESSELT  ·  AUS "
                                 + shown.base().title().toUpperCase()
@@ -783,14 +849,14 @@ final class MenuScreens {
                                 + "  ·  BIS STUFE "
                                 + shown.maxStacks(),
                 rarityColor(shown.rarity()));
-        g.wrap(114, 184, 352, shown.effect().replace('\n', ' '), Pal.RUST_6, 2);
-        g.wrap(114, 208, 352, shown.description(), Gui.MUTED, 3);
+        g.wrap(tx, 426, AW - 120, shown.effect().replace('\n', ' '), Pal.RUST_6, 2);
+        g.wrap(tx, 450, AW - 120, shown.description(), Gui.MUTED, 1);
         for (var synergy : Synergy.values())
             if (synergy.first() == shown || synergy.second() == shown) {
                 var partner = synergy.first() == shown ? synergy.second() : synergy.first();
                 g.text(
-                        114,
-                        244,
+                        tx,
+                        466,
                         "RESONANZ " + synergy.title().toUpperCase() + " MIT " + partner.title(),
                         Pal.VIOLET_4);
                 break;
@@ -800,53 +866,55 @@ final class MenuScreens {
     private void logbook(Gui g) {
         var earned = nav.service().profile().achievements();
         var entries = Achievement.values();
-        g.text(106, 38, "ERREICHT " + earned.size() + "/" + entries.length, Pal.TEAL_5);
+        g.text(AX + 8, AY + 10, "ERREICHT " + earned.size() + "/" + entries.length, Pal.TEAL_5);
         Achievement shown = null;
         var f = g.frame();
+        int rows = (entries.length + 2) / 3;
         for (int i = 0; i < entries.length; i++) {
             var entry = entries[i];
             boolean done = earned.contains(entry);
-            // Zwei Spalten zu je sechzehn Zeilen passen über das Detailfeld.
-            int x = 106 + (i / 16) * 186, y = 49 + (i % 16) * 9;
+            // Drei Spalten, damit alle Einträge über das Detailfeld passen.
+            int x = AX + 8 + (i / rows) * 240, y = AY + 30 + (i % rows) * 22;
             String id = "feat." + entry.name();
-            g.target(id, x, y - 1, 182, 9);
+            g.target(id, x, y - 3, 234, 20);
             if (g.focused(id) || shown == null) shown = entry;
             boolean focused = g.focused(id);
-            if (focused) f.fill(x, y - 1, 182, 9, 0x40F5C45E);
-            f.fill(x + 1, y + 1, 5, 5, done ? Pal.GREEN_4 : 0xFF1A232C);
-            f.rect(x, y, 7, 7, done ? Pal.GREEN_2 : Pal.STEEL_3);
-            g.text(x + 12, y, entry.title(), done ? Gui.TEXT : focused ? Gui.TEXT : Gui.MUTED);
+            if (focused) f.fill(x, y - 3, 234, 20, 0x40F5C45E);
+            f.fill(x + 2, y + 1, 8, 8, done ? Pal.GREEN_4 : 0xFF1A232C);
+            f.rect(x, y - 1, 12, 12, done ? Pal.GREEN_2 : Pal.STEEL_3);
+            g.text(x + 20, y + 1, entry.title(), done ? Gui.TEXT : focused ? Gui.TEXT : Gui.MUTED);
         }
-        g.screen(106, 200, 368, 56, Tone.TEAL);
-        g.text(114, 206, shown.title().toUpperCase(), Gui.TEXT);
-        g.wrap(114, 218, 352, shown.description(), Gui.MUTED, 2);
+        g.screen(AX, 376, AW, 106, Tone.TEAL);
+        g.big(AX + 16, 388, shown.title().toUpperCase(), Gui.TEXT, 2);
+        g.wrap(AX + 16, 416, AW - 32, shown.description(), Gui.MUTED, 2);
         boolean done = earned.contains(shown);
-        g.text(
-                114,
-                242,
+        g.big(
+                AX + 16,
+                452,
                 done ? "ERREICHT" : "BELOHNUNG  +" + shown.reward() + " ♦",
-                done ? Pal.GREEN_4 : Pal.RUST_6);
+                done ? Pal.GREEN_4 : Pal.RUST_6,
+                2);
     }
 
     private void resonances(Gui g) {
-        g.text(106, 38, "ZWEI MODULE IM SELBEN TAUCHGANG ERGEBEN EINEN BONUS", Pal.TEAL_5);
+        g.text(AX + 8, AY + 10, "ZWEI MODULE IM SELBEN TAUCHGANG ERGEBEN EINEN BONUS", Pal.TEAL_5);
         var all = Synergy.values();
         Synergy shown = null;
         for (int i = 0; i < all.length; i++) {
             var synergy = all[i];
-            int x = 106 + (i % 3) * 124, y = 52 + (i / 3) * 44;
+            int x = AX + 6 + (i % 3) * 240, y = AY + 30 + (i / 3) * 86;
             String id = "syn." + synergy.name();
-            g.card(id, x, y, 120, 40, Pal.VIOLET_4, true);
+            g.card(id, x, y, 232, 78, Pal.VIOLET_4, true);
             if (g.focused(id) || shown == null) shown = synergy;
-            g.icon(IconArt.item(synergy.first()), x + 6, y + 14, 1);
-            g.text(x + 25, y + 18, "+", Gui.MUTED);
-            g.icon(IconArt.item(synergy.second()), x + 33, y + 14, 1);
-            g.wrap(x + 54, y + 12, 62, synergy.title(), Pal.VIOLET_4, 2);
+            g.icon(IconArt.item(synergy.first()), x + 10, y + 24, 2);
+            g.big(x + 48, y + 32, "+", Gui.MUTED, 2);
+            g.icon(IconArt.item(synergy.second()), x + 66, y + 24, 2);
+            g.wrap(x + 110, y + 26, 114, synergy.title().toUpperCase(), Pal.VIOLET_4, 3);
         }
-        g.screen(106, 188, 368, 68, Tone.VIOLET);
-        g.text(114, 194, shown.title().toUpperCase(), Pal.VIOLET_5);
-        g.text(114, 206, shown.first().title() + "  +  " + shown.second().title(), Gui.MUTED);
-        g.wrap(114, 222, 352, shown.effect(), Pal.RUST_6, 2);
+        g.screen(AX, 376, AW, 106, Tone.VIOLET);
+        g.big(AX + 16, 388, shown.title().toUpperCase(), Pal.VIOLET_5, 2);
+        g.text(AX + 16, 414, shown.first().title() + "  +  " + shown.second().title(), Gui.MUTED);
+        g.wrap(AX + 16, 434, AW - 32, shown.effect(), Pal.RUST_6, 3);
     }
 
     static int rarityColor(Rarity rarity) {
@@ -870,13 +938,13 @@ final class MenuScreens {
 
     void settings(Gui g, boolean inGame) {
         g.header("BORDCOMPUTER", "EINSTELLUNGEN", Tone.TEAL);
-        g.panel(60, 40, 360, 188);
-        g.screen(68, 48, 344, 172, Tone.TEAL);
+        g.panel(120, 72, 720, 404);
+        g.screen(136, 88, 688, 372, Tone.TEAL);
         String[] labels = {"GESAMTLAUTSTÄRKE", "MUSIK", "KAMERAWACKELN"};
         double[] values = {draft.masterVolume(), draft.musicVolume(), draft.screenShake()};
         for (int i = 0; i < 3; i++) {
-            g.text(78, 58 + i * 18, labels[i], Gui.MUTED);
-            values[i] = g.slider("slider." + i, 206, 58 + i * 18, 150, values[i]);
+            g.big(160, 110 + i * 38, labels[i], Gui.MUTED, 1);
+            values[i] = g.slider("slider." + i, 420, 108 + i * 38, 300, values[i]);
         }
         String[] toggles = {
             "Röhrenfilter · feine Bildschirmzeilen",
@@ -893,14 +961,15 @@ final class MenuScreens {
             draft.explorer()
         };
         for (int i = 0; i < toggles.length; i++)
-            flags[i] = g.toggle("toggle." + i, 78, 118 + i * 18, 324, toggles[i], flags[i]);
+            flags[i] = g.toggle("toggle." + i, 160, 240 + i * 40, 640, toggles[i], flags[i]);
         draft =
                 new Settings(
                         values[0], values[1], flags[2], flags[3], flags[4], values[2], flags[0],
                         flags[1]);
         g.prefer("slider.0");
-        if (g.button("back", 60, 240, 80, 14, "← ZURÜCK", Tone.QUIET, true)) back(inGame);
-        if (g.button("apply", 310, 236, 110, 20, "ÜBERNEHMEN", Tone.AMBER, true)) {
+        foot(g);
+        if (g.button("back", 16, FOOT + 10, 140, 24, "← ZURÜCK", Tone.QUIET, true)) back(inGame);
+        if (g.button("apply", W - 16 - 200, FOOT + 2, 200, 38, "ÜBERNEHMEN", Tone.AMBER, true)) {
             nav.applySettings(draft);
             back(inGame);
         }
@@ -922,18 +991,24 @@ final class MenuScreens {
             {"K / RECHTE MAUS", "Aktives Modul · kostet Energie"},
             {"E", "Bergung, Händlerin, Werkstatt, Kapelle, Schott, Schalter"},
             {"Q", "Reparaturset · +35 Integrität"},
-            {"I / TAB  ·  M", "Ausrüstung  ·  Bootskarte"},
+            {"I / TAB  ·  M", "Ausrüstung mit allen Modulen  ·  Bootskarte"},
             {"ESC · F11 · F12", "Pause · Vollbild · Bildschirmfoto"},
-            {"MENÜS", "Pfeile oder Maus · Enter/Leertaste wählt · Esc zurück"}
+            {
+                "MENÜS",
+                "Pfeile oder Maus · Enter/Leertaste wählt · Ziffern wählen Karten · Esc zurück"
+            }
         };
-        g.panel(20, 38, 440, 190);
-        g.screen(28, 46, 424, 174, Tone.AMBER);
+        g.panel(40, 70, 880, 404);
+        g.screen(56, 86, 848, 372, Tone.AMBER);
         for (int i = 0; i < controls.length; i++) {
-            g.text(38, 52 + i * 15, controls[i][0], Pal.RUST_6);
-            g.wrap(160, 52 + i * 15, 284, controls[i][1], Gui.MUTED, 1);
+            int y = 104 + i * 30;
+            g.big(80, y, controls[i][0], Pal.RUST_6, 2);
+            g.wrap(400, y + 4, 488, controls[i][1], Gui.MUTED, 1);
         }
-        g.text(38, 52 + 11 * 15 - 2, "ROTE MARKIERUNGEN KÜNDIGEN ANGRIFFE AN.", Pal.RED_4);
+        g.big(80, 104 + 11 * 30 + 4, "ROTE MARKIERUNGEN KÜNDIGEN ANGRIFFE AN.", Pal.RED_4, 1);
         g.prefer("ok");
-        if (g.button("ok", 340, 236, 120, 20, "VERSTANDEN", Tone.AMBER, true)) back(inGame);
+        foot(g);
+        if (g.button("ok", W - 16 - 200, FOOT + 2, 200, 38, "VERSTANDEN", Tone.AMBER, true))
+            back(inGame);
     }
 }

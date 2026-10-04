@@ -351,6 +351,28 @@ public final class Frame {
     }
 
     /**
+     * Überträgt ein kleineres Bild pixelgenau vergrössert, etwa die Pixelwelt auf die feinere
+     * Oberflächenebene. Überschreibt den Inhalt deckend.
+     *
+     * @param source Quelle
+     * @param factor ganzzahlige Vergrösserung
+     */
+    public void upscale(Frame source, int factor) {
+        int w = Math.min(width, source.width * factor),
+                h = Math.min(height, source.height * factor);
+        for (int y = 0; y < h; y++) {
+            int row = (y / factor) * source.width;
+            int out = y * width;
+            if (y % factor != 0) {
+                System.arraycopy(pixels, (y - 1) * width, pixels, out, w);
+                continue;
+            }
+            for (int x = 0; x < w; x++)
+                pixels[out + x] = source.pixels[row + x / factor] | 0xFF000000;
+        }
+    }
+
+    /**
      * Zeichnet ein Sprite additiv, etwa Leuchtebenen oder Effekte.
      *
      * @param s Sprite

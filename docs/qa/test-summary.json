@@ -1,19 +1,20 @@
 {
-  "version": "1.4.0",
-  "verifiedUtc": "2026-10-03T16:00:00+00:00",
+  "version": "1.5.0",
+  "verifiedUtc": "2026-10-04T14:00:00+00:00",
   "environment": "macOS 27 Apple Silicon, OpenJDK 25, JavaFX 26.0.2, Gradle 9.3.1",
   "junit": {
-    "tests": 170,
+    "tests": 172,
     "failures": 0,
     "errors": 0,
     "skipped": 0,
-    "seconds": 14.5
+    "seconds": 14.3
   },
   "checks": {
     "checkJavaFormat": "passed",
     "javadoc -Xdoclint": "passed, no warnings",
     "uiSmoke": "58/58",
-    "endgameShots": "14 Bilder in docs/qa/endgame"
+    "endgameShots": "14 Bilder in docs/qa/endgame",
+    "renderSoak": "60 s, Mittel 2,21 ms, p95 2,43 ms, 0 Fehler (inklusive Oberflächenebene 960 × 540)"
   },
   "balance8Seeds": {
     "MECHANIC": "8/8",
@@ -37,42 +38,42 @@
     {
       "name": "ch.zhaw.abyss.application.CareerTest",
       "tests": 10,
-      "seconds": 0.074
+      "seconds": 0.061
     },
     {
       "name": "ch.zhaw.abyss.application.GameServiceTest",
       "tests": 8,
-      "seconds": 0.494
+      "seconds": 0.489
     },
     {
       "name": "ch.zhaw.abyss.domain.BossMechanicsTest",
       "tests": 15,
-      "seconds": 0.022
+      "seconds": 0.021
     },
     {
       "name": "ch.zhaw.abyss.domain.CampaignSimulationTest",
       "tests": 10,
-      "seconds": 4.531
+      "seconds": 4.251
     },
     {
       "name": "ch.zhaw.abyss.domain.CareerWeaponTest",
       "tests": 4,
-      "seconds": 0.002
+      "seconds": 0.003
     },
     {
       "name": "ch.zhaw.abyss.domain.CombatTest",
       "tests": 18,
-      "seconds": 0.111
+      "seconds": 0.089
     },
     {
       "name": "ch.zhaw.abyss.domain.EndgameTest",
       "tests": 14,
-      "seconds": 0.033
+      "seconds": 0.031
     },
     {
       "name": "ch.zhaw.abyss.domain.EvolutionTest",
       "tests": 9,
-      "seconds": 0.004
+      "seconds": 0.006
     },
     {
       "name": "ch.zhaw.abyss.domain.GameRunTest",
@@ -82,52 +83,52 @@
     {
       "name": "ch.zhaw.abyss.domain.MachineryTest",
       "tests": 9,
-      "seconds": 0.036
+      "seconds": 0.025
     },
     {
       "name": "ch.zhaw.abyss.domain.MovementTest",
       "tests": 8,
-      "seconds": 0.022
+      "seconds": 0.007
     },
     {
       "name": "ch.zhaw.abyss.domain.RewardTest",
       "tests": 13,
-      "seconds": 0.014
+      "seconds": 0.005
     },
     {
       "name": "ch.zhaw.abyss.domain.RoomEventTest",
       "tests": 2,
-      "seconds": 0.057
+      "seconds": 0.033
     },
     {
       "name": "ch.zhaw.abyss.domain.RoomGeneratorTest",
       "tests": 6,
-      "seconds": 0.127
+      "seconds": 0.104
     },
     {
       "name": "ch.zhaw.abyss.domain.SwarmTest",
       "tests": 12,
-      "seconds": 0.02
+      "seconds": 0.016
     },
     {
       "name": "ch.zhaw.abyss.infrastructure.FileGameRepositoryTest",
       "tests": 8,
-      "seconds": 0.036
+      "seconds": 0.026
     },
     {
       "name": "ch.zhaw.abyss.ui.InputControllerTest",
       "tests": 6,
-      "seconds": 0.004
+      "seconds": 0.003
     },
     {
       "name": "ch.zhaw.abyss.ui.pixel.FrameTest",
-      "tests": 5,
-      "seconds": 0.005
+      "tests": 6,
+      "seconds": 0.004
     },
     {
       "name": "ch.zhaw.abyss.ui.render.RenderSmokeTest",
-      "tests": 2,
-      "seconds": 8.921
+      "tests": 3,
+      "seconds": 9.143
     }
   ]
 }

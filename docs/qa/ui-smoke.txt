@@ -1,4 +1,4 @@
-ABYSS 1.4 · JavaFX-Komponentenprüfung · 03.10.2026
+ABYSS 1.5 · JavaFX-Komponentenprüfung · 04.10.2026
 ./gradlew uiSmoke -Psilent --args="--capture=docs/qa/screens"
 
 OK     title → TITLE
