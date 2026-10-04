@@ -1,4 +1,4 @@
-# Teststrategie und Prüfnachweise · Version 1.5
+# Teststrategie und Prüfnachweise · Version 1.6
 
 Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2. Automatisierte Tests, Bot-Läufe und Bildschirmfotos ersetzen keine menschlichen Usability-, Spielgefühl- oder Hörtests.
 
@@ -20,7 +20,8 @@ Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2.
 4. **Pixel-Pipeline ohne Fenster**: `FrameTest` (Alpha, Clipping, Anker und Spiegelung, gestuftes Licht, Schrift) und `RenderSmokeTest` (vollständiger Durchlauf durch alle vier Sektionen, jedes achte Bild gezeichnet, Titel- und Kartenansicht).
 5. **Eingabe**: `InputControllerTest` (Flanken statt Tastenwiederholung, gehaltener Sprung, Abtauchen, Maus-Zielrichtung, Aufräumen bei Menüwechsel).
 6. **JavaFX-Komponentenprüfung** (`./gradlew uiSmoke`): echtes Fenster mit temporärem Speicherort; öffnet Titel, Vorbereitung, Garderobe, Archiv (Taucher, Baupläne, Kompendium, Logbuch, Resonanzen), Optionen, Steuerung, startet einen Tauchgang mit Auftakt, sichert den Raum, zeigt Bergung, Ausrüstung, Karte, Pause, Route, Schwarzmarkt, Boss, Werkstatt, eine Routenwahl mit Raumzustand, erobert die Brücke (Siegesszene, Auswertung) und zeigt eine Niederlage; lädt Audioclips. 37 Prüfungen. Mit `--args="--capture=Verzeichnis"` entsteht zu jedem Schritt ein Bildschirmfoto (`docs/qa/screens`).
-7. **Render-Probelauf** (`./gradlew renderSoak`): Testspieler spielt fortlaufend, jedes Bild wird vollständig gezeichnet; misst Zeichenkosten und Fehler (`docs/qa/render-soak.json`).
+7. **Bordsynthesizer** (`MusicEngineTest`, `MusicCueTest`): Notenschrift und Akkordsymbole, Bar-Prüfung jeder Melodie, Stimmführung, alle zehn Partituren vollständig, keine Reibungen langer Melodietöne mit der Harmonie, sauberer Pegel unter Vollaussteuerung, deterministische Aufnahme, Schichten nach Intensität, Unterwasserfilter, Überblendung, Rechenzeit; alle Klangdateien bekannt und lesbar, Klangflut ohne Stau (höchstens 24 Stimmen, 3 je Klang, Überlast verworfen), Klänge auch bei stummer Musik, endlose Atmosphäre; Musikregie für Titel, Sektion, Schwarmgrösse, gesicherten Raum, Wächterphasen, Kaiserin in Raserei, Eskalation, Dämpfung und Niederlage. `./gradlew musicRender` misst Spitzenpegel, RMS und Echtzeitfaktor (`docs/qa/music-report.json`).
+8. **Render-Probelauf** (`./gradlew renderSoak`): Testspieler spielt fortlaufend, jedes Bild wird vollständig gezeichnet; misst Zeichenkosten und Fehler (`docs/qa/render-soak.json`).
 8. **Balancebericht** (`./gradlew balance --args=30`): Siegquote, Tiefe und Bot-Spielzeit je Klasse über viele Seeds. Diente zum Finden von Hängern (Gegner auf hohen Stegen, Harpunen gegen Flieger) und zum Abgleich der Klassen.
 9. **Visuelle Prüfung**: `artSheet` (alle Figuren, Gegner, Bosse), `sceneShot` (echte Szenen ohne Fenster), `endgameShots` (Endgame-Schwärme, Bedrohungen, Bossmuster und Prismenkaiserin aus vorbereiteten Raumeingängen), UI-Bildschirmfotos. Gefundene Fehler wurden behoben: überblendete Bosse, zu dunkle Räume, abgeschnittene Texte, fehlende Pfeil-Glyphen, überlappende Banner.
 
@@ -28,10 +29,12 @@ Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2.
 
 | Prüfung | Ergebnis |
 |---|---|
-| JUnit | 172 Testfälle bestanden, darunter `EndgameTest`, `BossMechanicsTest` und `EvolutionTest` (neu in 1.4), Oberflächenebene in `RenderSmokeTest` und `FrameTest` (neu in 1.5), `SwarmTest`, `CareerTest` und `CareerWeaponTest` (siehe `docs/qa/test-summary.json`) |
+| JUnit | 196 Testfälle bestanden, darunter `MusicEngineTest`, `MusicCueTest` und das Budget der Trefferpausen in `RenderSmokeTest` (neu in 1.6), `EndgameTest`, `BossMechanicsTest` und `EvolutionTest` (neu in 1.4), Oberflächenebene in `RenderSmokeTest` und `FrameTest` (neu in 1.5), `SwarmTest`, `CareerTest` und `CareerWeaponTest` (siehe `docs/qa/test-summary.json`) |
 | Formatprüfung und Javadoc (`-Xdoclint`) | bestanden, keine Compiler-Warnungen |
-| UI-Komponentenprüfung | 58/58 auf der neuen Oberflächenebene, inklusive Levelaufstieg, Laufbahn, Endgame-Schwarm, Routenwahl mit Bedrohung, Entfesselung und Prismenkaiserin (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
+| UI-Komponentenprüfung | 59/59 auf der Oberflächenebene, inklusive Start des Bordsynthesizers über das echte Ausgabegerät, Levelaufstieg, Laufbahn, Endgame-Schwarm, Routenwahl mit Bedrohung, Entfesselung und Prismenkaiserin (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
 | Endgame-Bildproben | 14 Bilder ohne Fenster in 1920 × 1080 mit HUD: Schwarm mit über 1100 Gegnern, vier Bedrohungen, Kernschmelze, Prismenspirale, Tintenwolke, Fischzug, Kreuzfeuer und vier Muster der Prismenkaiserin (`./gradlew endgameShots`, `docs/qa/endgame`) |
+| Endgame-Ton und Ruckeln | Ereignisrate im dritten Durchlauf bis 7 000/s (erster Durchlauf ≈ 30/s); 30 s Endgame in Echtzeit über die echte Tonausgabe: 3 µs je Klang im Spiel-Thread, Ausgabe läuft durch. Trefferpausen froren vorher 4–19 % der Zeit ein, jetzt ≈ 4 % in allen Durchläufen. Raumwechsel nach Bosskämpfen unter 1 ms |
+| Soundtrack | 10 Stücke je 80 s ohne Ausgabegerät aufgenommen: Spitze höchstens 0,99, RMS −14 bis −17 dB, 28- bis 53-fache Echtzeit; Klangbalance und Harmonien automatisch geprüft, nicht angehört (`docs/qa/music-report.json`) |
 | Render-Probelauf | 60 s, 26 980 Bilder, 0 Fehler, Mittel 2,2 ms, 95 % unter 2,4 ms inklusive Oberflächenebene; einzelne Spitze 77 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
 | Schwarm-Lastprobe | Testspieler über fünf Zyklen, bis 1600 Gegner gleichzeitig. Bei 600–999 Gegnern ≈ 3,6 ms Zeichnen und 0,4 ms Simulation pro Bild, bei 1000+ Gegnern ≈ 3,9 ms und 1,0 ms. Einzelne Spitzen bis knapp 200 ms bei Raumwechseln und grossen Abschusswellen (`./gradlew swarmBench --args="777 5 0"`) |
 | Balance | Testspieler ohne Laufbahnboni gewinnt Zyklus 1 mit jeder Klasse (8/8 je Klasse). Zwei Endgame-Läufe: beide besiegen die Prismenkaiserin im zweiten Zyklus, einer fällt im dritten Zyklus an ihr, der andere gewinnt alle fünf Zyklen. Danach wurden Wächter ab Eskalation 40 zäher, weil sie dort in Sekunden fielen. Kein menschlicher Spieltest |
@@ -43,6 +46,7 @@ Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2.
 ./gradlew test checkJavaFormat javadoc
 ./gradlew uiSmoke --args="--capture=docs/qa/screens"
 ./gradlew endgameShots --args="docs/qa/endgame"
+./gradlew musicRender --args="build/music 80"
 ./gradlew renderSoak --args='--seconds=60'
 ./gradlew balance --args='30'
 python3 tools/package_mac.py

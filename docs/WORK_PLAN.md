@@ -116,3 +116,19 @@ Auftrag: Die Oberfläche wird eng, Vorschläge machen. Gewählt wurde die Oberfl
 - Fehler behoben: Meldungen aus dem Tauchgang ragten in Menüs; die UI-Prüfung pausiert nicht mehr, wenn das Betriebssystem den Fokus wegnimmt.
 - Prüfung: 172 Tests, 58/58 UI-Schritte, Render-Probelauf 2,2 ms im Mittel.
 
+## Version 1.6 · Bordorchester (04.10.2026)
+
+Auftrag: einen coolen Soundtrack machen. Entscheid: keine Audiodateien und keine fremden Werkzeuge, sondern ein eigener Synthesizer im Spiel.
+
+- Klangerzeugung (`infrastructure/music`): PolyBLEP-Oszillatoren mit Unisono, Zustandsvariablenfilter, FM, Formantfilter, ADSR, synthetisches Schlagzeug (Bassdrum, Snare, Clap, 808-Hi-Hats, Becken, Toms, Industrieschlag, Rauschanstieg), Ping-Pong-Echo, Hall aus Feedback-Delay-Netz, Begrenzer.
+- Notenschrift und zehn Partituren mit gemeinsamem Leitmotiv; Begleitung aus Akkordsymbolen mit Stimmführung.
+- Musikregie: Stück nach Raum, Sektion, Wächter, Kaiserin und Eskalation; Intensität nach Schwarmgrösse und Bossphase; Dämpfung in Menüs, bei wenig Integrität und nach der Niederlage; Tempo der rasenden Kaiserin.
+- Abmischung per Messung: Pegel pro Stimme, Klangbalance in sechs Bändern, Übergänge an der Schleife, lange Melodietöne gegen die Harmonie.
+- Alte Musikschleifen (24 MB) entfernt; Demo-Video mit adaptiver Tonspur; Hörproben als MP3.
+- Prüfung: 191 Tests, 59/59 UI-Schritte, `musicRender` mit 28- bis 53-facher Echtzeit.
+- Fehlermeldung von David: ab dem zweiten Durchlauf kein Ton, Ruckeln und Warten nach Bosskämpfen.
+  - Messung: Ereignisse pro Sekunde je Durchlauf, Bosskämpfe und Raumwechsel ohne Fenster, Anteil der Trefferpausen.
+  - Befund: Die Warteschlange der JavaFX-AudioClips wächst unbegrenzt und wird im Spiel-Thread durchsucht. Trefferpausen froren bis zu 19 % der Zeit ein.
+  - Lösung: Effektmischer im Audio-Thread (`SoundMixer`, `SoundBank`), Budget für Trefferpausen, Neustart der Tonausgabe nach Geräteverlust.
+  - Prüfung: 196 Tests, 59/59 UI-Schritte, 30 s Endgame in Echtzeit über die echte Tonausgabe.
+

@@ -1,5 +1,5 @@
-ABYSS 1.5 · JavaFX-Komponentenprüfung · 04.10.2026
-./gradlew uiSmoke -Psilent --args="--capture=docs/qa/screens"
+ABYSS 1.6 · JavaFX-Komponentenprüfung · 04.10.2026
+./gradlew uiSmoke -Psilent
 
 OK     title → TITLE
 OK     loadout → LOADOUT
@@ -33,7 +33,8 @@ OK     alle Levelaufstiege gewählt
 OK     level-up-chosen → PLAY
 OK     Raumzustand in der Routenwahl
 OK     route-condition → ROUTE
-OK     Audioclips geladen (16)
+OK     Klänge geladen (29)
+OK     Bordsynthesizer spielt
 OK     audio → PLAY
 OK     Brücke erobert
 OK     Siegesszene läuft
@@ -59,4 +60,4 @@ OK     evolution-taken → PLAY
 OK     Prismenkaiserin auf der Brücke
 OK     empress → PLAY
 OK     title-final → TITLE
-UI_SMOKE 58/58 bestanden
+UI_SMOKE 59/59 bestanden

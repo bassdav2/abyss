@@ -1,4 +1,4 @@
-# ABYSS 1.5 – Überblick für David
+# ABYSS 1.6 – Überblick für David
 
 Stand 25.09.2026, Nachmittag. Version 1.1 baut auf dem Nachtstand 1.0 auf; was dazugekommen ist, steht direkt unter der Steuerung. Aus deinem Prototyp ist über Nacht ein vollständiges Pixel-Art-Roguelite geworden. Es bleibt dabei: ein riesiges U-Boot, du startest ganz hinten im Heck und kämpfst dich Raum für Raum bis zur Brücke vor. Geschrieben ist alles in Java mit JavaFX, ohne Frameworks und ohne neue Bibliotheken.
 
@@ -23,6 +23,39 @@ Aus dem Quellcode: `./run.command` oder `./gradlew run` (JDK 25).
 | Menüs | Pfeile/WASD oder Maus, Enter/Leertaste wählt, Ziffern wählen Karten direkt |
 
 Für den ersten Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen**. Bis du zum ersten Mal einen Raum sicherst, läuft vor dem Tauchgang ein kurzer Auftakt, den jede Taste überspringt. Wer es gemütlicher will, schaltet in der Vorbereitung **Entdecker** ein.
+
+## Neu in Version 1.6 · Bordorchester
+
+Stand 04.10.2026. ABYSS hat einen eigenen Soundtrack. Ein selbst geschriebener Synthesizer im Spiel erzeugt ihn beim Spielen, es liegt keine Audiodatei bei. Die Noten stehen als Partituren im Code (`infrastructure/music/Scores.java`). Hörproben mit je 80 Sekunden liegen in `Documents/Abyss/Soundtrack`.
+
+| Stück | Wo | Stil |
+|---|---|---|
+| Abyss | Titel und Menüs | weite Flächen, Sonar, Leitmotiv, 84 BPM |
+| Rost im Heck | Hecksektion | industriell, Metallschläge, pulsierender Bass, 100 BPM |
+| Turbinenherz | Maschinendeck | Säurebass, gerader Takt, Turbinenrauschen, 118 BPM |
+| Glasgarten | Forschungsdeck | gläserne Glocken, gebrochener Rhythmus, 108 BPM |
+| Kommandobrücke | Kommandodeck | Marschtrommel, Streicher, Bläser, 126 BPM |
+| Wächter | Sektorwächter | Reese-Bass, Galopp, Chor, 140 BPM |
+| Prismenkaiserin | Endkampf ab Zyklus 2 | euphorisch, Supersaw-Hymne, 156 BPM |
+| Abgrund | Eskalation ab Raum 20 | Drum and Bass, 174 BPM |
+| Atempause | Versorgung, Händlerin, Werkstatt, Kapelle | ruhig, E-Piano, leichter Swing, 76 BPM |
+| Auftauchen | Sieg | Leitmotiv in Dur, 96 BPM |
+
+**Ein Leitmotiv.** Das frühere Titelthema (D–F–E–C–D–A–G–E) kommt in jedem Stück vor, jeweils in dessen Tonart und Stil.
+
+**Die Musik reagiert auf das Spiel.**
+- Sie baut sich mit dem Kampf auf: Grundierung, dann Bass und Becken, Schlagzeug, Melodie und bei grossen Schwärmen volle Wucht. Ist der Raum gesichert, wird sie ruhig.
+- Bei Wächtern steigt sie Phase für Phase. Die rasende Kaiserin macht sie schneller.
+- In Pause, Karte und Ausrüstung klingt sie gedämpft wie durch Wasser, beim Levelaufstieg leicht. Bei wenig Integrität wird sie dumpf, nach einer Niederlage bleibt nur die Grundierung.
+- Stücke wechseln mit Überblendung, neue Stimmen setzen auf dem nächsten Takt ein.
+
+**Behoben: Ton weg und Ruckeln ab dem zweiten Durchlauf.** Das hattest du gemeldet. Es hatte zwei Ursachen.
+- **Die Klänge.** JavaFX spielt höchstens 16 Klänge gleichzeitig. Alle weiteren landen in einer Warteschlange ohne Grenze, die es bei jedem neuen Klang im Spiel-Thread durchsucht. Im Endgame entstehen bis zu 7 000 Ereignisse pro Sekunde, im ersten Durchlauf waren es etwa 30. Die Schlange wuchs, Klänge kamen Minuten zu spät oder nie, und das Spiel ruckelte immer stärker. Jetzt mischt das Bordaudio alle Klänge selbst: feste Stimmenzahl, Überlast wird verworfen. Ein Klang kostet den Spiel-Thread etwa 3 µs.
+- **Die Treffer-Pausen.** Bei Volltreffern hält das Spiel kurz an, damit der Treffer Wucht hat. Im Endgame folgten diese Pausen so dicht aufeinander, dass das Spiel bis zu 19 % der Zeit stand (gemessen im dritten Durchlauf). Jetzt gibt es ein Budget von etwa 4 %. Kurze Kämpfe fühlen sich weiter wuchtig an.
+
+Raumwechsel nach Bosskämpfen habe ich mitgemessen, sie dauern unter 1 ms. Das Warten danach kam vom Ruckeln.
+
+**Bitte anhören.** Gemessen sind Pegel, Übersteuerung, Klangbalance, Harmonien und Rechenzeit (etwa 2–4 % eines Prozessorkerns). Gehört hat die Musik aber noch niemand. Ist sie zu laut oder zu leise, gefällt dir ein Stück nicht, sag es mir. Die Lautstärke regelst du unter Optionen → Musik.
 
 ## Neu in Version 1.5 · Klare Sicht
 
@@ -219,7 +252,7 @@ Automatische Tests sagen nichts darüber, ob es sich gut anfühlt. Bitte etwa 15
 
 1. Fühlen sich Sprung, Ausweichen und Treffer gut an?
 2. Sind die Vorwarnungen der Gegner und Bosse lesbar?
-3. Stimmen Lautstärke und Tempo der Klänge? Gehört wurden sie bisher nicht, nur geladen.
+3. Stimmen Lautstärke und Tempo der Klänge und der Musik? Die Klänge wurden bisher nur geladen, die Musik nur gemessen.
 4. Ist die Schwierigkeit passend? Die Siegquoten des Testspielers sind obere Grenzen, denn der Bot reagiert perfekt.
 
 Nicht geprüft sind Windows/Linux, Gamepad, Vollbild auf mehreren Monitoren und Tests mit echten Menschen.

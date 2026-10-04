@@ -208,7 +208,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
             if (screen != Screen.TITLE) renderer.dim(.62);
             drawScreen(dt);
         }
-        audio.context(run, !inGameScreen() && screen != Screen.PLAY);
+        audio.context(run, !inGameScreen() && screen != Screen.PLAY, overlay());
         view.present(renderer.ui(), settings.retroFilter());
         String message = service.takeStorageMessage();
         if (!message.isBlank()) toast(message);
@@ -249,6 +249,16 @@ public final class GameWindow implements AutoCloseable, Navigator {
         if (screen == Screen.TITLE) renderer.hud().drawMessagesOnly(renderer.ui());
         else renderer.hud().drawMessagesCompact(renderer.ui());
         gui.end();
+    }
+
+    /** Wie stark die Musik unter einem Bordsystem-Bildschirm gedämpft klingt. */
+    private double overlay() {
+        return switch (screen) {
+            case PAUSE, INVENTORY, MAP -> .72;
+            case SETTINGS, HELP -> inGameModal ? .72 : 0;
+            case LEVEL_UP, REWARD, SHRINE, ROUTE -> .45;
+            default -> 0;
+        };
     }
 
     private boolean inGameScreen() {

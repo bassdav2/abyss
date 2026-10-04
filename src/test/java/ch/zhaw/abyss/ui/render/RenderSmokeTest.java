@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import ch.zhaw.abyss.application.Settings;
 import ch.zhaw.abyss.domain.DiverClass;
+import ch.zhaw.abyss.domain.GameEvent;
 import ch.zhaw.abyss.domain.GameRun;
 import ch.zhaw.abyss.domain.RunSetup;
 import ch.zhaw.abyss.qa.CampaignPilot;
@@ -49,6 +50,29 @@ class RenderSmokeTest {
         var colors = new HashSet<Integer>();
         for (int i = 0; i < pixels.length; i += 37) colors.add(pixels[i]);
         assertTrue(colors.size() > 40, "das Bild ist nicht einfarbig");
+    }
+
+    @Test
+    void hitStopsPunchButNeverFreezeTheSwarmForLong() {
+        var renderer = new WorldRenderer(PixelFont.load(), new SpriteBank());
+        var settings = Settings.DEFAULT;
+        var run = new GameRun(RunSetup.standard(7, DiverClass.MECHANIC));
+        renderer.update(1.0 / 60, run, settings);
+        renderer.event(new GameEvent(GameEvent.Type.CRIT, 600, 500, 40, "#2"), run, settings);
+        assertTrue(renderer.takeHitStop() > 0, "der erste Volltreffer sitzt");
+        double frozen = 0;
+        for (int frame = 0; frame < 60 * 60; frame++) {
+            // Endgame: in jedem Bild mehrere Volltreffer, Abschüsse und Explosionen.
+            for (int i = 0; i < 6; i++) {
+                renderer.event(
+                        new GameEvent(GameEvent.Type.CRIT, 600, 500, 40, "#3"), run, settings);
+                renderer.event(
+                        new GameEvent(GameEvent.Type.ELITE_DOWN, 640, 500, 2, "X"), run, settings);
+            }
+            frozen += renderer.takeHitStop();
+            renderer.update(1.0 / 60, run, settings);
+        }
+        assertTrue(frozen / 60 <= .045, "Stillstand " + Math.round(frozen / .6) + " %");
     }
 
     @Test

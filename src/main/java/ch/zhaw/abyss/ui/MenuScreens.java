@@ -164,7 +164,7 @@ final class MenuScreens {
                         + "   ·   LAUFBAHNRANG "
                         + profile.career().rank(),
                 Gui.MUTED);
-        g.right(W - 12, H - 16, "V1.5", 0xFF3A4654);
+        g.right(W - 12, H - 16, "V1.6", 0xFF3A4654);
     }
 
     // --- Laufbahn: Ränge, Skill-Bäume, Waffenmeisterschaft ---------------------------------------

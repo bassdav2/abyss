@@ -1,0 +1,14 @@
+{
+  "songs": [
+    {"id": "title", "peak": 0.973, "rmsDb": -16.6, "rmsFullDb": -15.4, "realtimeFactor": 52.7},
+    {"id": "hold", "peak": 0.964, "rmsDb": -15.8, "rmsFullDb": -14.7, "realtimeFactor": 49.5},
+    {"id": "engine", "peak": 0.954, "rmsDb": -16.1, "rmsFullDb": -15.0, "realtimeFactor": 53.2},
+    {"id": "research", "peak": 0.991, "rmsDb": -15.8, "rmsFullDb": -14.8, "realtimeFactor": 42.3},
+    {"id": "command", "peak": 0.990, "rmsDb": -15.8, "rmsFullDb": -14.6, "realtimeFactor": 45.7},
+    {"id": "boss", "peak": 0.985, "rmsDb": -16.1, "rmsFullDb": -15.1, "realtimeFactor": 40.4},
+    {"id": "empress", "peak": 0.965, "rmsDb": -15.6, "rmsFullDb": -14.3, "realtimeFactor": 27.6},
+    {"id": "abyss", "peak": 0.966, "rmsDb": -16.2, "rmsFullDb": -15.0, "realtimeFactor": 34.8},
+    {"id": "haven", "peak": 0.998, "rmsDb": -16.6, "rmsFullDb": -16.7, "realtimeFactor": 52.7},
+    {"id": "ending", "peak": 0.990, "rmsDb": -15.3, "rmsFullDb": -15.2, "realtimeFactor": 42.1}
+  ]
+}

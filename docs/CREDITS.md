@@ -17,7 +17,8 @@ Seit Version 1.1 werden keine fremden Schriften mehr ausgeliefert: Menüs, HUD u
 
 - **Pixelgrafik:** vollständig prozedural in Java (`ui/art`), keine Spritepacks, keine Bild-KI.
 - **Schrift:** eigene 5×7-Bitmap-Schrift in `src/main/resources/pixel/font.txt` für HUD und alle Menüs.
-- **Klänge und Musik:** eigene NumPy-Synthese (`tools/create_audio.py`, `tools/create_audio_extra.py`), keine Fremd-Samples.
+- **Klänge:** eigene NumPy-Synthese (`tools/create_audio.py`, `tools/create_audio_extra.py`), keine Fremd-Samples.
+- **Musik:** eigener Synthesizer und eigene Kompositionen im Java-Code (`ch.zhaw.abyss.infrastructure.music`), zur Laufzeit erzeugt, keine Samples oder fremden Melodien.
 - **App-Signet:** `tools/MakeIcon.java` aus der Figurengrafik.
 
 ## Entwicklungswerkzeuge (nicht Teil der Spiellogik)

@@ -189,13 +189,18 @@ public final class WorldRenderer {
     public double takeHitStop() {
         double value = feel.hitStop;
         feel.hitStop = 0;
-        // Im Schwarm träfe sonst fast jedes Bild: nach einer Pause ruht sie kurz.
-        if (value <= 0 || time < hitStopReady) return 0;
-        hitStopReady = time + (value >= .06 ? .12 : .35);
+        // Trefferpausen geben Wucht, im Schwarm stünde aber fast jedes Bild still. Ein Budget
+        // erlaubt im Dauerfeuer höchstens 3 % Stillstand; der erste Treffer eines Kampfes sitzt.
+        if (value <= 0 || time < hitStopReady || hitStopBudget < value) return 0;
+        hitStopBudget -= value;
+        hitStopReady = time + .25;
         return value;
     }
 
-    private double hitStopReady;
+    /** Höchster Anteil der Spielzeit, den Trefferpausen anhalten dürfen. */
+    static final double HIT_STOP_SHARE = .03;
+
+    private double hitStopReady, hitStopBudget = .12;
 
     /**
      * @return Zeitfaktor für Zeitlupe, 1 bedeutet normal
@@ -239,6 +244,7 @@ public final class WorldRenderer {
      */
     public void update(double dt, GameRun run, Settings settings) {
         time += dt;
+        hitStopBudget = Math.min(.12, hitStopBudget + HIT_STOP_SHARE * dt);
         events.frame();
         actors.prepare(time, look);
         feel.update(dt);

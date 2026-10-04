@@ -1,5 +1,4 @@
-"""Zusätzliche eigene Klänge für ABYSS 1.0: Treffer, Explosionen, Beute, Boss und ein Motiv für das
-Forschungsdeck. Reine Synthese mit NumPy, keine Fremd-Samples. Bestehende Dateien bleiben unverändert."""
+"""Zusätzliche eigene Klänge für ABYSS 1.0: Treffer, Explosionen, Beute und Boss. Reine Synthese mit NumPy, keine Fremd-Samples. Bestehende Dateien bleiben unverändert."""
 from pathlib import Path
 import wave
 import numpy as np
@@ -97,21 +96,4 @@ t = time(.8)
 curse = sum(.15 * np.sin(2 * np.pi * (f * t - f * .25 * t ** 2)) * np.exp(-t * 3) for f in (311, 330, 466))
 write('curse', fade(curse))
 
-# Forschungsdeck: gläserne Glockentöne über einem langsamen Puls, nahtlos loopbar.
-duration = 25.6
-t = time(duration)
-track = np.zeros(len(t))
-root = 55.0
-for i, ratio in enumerate([1, 1.5, 2.25]):
-    hz = round(root * ratio * duration) / duration
-    track += (.05 / (i + 1)) * np.sin(2 * np.pi * hz * t) * (.55 + .45 * np.sin(2 * np.pi * t / duration * 2 + i) ** 2)
-for i, note in enumerate([4, 4.5, 6, 5.333, 4, 6.75, 6, 4.5]):
-    delta = (t - i * 3.2) % duration
-    hz = round(root * note * duration) / duration
-    track += .05 * np.sin(2 * np.pi * hz * delta) * np.exp(-delta * .9) * (1 - np.exp(-delta * 40))
-    track += .018 * np.sin(2 * np.pi * hz * 2.76 * delta) * np.exp(-delta * 2.2)
-for beat in np.arange(0, duration, 1.6):
-    offset = (t - beat) % duration
-    track += .06 * np.sin(2 * np.pi * 42 * offset) * np.exp(-offset * 10)
-write('music_research', np.stack([track, np.roll(track, 700)], axis=1))
 print('Zusätzliche Klänge erzeugt:', sorted(p.stem for p in OUT.glob('*.wav')))

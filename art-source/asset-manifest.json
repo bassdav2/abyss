@@ -1178,46 +1178,6 @@
       "source": "Original synthesis; tools/create_audio.py"
     },
     {
-      "path": "audio/music.wav",
-      "bytes": 5644844,
-      "sha256": "5b303244f0304e0c52e8f6aa072a06533fd51e6065589408ecadd62565660cf6",
-      "channels": 2,
-      "sampleRate": 44100,
-      "sampleWidth": 2,
-      "duration": 32.0,
-      "source": "Original synthesis; tools/create_audio.py"
-    },
-    {
-      "path": "audio/music_boss.wav",
-      "bytes": 4515884,
-      "sha256": "5a52f262d631ec1def6f92145b6a03c5575b65f6956e9ec6f0c2df546f2a7f68",
-      "channels": 2,
-      "sampleRate": 44100,
-      "sampleWidth": 2,
-      "duration": 25.6,
-      "source": "Original synthesis; tools/create_audio.py"
-    },
-    {
-      "path": "audio/music_command.wav",
-      "bytes": 4515884,
-      "sha256": "2e15dea24abdd0e33de5a4b74347e8ca2ce39eb9a6853cad68b345a00565df86",
-      "channels": 2,
-      "sampleRate": 44100,
-      "sampleWidth": 2,
-      "duration": 25.6,
-      "source": "Original synthesis; tools/create_audio.py"
-    },
-    {
-      "path": "audio/music_engine.wav",
-      "bytes": 4515884,
-      "sha256": "10200599833a86b77f0b71280666458acc862433a59af2e85045cee7887eb2d4",
-      "channels": 2,
-      "sampleRate": 44100,
-      "sampleWidth": 2,
-      "duration": 25.6,
-      "source": "Original synthesis; tools/create_audio.py"
-    },
-    {
       "path": "audio/pulse.wav",
       "bytes": 75014,
       "sha256": "7e5c30fd73a55b5223923ba9934cfce6456028220e558b8e54383510e60c0413",

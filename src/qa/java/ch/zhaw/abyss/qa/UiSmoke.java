@@ -14,12 +14,12 @@ import ch.zhaw.abyss.domain.StatSheet;
 import ch.zhaw.abyss.domain.Threat;
 import ch.zhaw.abyss.domain.Weapon;
 import ch.zhaw.abyss.infrastructure.FileGameRepository;
+import ch.zhaw.abyss.infrastructure.music.MusicEngine;
 import ch.zhaw.abyss.ui.GameWindow;
 
 import javafx.animation.PauseTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.scene.media.AudioClip;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -29,7 +29,6 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * JavaFX-Komponentenprüfung im echten Fenster mit temporärem Speicherort: alle Bildschirme öffnen,
@@ -191,36 +190,16 @@ public final class UiSmoke extends Application {
                 "PLAY",
                 () -> {
                     window.play();
-                    int clips = 0;
-                    for (String name :
-                            new String[] {
-                                "hit",
-                                "hurt",
-                                "swing",
-                                "dash",
-                                "jump",
-                                "shot",
-                                "down",
-                                "click",
-                                "upgrade",
-                                "clear",
-                                "victory",
-                                "defeat",
-                                "pulse",
-                                "warning",
-                                "ambience",
-                                "music"
-                            }) {
-                        var clip =
-                                new AudioClip(
-                                        Objects.requireNonNull(
-                                                        UiSmoke.class.getResource(
-                                                                "/audio/" + name + ".wav"))
-                                                .toExternalForm());
-                        clip.setVolume(0);
-                        clips++;
-                    }
-                    expect("Audioclips geladen (" + clips + ")", clips == 16);
+                    int clips = MusicEngine.soundCount();
+                    expect("Klänge geladen (" + clips + ")", clips == 29);
+                    var music = MusicEngine.start();
+                    music.volume(1e-4);
+                    music.cue("boss");
+                    long until = System.nanoTime() + 2_000_000_000L;
+                    while (!music.ready() && System.nanoTime() < until) Thread.onSpinWait();
+                    boolean device = javax.sound.sampled.AudioSystem.getMixerInfo().length > 0;
+                    expect("Bordsynthesizer spielt", music.ready() || !device);
+                    music.close();
                 });
         add(
                 "ending",

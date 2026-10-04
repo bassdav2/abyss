@@ -1,20 +1,22 @@
 {
-  "version": "1.5.0",
-  "verifiedUtc": "2026-10-04T14:00:00+00:00",
+  "version": "1.6.0",
+  "verifiedUtc": "2026-10-04T16:30:00+00:00",
   "environment": "macOS 27 Apple Silicon, OpenJDK 25, JavaFX 26.0.2, Gradle 9.3.1",
   "junit": {
-    "tests": 172,
+    "tests": 196,
     "failures": 0,
     "errors": 0,
     "skipped": 0,
-    "seconds": 14.3
+    "seconds": 17.2
   },
   "checks": {
     "checkJavaFormat": "passed",
     "javadoc -Xdoclint": "passed, no warnings",
-    "uiSmoke": "58/58",
+    "uiSmoke": "59/59",
     "endgameShots": "14 Bilder in docs/qa/endgame",
-    "renderSoak": "60 s, Mittel 2,21 ms, p95 2,43 ms, 0 Fehler (inklusive Oberflächenebene 960 × 540)"
+    "renderSoak": "60 s, Mittel 2,21 ms, p95 2,43 ms, 0 Fehler (inklusive Oberflächenebene 960 × 540)",
+    "musicRender": "10 Stücke je 80 s, Spitze ≤ 0,99, RMS −14 bis −17 dB, 28- bis 53-fache Echtzeit (docs/qa/music-report.json)",
+    "audioLoad": "30 s Endgame (Zyklus 3) in Echtzeit über die echte Tonausgabe: 3 µs je Klang im Spiel-Thread, keine Warteschlange, Ausgabe läuft durch; Trefferpausen ≈ 4 % statt bis 19 %"
   },
   "balance8Seeds": {
     "MECHANIC": "8/8",
@@ -38,37 +40,37 @@
     {
       "name": "ch.zhaw.abyss.application.CareerTest",
       "tests": 10,
-      "seconds": 0.061
+      "seconds": 0.063
     },
     {
       "name": "ch.zhaw.abyss.application.GameServiceTest",
       "tests": 8,
-      "seconds": 0.489
+      "seconds": 0.504
     },
     {
       "name": "ch.zhaw.abyss.domain.BossMechanicsTest",
       "tests": 15,
-      "seconds": 0.021
+      "seconds": 0.025
     },
     {
       "name": "ch.zhaw.abyss.domain.CampaignSimulationTest",
       "tests": 10,
-      "seconds": 4.251
+      "seconds": 3.999
     },
     {
       "name": "ch.zhaw.abyss.domain.CareerWeaponTest",
       "tests": 4,
-      "seconds": 0.003
+      "seconds": 0.002
     },
     {
       "name": "ch.zhaw.abyss.domain.CombatTest",
       "tests": 18,
-      "seconds": 0.089
+      "seconds": 0.09
     },
     {
       "name": "ch.zhaw.abyss.domain.EndgameTest",
       "tests": 14,
-      "seconds": 0.031
+      "seconds": 0.034
     },
     {
       "name": "ch.zhaw.abyss.domain.EvolutionTest",
@@ -78,17 +80,22 @@
     {
       "name": "ch.zhaw.abyss.domain.GameRunTest",
       "tests": 11,
-      "seconds": 0.016
+      "seconds": 0.017
     },
     {
       "name": "ch.zhaw.abyss.domain.MachineryTest",
       "tests": 9,
-      "seconds": 0.025
+      "seconds": 0.026
     },
     {
       "name": "ch.zhaw.abyss.domain.MovementTest",
       "tests": 8,
       "seconds": 0.007
+    },
+    {
+      "name": "ch.zhaw.abyss.domain.MusicCueTest",
+      "tests": 8,
+      "seconds": 0.003
     },
     {
       "name": "ch.zhaw.abyss.domain.RewardTest",
@@ -103,32 +110,37 @@
     {
       "name": "ch.zhaw.abyss.domain.RoomGeneratorTest",
       "tests": 6,
-      "seconds": 0.104
+      "seconds": 0.091
     },
     {
       "name": "ch.zhaw.abyss.domain.SwarmTest",
       "tests": 12,
-      "seconds": 0.016
+      "seconds": 0.017
     },
     {
       "name": "ch.zhaw.abyss.infrastructure.FileGameRepositoryTest",
       "tests": 8,
-      "seconds": 0.026
+      "seconds": 0.029
+    },
+    {
+      "name": "ch.zhaw.abyss.infrastructure.music.MusicEngineTest",
+      "tests": 15,
+      "seconds": 2.906
     },
     {
       "name": "ch.zhaw.abyss.ui.InputControllerTest",
       "tests": 6,
-      "seconds": 0.003
+      "seconds": 0.004
     },
     {
       "name": "ch.zhaw.abyss.ui.pixel.FrameTest",
       "tests": 6,
-      "seconds": 0.004
+      "seconds": 0.003
     },
     {
       "name": "ch.zhaw.abyss.ui.render.RenderSmokeTest",
-      "tests": 3,
-      "seconds": 9.143
+      "tests": 4,
+      "seconds": 9.38
     }
   ]
 }

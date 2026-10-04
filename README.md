@@ -2,7 +2,7 @@
 
 Ein Pixel-Art-Roguelite in Java/JavaFX: Du beginnst im Heck eines riesigen U-Boots und kämpfst dich durch vier Sektionen und 24 Räume bis zur Brücke nach vorn – und danach immer tiefer, gegen Schwärme aus bis zu 1600 gleichzeitigen Gegnern. Mit Laufstegen, Kombos, Ausweichen, acht aktiven Modulen, stapelbaren Modulen und Entfesselungen, Levelaufstiegen, fünf Taucherklassen, vier Sektorwächtern, der Prismenkaiserin und einer dauerhaften Laufbahn.
 
-**Version 1.5 vom 04.10.2026 (Klare Sicht: neue Oberfläche in doppelter Auflösung, baut auf dem Endgame-Update 1.4 auf).** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
+**Version 1.6 vom 04.10.2026 (Bordorchester: eigener, adaptiver Soundtrack aus einem Synthesizer im Spiel; baut auf 1.5 Klare Sicht und dem Endgame-Update 1.4 auf).** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
 
 ## Sofort spielen
 
@@ -28,6 +28,36 @@ Erster Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen.** Der erste 
 Rote Markierungen kündigen Angriffe an. Bosse tragen Panzerung; in ihrer Erholung ist der Kern offen („KERN OFFEN · JETZT ANGREIFEN“).
 
 ## Inhalt
+
+**Neu in 1.6 – Bordorchester:** ABYSS hat einen eigenen Soundtrack. Er liegt nicht als Audiodatei bei, sondern ein im Spiel geschriebener Synthesizer mit Sequenzer erzeugt ihn beim Spielen aus Partituren im Java-Code (Java Sound, keine Samples, keine neue Bibliothek).
+- **Zehn Stücke:**
+  - Titel „Abyss“.
+  - Je eins pro Sektion: „Rost im Heck“, „Turbinenherz“, „Glasgarten“, „Kommandobrücke“.
+  - „Wächter“ für die Sektorwächter und „Prismenkaiserin“ für den Endkampf.
+  - „Abgrund“ (Drum and Bass) für die Eskalation.
+  - „Atempause“ für Versorgung, Händlerin, Werkstatt und Kapelle.
+  - „Auftauchen“ für den Sieg.
+- **Ein Leitmotiv:** Das frühere Titelthema zieht sich durch alle Stücke, jeweils in Tonart und Stil der Sektion: industriell im Heck, Säurebass im Maschinendeck, gläsern im Forschungsdeck, als Marsch im Kommandodeck, als Hymne bei der Kaiserin, in Dur beim Sieg.
+- **Adaptiv:** Die Musik baut sich mit dem Kampf auf, in dieser Reihenfolge:
+  1. Grundierung
+  2. Bass und Becken
+  3. Schlagzeug
+  4. Melodie
+  5. volle Wucht bei grossen Schwärmen
+
+  Nach dem Sichern eines Raums wird sie ruhig. Wächter treiben die Musik Phase für Phase, die rasende Kaiserin beschleunigt sie. Schichten setzen nur auf Taktgrenzen ein, Stücke wechseln mit Überblendung.
+- **Unterwasserfilter:**
+  - In Pause, Karte und Ausrüstung klingt die Musik gedämpft, beim Levelaufstieg leicht.
+  - Bei wenig Integrität wird sie dumpf.
+  - Nach einer Niederlage bleibt nur die Grundierung.
+- **Aufgeräumt:** Die alten Musikschleifen (24 MB WAV) sind entfernt. Der Synthesizer braucht etwa 2–4 % eines Prozessorkerns.
+- `./gradlew musicRender` nimmt alle Stücke als WAV auf, das Demo-Video bekommt die adaptive Tonspur.
+- **Behoben: Ton weg und Ruckeln ab dem zweiten Durchlauf.**
+  - JavaFX spielt höchstens 16 Klänge gleichzeitig und stellt alle weiteren in eine unbegrenzte Warteschlange. Diese durchsucht es bei jedem neuen Klang im Spiel-Thread.
+  - Im Endgame entstehen tausende Ereignisse pro Sekunde. Die Klänge kamen immer später oder gar nicht, und das Spiel ruckelte immer stärker.
+  - Jetzt mischt das Bordaudio auch alle Klänge selbst: 24 Stimmen, höchstens drei Kopien je Klang, Überlast wird verworfen statt gestaut. Ein Klang kostet den Spiel-Thread etwa 3 µs.
+  - Treffer-Pausen haben jetzt ein Budget: Sie froren das Spiel im Endgame bis zu 19 % der Zeit ein, inzwischen höchstens etwa 4 %. Kurze Kämpfe behalten ihre Wucht.
+  - Fällt das Ausgabegerät weg, etwa weil Kopfhörer gezogen werden, öffnet das Bordaudio es neu.
 
 **Neu in 1.5 – Klare Sicht:** HUD und alle Menüs liegen jetzt auf einer eigenen Oberflächenebene in 960 × 540, doppelt so fein wie die Pixelwelt (480 × 270). Die Welt bleibt grobe Pixel-Art, Fliesstext nutzt die Pixelschrift einfach, Überschriften und wichtige Zahlen doppelt. So passt doppelt so viel auf jeden Bildschirm.
 - Das HUD ist neu geordnet. Lebenswerte stehen oben links, Raum, Zyklus, Eskalation und Ressourcen oben rechts. Oben in der Mitte fasst eine Statuszeile Welle, Schwarm und Bedrohung zusammen. Die Modulleiste zeigt Entfesselungen zuerst; Schadenszahlen und Meldungen sind kleiner und überlagern sich nicht mehr.
@@ -77,7 +107,7 @@ Rote Markierungen kündigen Angriffe an. Bosse tragen Panzerung; in ihrer Erholu
 - **Garderobe:** 8 Anzugfarben, 4 Helmformen, 6 Visierfarben, 4 Metalltöne.
 - **Grafik:** eigene Software-Pixel-Pipeline (480 × 270) mit gestufter Lichtkarte, Stirnlampe, Bloom, Partikeln, Explosionen, Trefferpausen, Zeitlupe, Parallaxe-Meer und optionalem Röhrenfilter. Alle Grafiken werden prozedural in Java gemalt. Auftakt vor dem ersten Tauchgang, Siegesszene mit auftauchendem Boot, Schott-Animation beim Raumwechsel, kippendes Bild bei Schlagseite.
 - **Bordsystem-Oberfläche:** Alle Menüs, Bergungskarten, Händler, Routenwahl (mit Kamerabildern der nächsten Räume), Archiv und Optionen werden im selben Pixelbild gezeichnet wie das Spiel – als Schottplatten, Terminals und Hologramme, bedienbar mit Maus oder Tastatur.
-- **Audio:** 34 selbst synthetisierte Klänge und Musikloops (keine Fremd-Samples).
+- **Audio:** 29 selbst synthetisierte Klänge (keine Fremd-Samples), gemischt im eigenen Effektmischer, und der Bordsynthesizer, der zehn Stücke zur Laufzeit spielt: Sägezahn-, Rechteck- und FM-Stimmen mit Filtern, synthetisches Schlagzeug, Hall und Echo, alles in Java.
 
 ## Dokumentation (PM3)
 
@@ -107,6 +137,7 @@ Voraussetzung: **JDK 25**; beim ersten Build lädt Gradle JavaFX 26.0.2.
 ./gradlew balance --args='30'     # Testspieler: Siegquote je Klasse
 ./gradlew artSheet                # Pixelgrafiken als Übersichtsbögen nach build/art
 ./gradlew sceneShot               # echte Spielszenen ohne Fenster nach build/scenes
+./gradlew musicRender             # Soundtrack als WAV-Dateien nach build/music
 ./gradlew renderDemo              # Gameplay-Video (benötigt ffmpeg)
 python3 tools/package_mac.py      # dist/Abyss.app
 python3 tools/write_diagrams.py   # UML aus docs/diagrams
@@ -121,7 +152,7 @@ Auf Davids Mac vorher `source /Users/davidbass/abyss-tools/env.sh`.
 |---|---|
 | `src/main/java/ch/zhaw/abyss/domain` | Spielregeln ohne JavaFX und Dateien: `GameRun`, `Combat`, `Physics`, `Machinery`, Gegnerstrategien, `RoomGenerator` |
 | `application` / `ports` | Anwendungsfälle (`GameService`), Profil, Freischaltungen, Speichervertrag |
-| `infrastructure` | Versioniertes Dateiformat, Audio |
+| `infrastructure` | Versioniertes Dateiformat, Audio; `infrastructure/music`: Bordsynthesizer, Partituren, Musikregie |
 | `ui` · `ui/gui` | JavaFX-Fenster, Bildschirme, Eingabe · Bordsystem-GUI im Pixelbild (Immediate Mode) |
 | `ui/pixel` · `ui/art` · `ui/render` | Software-Framebuffer · prozedurale Pixel-Art · Welt- und HUD-Renderer |
 | `src/test` · `src/qa` | JUnit-Tests · Testspieler, Balance, UI-Prüfung, Render-Probelauf, Demo |

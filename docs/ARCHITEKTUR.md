@@ -21,7 +21,7 @@ ABYSS ist ein lokales Einzelspieler-Desktopspiel. Eine Figur kämpft sich vom He
 - **domain** – reine Spielregeln. `GameRun` ist Aggregat und Konsistenzgrenze eines Tauchgangs und einzige öffentliche Änderungsschnittstelle. Intern arbeitet es mit paketinternen Mitarbeiterklassen: `PlayerMotor` (Bewegung, Sprünge, Ausweichen), `Arsenal` (Kombinationen, Luftangriffe, Harpunen, aktive Module, Drohne), `Ballistics` (Geschosse), `Loot` (Beute und Kisten) und `Rewards` (Bergung, Handel, Kapelle). `StatSheet` leitet alle Kampfwerte aus Klasse, Waffenstufe, Modulen und aktiven Resonanzen (`Synergy`) ab. `Combat` bündelt Schadensregeln (Kritik, Panzerung, Zustände, Modul-Auslöser, Explosionen, Kettenblitze), `Physics` die Bewegung mit Laufstegen. Gegnerverhalten sind Strategien (`EnemyBehavior`), gemeinsam über die Schablone `Brain`. `RoomGenerator` erzeugt reproduzierbare `RoomPlan`s mit `RoomLayout`, Wellen, Gefahren, Kisten, Raumtechnik (`Fixture`, gesteuert von `Machinery`) und `RoomCondition` (Raumzustand, aus einem eigenen Zufallsstrom, damit die übrigen Raumdaten eines Seeds unverändert bleiben). Keine Importe aus JavaFX, `java.io` oder den äusseren Schichten.
 - **application** – `GameService` koordiniert Anwendungsfälle (starten, fortsetzen, sichern, Ergebnis verbuchen, freischalten, Aussehen). Unveränderliche Werte: `Profile`, `Loadout`, `Cosmetics`, `Settings`, `Unlock`-Katalog, `Achievement` (Logbuch; Bedingungen werden nach jeder Verbuchung gegen Tauchgang und Profil geprüft).
 - **ports** – `GameRepository` als Speichervertrag.
-- **infrastructure** – `FileGameRepository` (Properties-Format 3, Migration 1/2, atomares Schreiben, `.bak`-Sicherung); `AudioSystem` übersetzt Ereignisse in Klänge.
+- **infrastructure** – `FileGameRepository` (Properties-Format 3, Migration 1/2, atomares Schreiben, `.bak`-Sicherung); `AudioSystem` übersetzt Ereignisse in Klänge und gibt der Musikregie den Spielzustand; `infrastructure/music` enthält den Bordsynthesizer (`MusicEngine`), die Partituren (`Scores`) und die Musikregie (`MusicDirector`).
 - **ui.pixel** – JavaFX-freie Pixelgrundlagen: `Frame` (Framebuffer mit Alpha, Clipping, Sprites, Linien), `Sprite` (mit Leuchtebene), `LightMap` (gestuftes Licht mit Bayer-Raster), `PostProcess` (Bloom, Farbstimmung, Vignette, Aberration), `PixelFont`.
 - **ui.art** – prozedurale Pixel-Art: `Painter` (Formen, Kugelschattierung, Kontur, gedrehte Stempel), `DiverArt` (Figur mit Skelett-Posen und Garderobe), `EnemyArt`/`BossArt`, `RoomArt` (Raumstreifen, Lichter, Requisiten), `PropArt`, `IconArt`, Palette `Pal`.
 - **ui.render** – `WorldRenderer` zeichnet einen `GameRun` lesend; `ActorPainter` (Figuren, Hiebspuren), `EventEffects` (Ereignis → Effekt), `ScreenFeel` (Blitz, Trefferpause, Zeitlupe), `MachinePainter` (Raumtechnik), `HudRenderer`, `Effects`, `Camera`, `Ocean`, `SubmarineScene` (Titel, Bootskarte, Auftakt, Siegesszene), `SpriteBank` (Zwischenspeicher). Raumzustände wirken im Renderer nur auf Licht und Partikel (Stromausfall, Alarmlichter, Lecks); ihre Regeln liegen im Generator und in `Rewards`.
@@ -92,6 +92,26 @@ Bullet-Hell-Muster brauchen Vorwarnungen, die länger leben als ein Gegnerzustan
 ### ADR-15 · Oberflächenebene in doppelter Auflösung (neu in 1.5)
 Bis 1.4 zeichneten Welt, HUD und Menüs in denselben 480 × 270 grossen Framebuffer. Mit Eskalation, Bedrohungen und Entfesselungen wurde die Oberfläche zu eng. Jetzt rendert `WorldRenderer` zuerst die Pixelwelt samt Licht und Nachbearbeitung in 480 × 270. `compose()` überträgt sie per `Frame.upscale` als 2 × 2-Blöcke auf eine zweite Ebene in 960 × 540. Darauf zeichnen `HudRenderer`, Schadenszahlen, Tastenhinweise und alle `Gui`-Bildschirme im feinen Raster. `PixelView` zeigt nur noch diese Ebene; Mausziele der Welt werden durch den Faktor geteilt, und der Röhrenfilter folgt weiter den Zeilen der Pixelwelt. Domäne, Licht und Effekte bleiben unverändert. Die Kosten sind gering, gemessen ≈ 0,2 ms mehr pro Bild.
 
+### ADR-16 · Soundtrack zur Laufzeit synthetisiert (neu in 1.6)
+Ein Soundtrack aus WAV-Dateien hätte bei zehn Stücken von ein bis anderthalb Minuten über 100 MB gekostet. JavaFX kann `AudioClip`s während der Wiedergabe weder überblenden noch in der Lautstärke ändern, und komprimierte Formate laufen in JavaFX nicht lückenlos als Schleife. Deshalb erzeugt `MusicEngine` die Musik selbst. Ein eigener Thread schreibt 16-Bit-Stereo mit 44,1 kHz über Java Sound (`SourceDataLine`, Modul `java.desktop`, bereits Teil der Laufzeit). Das Spiel braucht dafür keine neue Bibliothek.
+
+Aufbau:
+- Partituren in einer kleinen Notenschrift (`Notation`): Melodien als Tracker-Zeilen, Harmonie als Akkordsymbole, Begleitung (Flächen mit Stimmführung, Bass, Arpeggio, Akkordschläge) daraus abgeleitet.
+- `SongPlayer` sequenziert die Noten und verwaltet die Stimmen (`SynthVoice`: PolyBLEP-Oszillatoren, Zustandsvariablenfilter, FM, Formanten; `DrumVoice`: synthetisches Schlagzeug).
+- Raumklang: Ping-Pong-Echo und ein Hall aus einem Feedback-Delay-Netz.
+- Jede Stimme hat eine Intensitätsschwelle. Schichten wechseln nur auf Taktgrenzen.
+- `MusicEngine` überblendet Stücke und regelt über einen Tiefpass im Master die Unterwasserdämpfung, ein Begrenzer verhindert Übersteuerung.
+
+Auch alle Spielklänge laufen seit 1.6 durch diesen Thread. JavaFX-`AudioClip`s spielen höchstens 16 Klänge zugleich und reihen weitere in eine unbegrenzte Warteschlange. Diese durchsucht `play()` bei jedem Aufruf linear im Spiel-Thread. Im Endgame mit tausenden Ereignissen pro Sekunde verstummte so der Ton, und das Spiel ruckelte zunehmend. `SoundMixer` ersetzt sie:
+- Die Klänge liegen als Abtastwerte im Speicher (`SoundBank`).
+- Zwischen den Threads liegt eine begrenzte Ein-Erzeuger-Warteschlange.
+- Der Mischer hat 24 Stimmen, höchstens drei Kopien je Klang und verdrängt die ältesten.
+- Überlast wird verworfen statt gestaut, ein verspäteter Klang wäre schlimmer als ein fehlender.
+
+Klänge umgehen den Unterwasserfilter und die Musiklautstärke; der Begrenzer schützt die Summe. Fällt das Ausgabegerät weg, öffnet der Thread es nach zwei Sekunden neu.
+
+`MusicDirector` übersetzt den Spielzustand rein lesend in Stück, Intensität, Dämpfung und Tempo. So ist die Musikregie ohne Ausgabegerät testbar. Der Render-Thread teilt nach dem Aufbau eines Stücks keinen Speicher mehr zu. Eine Aufnahme ohne Ausgabegerät (`MusicEngine.offline()`) dient Tests, `musicRender` und dem Demo-Video. Kosten: 28- bis 53-fache Echtzeit auf einem Kern, also etwa 2–4 % Last.
+
 ## Verantwortlichkeiten
 
 | Klasse | Verantwortung | Bewusst nicht zuständig |
@@ -107,6 +127,9 @@ Bis 1.4 zeichneten Welt, HUD und Menüs in denselben 480 × 270 grossen Framebuf
 | FileGameRepository | Lesen, Schreiben, Migration | Menüablauf |
 | WorldRenderer | Bild aus Domänenzustand, Effekte aus Ereignissen | Regeln |
 | GameWindow | Spielschleife, Eingabe, Navigation | Spielregeln |
+| MusicDirector | Stück, Intensität, Dämpfung und Tempo aus dem Spielzustand | Klangerzeugung |
+| MusicEngine / SongPlayer | Synthese, Sequenzer, Schichten, Überblendung, Ausgabe | Spielregeln |
+| SoundMixer / SoundBank | Spielklänge mit fester Stimmenzahl und begrenzter Warteschlange | Auswahl der Klänge |
 
 ## Bekannte Grenzen
 
