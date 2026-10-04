@@ -5,8 +5,8 @@ import ch.zhaw.abyss.ui.art.EnemyArt.Anim;
 import ch.zhaw.abyss.ui.pixel.Sprite;
 
 /**
- * Pixelgrafiken der vier Sektorwächter. Jeder Boss hat eine klar lesbare Silhouette und einen
- * leuchtenden Schwachpunkt, der in der Erholung sichtbar offen liegt.
+ * Pixelgrafiken der Sektorwächter und der Prismenkaiserin. Jeder Boss hat eine klar lesbare
+ * Silhouette und einen leuchtenden Schwachpunkt, der in der Erholung sichtbar offen liegt.
  */
 final class BossArt {
     private BossArt() {}
@@ -16,6 +16,7 @@ final class BossArt {
             case WARDEN -> warden(anim, f);
             case REACTOR -> reactor(anim, f);
             case BROOD -> brood(anim, f);
+            case EMPRESS -> empress(anim, f);
             default -> captain(anim, f);
         };
     }
@@ -318,5 +319,87 @@ final class BossArt {
         }
         p.outline(Pal.OUTLINE);
         return p.sprite(36, 65);
+    }
+
+    // --- Die Prismenkaiserin: Lichtqualle mit Krone, Flügeln und schillernden Schleppen ---------
+
+    private static Sprite empress(Anim anim, int f) {
+        var p = new Painter(96, 100);
+        int frames = anim.frames();
+        double wave = Math.sin(f / (double) frames * Math.PI * 2);
+        boolean charged = anim == Anim.WINDUP;
+        boolean spread = anim == Anim.STRIKE;
+        boolean tired = anim == Anim.RECOVER;
+        double lift = tired ? 3 : spread ? -2 : wave;
+        double cx = 48, head = 26 + lift;
+        // Schleppen: sieben wehende Bänder mit leuchtenden Spitzen
+        for (int r = 0; r < 7; r++) {
+            double x0 = cx - 9 + r * 3;
+            double prevX = x0, prevY = 60 + lift;
+            int color = Pal.prism(r / 7.0, .3);
+            for (int s2 = 1; s2 <= 12; s2++) {
+                double y = 60 + lift + s2 * 3;
+                double x =
+                        x0 + (r - 3) * s2 * .35 + Math.sin(s2 * .55 + f * 1.1 + r) * (1 + s2 * .18);
+                p.thick(prevX, prevY, x, y, s2 < 6 ? 2 : 1, Pal.shade(color, .75));
+                if (s2 % 3 == 0) p.glowOnly((int) x, (int) y, color);
+                prevX = x;
+                prevY = y;
+            }
+            p.light((int) prevX, (int) prevY, Pal.prism(r / 7.0 + .5, .55));
+        }
+        // Flügel: zwei Paare aus Lichtfedern
+        double raise = spread ? -10 : charged ? -6 : tired ? 6 : wave * 2;
+        for (int side = -1; side <= 1; side += 2) {
+            for (int k = 0; k < 5; k++) {
+                double sx = cx + side * 7, sy = 42 + lift;
+                double ex = cx + side * (24 + k * 5),
+                        ey = 14 + k * 5 + raise + k * (spread ? -1 : 0);
+                int color = Pal.prism(.55 + k * .08 + (side > 0 ? .3 : 0), .25);
+                p.thick(sx, sy, ex, ey, 2, Pal.shade(color, .8));
+                p.glowOnly((int) ex, (int) ey, Pal.prism(k / 5.0 + (side > 0 ? .5 : 0)));
+                p.px((int) ex, (int) ey, Pal.WHITE);
+            }
+            for (int k = 0; k < 3; k++) {
+                double sx = cx + side * 6, sy = 54 + lift;
+                double ex = cx + side * (20 + k * 5), ey = 62 + k * 4 - raise * .5;
+                p.thick(sx, sy, ex, ey, 2, Pal.shade(Pal.prism(.7 + k * .1, .25), .7));
+                p.glowOnly((int) ex, (int) ey, Pal.prism(.7 + k * .1));
+            }
+        }
+        // Leib: schlanke, durchscheinende Gestalt mit Herzkern
+        p.sphere(
+                cx,
+                50 + lift,
+                6.5,
+                13,
+                new int[] {Pal.VIOLET_2, Pal.VIOLET_3, Pal.VIOLET_4, Pal.VIOLET_5});
+        int core = charged ? Pal.WHITE : Pal.prism(.85 + f * .05, .4);
+        for (int y = -3; y <= 3; y++)
+            for (int x = -3; x <= 3; x++)
+                if (x * x + y * y <= 9)
+                    p.light(
+                            (int) cx + x,
+                            (int) (46 + lift) + y,
+                            x * x + y * y < 3 ? Pal.WHITE : core);
+        // Kopf: leuchtende Glocke mit Krone
+        p.sphere(cx, head, 14, 11, new int[] {Pal.VIOLET_3, Pal.VIOLET_4, Pal.VIOLET_5, Pal.WHITE});
+        for (int x = (int) cx - 13; x <= cx + 13; x += 2)
+            p.light(x, (int) head + 9, Pal.prism((x - cx) / 26.0 + .5, .4));
+        for (int k = -2; k <= 2; k++) {
+            double bx = cx + k * 5, by = head - 10 + Math.abs(k);
+            double tip = by - 8 + Math.abs(k) * 2 - (charged ? 2 : 0);
+            p.thick(bx, by, bx, tip, k == 0 ? 2 : 1.5, Pal.RUST_6);
+            p.light((int) bx, (int) tip, Pal.prism(k / 5.0 + .5, .3));
+        }
+        int eye = tired ? Pal.VIOLET_3 : charged || spread ? Pal.WHITE : Pal.prism(.5, .2);
+        for (int side = -1; side <= 1; side += 2) {
+            p.rect((int) cx + side * 5 - 1, (int) head, 3, 1, Pal.INK);
+            p.light((int) cx + side * 5, (int) head, eye);
+            p.light((int) cx + side * 5 + side, (int) head, eye);
+        }
+        if (anim == Anim.HURT) p.light((int) cx, (int) head - 3, Pal.WHITE);
+        p.outline(Pal.OUTLINE);
+        return p.sprite(48, 80);
     }
 }

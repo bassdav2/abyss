@@ -1,4 +1,4 @@
-ABYSS 1.1 · JavaFX-Komponentenprüfung · 25.09.2026 13:08
+ABYSS 1.4 · JavaFX-Komponentenprüfung · 03.10.2026
 ./gradlew uiSmoke -Psilent --args="--capture=docs/qa/screens"
 
 OK     title → TITLE
@@ -26,6 +26,11 @@ OK     merchant → REWARD
 OK     boss → PLAY
 OK     shrine-or-workshop → REWARD
 OK     sector2 → PLAY
+OK     Levelaufstieg offen
+OK     Auswahl angeboten
+OK     level-up → LEVEL_UP
+OK     alle Levelaufstiege gewählt
+OK     level-up-chosen → PLAY
 OK     Raumzustand in der Routenwahl
 OK     route-condition → ROUTE
 OK     Audioclips geladen (16)
@@ -37,5 +42,21 @@ OK     Auswertung nach der Szene
 OK     victory → OUTCOME
 OK     Niederlage ohne Siegesszene
 OK     outcome → OUTCOME
+OK     Laufbahn-Erfahrung verbucht
+OK     career → CAREER
+OK     career-depth → CAREER
+OK     career-weapons → CAREER
 OK     title-again → TITLE
-UI_SMOKE 37/37 bestanden
+OK     Eskalation im zweiten Zyklus
+OK     Schwarm mit über hundert Gegnern
+OK     endgame-swarm → PLAY
+OK     Bedrohung in der Routenwahl
+OK     route-threat → ROUTE
+OK     Entfesselung obenauf
+OK     evolution → LEVEL_UP
+OK     Klingensturm installiert
+OK     evolution-taken → PLAY
+OK     Prismenkaiserin auf der Brücke
+OK     empress → PLAY
+OK     title-final → TITLE
+UI_SMOKE 58/58 bestanden

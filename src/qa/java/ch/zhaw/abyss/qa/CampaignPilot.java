@@ -65,13 +65,16 @@ public final class CampaignPilot {
             if (Math.abs(dx) > 520) b.move(toward);
             else if (Math.abs(dx) < 200) b.move(-toward);
         } else if (Math.abs(dx) > reach * .7) b.move(toward);
-        boolean verticalOk = Math.abs(target.centerY() - p.centerY()) < (flying ? 110 : 90);
+        double rise = Math.abs(target.centerY() - p.centerY());
+        // Fernwaffen treffen dank Zielhilfe auch schräg nach oben oder unten.
+        boolean verticalOk =
+                rise < (flying ? 110 : 90) || ranged && rise < Math.abs(dx) * .55 && rise < 320;
         if (Math.abs(dx) < reach && verticalOk) {
             b.attack();
             b.aim(toward);
         }
         if (p.grounded() && target.centerY() < p.y() - 150 && Math.abs(dx) < 260) b.jump();
-        if (p.grounded() && dy > 60 && target.grounded() && Math.abs(dx) < 400) {
+        if (p.grounded() && dy > 60 && target.grounded() && Math.abs(dx) < 700) {
             b.down();
             b.jump();
         }

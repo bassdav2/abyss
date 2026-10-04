@@ -23,12 +23,9 @@ class RoomGeneratorTest {
                     assertEquals(depth, room.depth());
                     assertEquals(depth / RoomGenerator.SECTOR_ROOMS, room.sector());
                     assertTrue(room.waveCount() <= 3);
-                    room.waves()
-                            .forEach(
-                                    wave ->
-                                            assertTrue(
-                                                    wave.size() <= RoomGenerator.MAX_CORE
-                                                            && !wave.isEmpty()));
+                    // Brutnester kommen zu den fest platzierten Gegnern hinzu.
+                    int cap = RoomGenerator.maxCore(RoomGenerator.escalation(0, depth)) + 4;
+                    room.waves().forEach(wave -> assertTrue(wave.size() <= cap && !wave.isEmpty()));
                     assertEquals(room.waves().size(), room.hordes().size());
                     for (var wave : room.waves())
                         for (var spawn : wave) {

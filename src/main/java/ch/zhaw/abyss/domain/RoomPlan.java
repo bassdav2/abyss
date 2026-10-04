@@ -20,6 +20,8 @@ import java.util.List;
  * @param salvageReward Schrott beim Sichern
  * @param condition besonderer Raumzustand
  * @param fixtures eingebaute Raumtechnik
+ * @param hordes Schwarmkontingente je Welle
+ * @param threat Bedrohung, die einen bestimmten Build verlangt
  */
 public record RoomPlan(
         int depth,
@@ -36,7 +38,8 @@ public record RoomPlan(
         int salvageReward,
         RoomCondition condition,
         List<FixtureSlot> fixtures,
-        List<List<Horde>> hordes) {
+        List<List<Horde>> hordes,
+        Threat threat) {
     /** Raumarten. */
     public enum Kind {
         COMBAT,
@@ -109,6 +112,7 @@ public record RoomPlan(
             throw new IllegalArgumentException("Horden passen nicht zu den Wellen");
         hazards = List.copyOf(hazards);
         crates = List.copyOf(crates);
+        if (threat == null) threat = Threat.NONE;
     }
 
     /**

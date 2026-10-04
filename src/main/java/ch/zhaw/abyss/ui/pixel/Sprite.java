@@ -80,6 +80,33 @@ public final class Sprite {
     }
 
     /**
+     * Vergrössert ein Sprite pixelgenau (nächster Nachbar), samt Leuchtebene und Anker.
+     *
+     * @param factor Vergrösserung, etwa 1.45
+     * @return neues Sprite
+     */
+    public Sprite scaled(double factor) {
+        int w = Math.max(1, (int) Math.round(width * factor));
+        int h = Math.max(1, (int) Math.round(height * factor));
+        var out = new int[w * h];
+        for (int y = 0; y < h; y++)
+            for (int x = 0; x < w; x++)
+                out[y * w + x] =
+                        pixels[
+                                Math.min(height - 1, (int) (y / factor)) * width
+                                        + Math.min(width - 1, (int) (x / factor))];
+        var result =
+                new Sprite(
+                        out,
+                        w,
+                        h,
+                        (int) Math.round(anchorX * factor),
+                        (int) Math.round(anchorY * factor));
+        if (glow != null) result.withGlow(glow.scaled(factor));
+        return result;
+    }
+
+    /**
      * @return Kopie der Pixel
      */
     public int[] pixels() {

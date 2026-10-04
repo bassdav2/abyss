@@ -32,7 +32,8 @@ final class Combat {
             double damage,
             boolean hurtsPlayer,
             boolean hurtsEnemies,
-            Status status) {}
+            Status status,
+            Source source) {}
 
     /** Höchstzahl ausgewerteter Explosionen pro Simulationsschritt; der Rest folgt danach. */
     static final int BLASTS_PER_STEP = 160;
@@ -67,8 +68,16 @@ final class Combat {
             case ABILITY, EXPLOSION, DRONE -> damage *= s.abilityDamage();
             case BURN, MACHINE -> {}
         }
-        boolean crit = (direct || source == Source.DRONE) && run.rng.nextDouble() < s.critChance();
-        if (crit) damage *= s.critDamage();
+        int tier =
+                direct || source == Source.DRONE
+                        ? StatSheet.critTier(s.critChance(), run.rng.nextDouble())
+                        : 0;
+        boolean crit = tier > 0;
+        if (crit) {
+            // Überkritik: jede weitere Stufe legt 60 % des kritischen Schadens drauf.
+            damage *= s.critDamage() * (1 + .6 * (tier - 1));
+            if (tier > 1 && p.stacks(Item.DEATH_EYE) > 0) damage *= 1.5;
+        }
         if (direct && p.afterburner) {
             damage *= 1.6;
             p.afterburner = false;
@@ -80,6 +89,21 @@ final class Combat {
             run.emit(GameEvent.at(GameEvent.Type.BLOCK, e.x, e.centerY()));
         }
         if (e.armored() && source != Source.MACHINE) damage *= e.kind.armor();
+        boolean plain =
+                !crit
+                        && (source == Source.MELEE
+                                || source == Source.PROJECTILE
+                                || source == Source.ORBIT
+                                || source == Source.DASH
+                                || source == Source.DRONE);
+        if (e.plated && plain) damage *= .35;
+        // Im Panzerschwarm ersetzt der Panzer die Schale, sonst wären Krabben fast unverwundbar.
+        if (e.kind == EnemyKind.CRAB && plain && !e.plated && shellFront(e, sourceX)) {
+            damage *= .2;
+            if (run.rng.nextInt(4) == 0)
+                run.emit(GameEvent.at(GameEvent.Type.BLOCK, e.x, e.centerY()));
+        }
+        if (p.stacks(Item.ABSOLUTE_ZERO) > 0 && e.statuses.active(Status.FREEZE)) damage *= 2;
         if (e.affix == Affix.ARMORED) damage *= .6;
         if (e.eliteShield > 0) {
             double absorbed = Math.min(e.eliteShield, damage);
@@ -95,7 +119,7 @@ final class Combat {
                         e.x,
                         e.y - e.height * .6,
                         damage,
-                        source.name()));
+                        tier > 1 ? source.name() + "#" + tier : source.name()));
         applyKnockback(e, knockback, sourceX, direct);
         if (direct) applyStatuses(e, base);
         if (direct && s.lifesteal() > 0) p.heal(damage * s.lifesteal());
@@ -103,6 +127,11 @@ final class Combat {
         if (crit && p.stacks(Item.LEVIATHAN_TOOTH) > 0) {
             p.heal(2);
             chain(e, 15, 300);
+        }
+        if (crit && p.stacks(Item.DEATH_EYE) > 0 && p.deathEyeTime <= 0) {
+            p.deathEyeTime = .08;
+            // Ohne erneute Faktoren: der kritische Schaden ist schon eingerechnet, Panzer wirkt.
+            explode(e.x, e.centerY(), 70 * s.area(), damage * .3, false, true, null, Source.BURN);
         }
         if (!e.alive()) killed(e);
         return damage;
@@ -120,6 +149,13 @@ final class Combat {
                         && Math.abs(e.centerY() - (p.y - 100)) < 130;
         if (lit) factor *= 1 + .2 * p.stacks(Item.LANTERN);
         return factor;
+    }
+
+    /** Die Schale der Panzerkrabbe schützt vorn, solange sie nicht ausholt. */
+    private static boolean shellFront(Enemy e, double sourceX) {
+        return e.state != Enemy.State.STRIKE
+                && e.state != Enemy.State.STUNNED
+                && Math.signum(sourceX - e.x) == e.facing;
     }
 
     private static boolean blocksFront(Enemy e, double sourceX) {
@@ -190,6 +226,7 @@ final class Combat {
     private void killed(Enemy e) {
         var p = run.player;
         run.countKill();
+        run.weaponKills.merge(p.weapon, 1, Integer::sum);
         boolean summoned = e.parentId != 0;
         int salvage = summoned ? 1 : e.kind.salvage() + (e.affix.elite() ? 8 : 0);
         if (salvage > 0) run.dropScrap(e.x, e.centerY(), salvage);
@@ -202,6 +239,19 @@ final class Combat {
         run.drop(Pickup.Kind.SHARD, shard, e.x, e.centerY());
         if (e.affix.elite() || e.kind == EnemyKind.SMUGGLER)
             run.drop(Pickup.Kind.CORE, 1, e.x, e.centerY());
+        if (e.kind == EnemyKind.HIVE)
+            // Fällt ein Nest, stirbt seine Brut mit.
+            for (var minion : run.enemies)
+                if (e.children.contains(minion.id) && minion.alive()) {
+                    minion.health = 0;
+                    run.emit(
+                            new GameEvent(
+                                    GameEvent.Type.ENEMY_DOWN,
+                                    minion.x,
+                                    minion.centerY(),
+                                    minion.kind.ordinal(),
+                                    ""));
+                }
         if (e.kind == EnemyKind.SMUGGLER) {
             run.smugglersCaught++;
             run.emit(new GameEvent(GameEvent.Type.MACHINE, e.x, e.centerY(), 0, "CAUGHT"));
@@ -217,6 +267,9 @@ final class Combat {
         }
         p.addEnergy(6 + 4 * p.stacks(Item.SIPHON));
         p.heal(3 * p.stacks(Item.RECOVERY));
+        if (p.stacks(Item.BLOOD_PACT) > 0) p.heal(p.maxHealth * .01);
+        if (p.stacks(Item.PHASE_STORM) > 0 && p.dashTime > 0) p.dashCooldown = 0;
+        if (p.stacks(Item.INFERNO) > 0 && e.statuses.active(Status.BURN)) spread(e);
         if (p.stacks(Item.DEPTH_RUSH) > 0 && ++p.killsTowardRush >= 10) {
             p.killsTowardRush = 0;
             p.rushStacks += p.stacks(Item.DEPTH_RUSH);
@@ -225,21 +278,36 @@ final class Combat {
             p.frenzy = Math.min(20, p.frenzy + 1);
             p.frenzyTime = 4;
         }
-        if (p.stacks(Item.NOVA) > 0 && ++p.novaKills >= 14 - 3 * p.stacks(Item.NOVA)) {
+        boolean supernova = p.stacks(Item.SUPERNOVA) > 0;
+        int novaEvery = supernova ? 5 : 14 - 3 * p.stacks(Item.NOVA);
+        if (p.stacks(Item.NOVA) > 0 && ++p.novaKills >= novaEvery) {
             p.novaKills = 0;
-            double radius = (260 + 50 * p.stacks(Item.NOVA)) * p.stats.area();
+            double radius =
+                    (260 + 50 * p.stacks(Item.NOVA)) * p.stats.area() * (supernova ? 1.5 : 1);
             run.emit(new GameEvent(GameEvent.Type.NOVA, p.x, p.centerY(), radius, ""));
-            explode(p.x, p.centerY(), radius, 30 + 25 * p.stacks(Item.NOVA), false, true, null);
+            explode(
+                    p.x,
+                    p.centerY(),
+                    radius,
+                    (30 + 25 * p.stacks(Item.NOVA)) * (supernova ? 2 : 1),
+                    false,
+                    true,
+                    null);
         }
         if (p.stacks(Item.CHAIN_REACTION) > 0)
             explode(
                     e.x,
                     e.centerY(),
-                    (100 + 15 * p.stacks(Item.CHAIN_REACTION)) * p.stats.area(),
-                    20 * p.stacks(Item.CHAIN_REACTION),
+                    (100 + 15 * p.stacks(Item.CHAIN_REACTION))
+                            * p.stats.area()
+                            * (supernova ? 2 : 1),
+                    20 * p.stacks(Item.CHAIN_REACTION) * (supernova ? 2 : 1),
                     false,
                     true,
                     null);
+        if (e.kind == EnemyKind.FUSE)
+            // Eine erwischte Zündmilbe zündet gegen ihre Nachbarn.
+            explode(e.x, e.centerY(), 80 * p.stats.area(), 12, false, true, null);
         if (e.kind == EnemyKind.BOMBER) explode(e.x, e.centerY(), 130, 30, false, true, null);
         if (e.affix == Affix.VOLATILE)
             explode(e.x, e.centerY(), 125, 16 * run.enemyDamage(), true, false, null);
@@ -254,6 +322,19 @@ final class Combat {
                         e.y - e.height * .5,
                         e.kind.ordinal(),
                         e.kind.title()));
+    }
+
+    /** Höllenglut: ein brennender Gegner steckt beim Tod seine Nachbarn an. */
+    private void spread(Enemy e) {
+        var s = run.player.stats;
+        int lit = 0;
+        for (var other : run.grid().around(e.x, e.centerY(), 170)) {
+            if (other == e || !other.alive() || lit >= 6) continue;
+            if (Math.hypot(other.x - e.x, other.centerY() - e.centerY()) > 170) continue;
+            other.statuses.ignite(3, 8 * s.burnPower());
+            lit++;
+        }
+        if (lit > 0) run.emit(GameEvent.at(GameEvent.Type.FLAME, e.x, e.centerY()));
     }
 
     /**
@@ -282,6 +363,16 @@ final class Combat {
             p.shield -= absorbed;
             damage -= absorbed;
             run.emit(new GameEvent(GameEvent.Type.SHIELD_HIT, p.x, p.centerY(), absorbed, ""));
+            if (p.shield <= 0 && p.stacks(Item.BASTION) > 0 && p.bastionTime <= 0) {
+                // Bollwerk: der brechende Schild schlägt zurück und schützt kurz.
+                p.bastionTime = 6;
+                damage = 0;
+                p.invulnerableTime = 1.2;
+                double radius = 320 * p.stats.area();
+                run.emit(new GameEvent(GameEvent.Type.NOVA, p.x, p.centerY(), radius, "bastion"));
+                explode(p.x, p.centerY(), radius, 60, false, true, null);
+                return true;
+            }
         }
         p.health = Math.max(0, p.health - damage);
         p.hurtTime = .25;
@@ -333,7 +424,31 @@ final class Combat {
             boolean hurtsPlayer,
             boolean hurtsEnemies,
             Status status) {
-        blasts.add(new Blast(x, y, radius, damage, hurtsPlayer, hurtsEnemies, status));
+        explode(x, y, radius, damage, hurtsPlayer, hurtsEnemies, status, Source.EXPLOSION);
+    }
+
+    /**
+     * Explosion mit wählbarer Schadensherkunft, etwa Werkzeugschaden für Plasmakugeln.
+     *
+     * @param x Mittelpunkt
+     * @param y Mittelpunkt
+     * @param radius Radius
+     * @param damage Grundschaden
+     * @param hurtsPlayer trifft die Figur
+     * @param hurtsEnemies trifft Gegner
+     * @param status Zustand für getroffene Gegner oder {@code null}
+     * @param source Herkunft der Treffer auf Gegner
+     */
+    void explode(
+            double x,
+            double y,
+            double radius,
+            double damage,
+            boolean hurtsPlayer,
+            boolean hurtsEnemies,
+            Status status,
+            Source source) {
+        blasts.add(new Blast(x, y, radius, damage, hurtsPlayer, hurtsEnemies, status, source));
         if (blastDepth == 0) flush();
     }
 
@@ -369,7 +484,7 @@ final class Combat {
                 if (!e.alive() || e.untargetable()) continue;
                 if (Math.hypot(e.x - x, e.centerY() - y) > radius + e.width / 2) continue;
                 if (status != null) applyStatus(e, status, status == Status.FREEZE ? 2.2 : 3);
-                hitEnemy(e, damage, Source.EXPLOSION, 260, x);
+                hitEnemy(e, damage, b.source(), 260, x);
             }
             for (var crate : run.crates)
                 if (crate.intact()

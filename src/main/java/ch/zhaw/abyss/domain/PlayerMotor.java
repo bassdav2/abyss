@@ -28,10 +28,14 @@ final class PlayerMotor {
         p.hurtTime = Math.max(0, p.hurtTime - dt);
         p.comboTimer = Math.max(0, p.comboTimer - dt);
         p.shieldRegenDelay = Math.max(0, p.shieldRegenDelay - dt);
+        p.deathEyeTime = Math.max(0, p.deathEyeTime - dt);
+        p.bastionTime = Math.max(0, p.bastionTime - dt);
         p.lastHitTime += dt;
         p.addEnergy(s.energyRegen() * dt);
-        if (p.shieldRegenDelay <= 0 && p.shield < s.maxShield())
-            p.shield = Math.min(s.maxShield(), p.shield + 6 * dt);
+        boolean bastion = p.stacks(Item.BASTION) > 0;
+        if ((p.shieldRegenDelay <= 0 || bastion && p.shieldRegenDelay <= 3)
+                && p.shield < s.maxShield())
+            p.shield = Math.min(s.maxShield(), p.shield + (bastion ? 40 : 6) * dt);
     }
 
     /**
@@ -65,7 +69,7 @@ final class PlayerMotor {
             double factor = committed && p.grounded ? .3 : 1;
             p.vx = direction * GameRun.RUN * speed * factor + p.lungeVelocity;
         }
-        if (p.dashTime <= 0) p.vx += run.machinery.push(p);
+        if (p.dashTime <= 0) p.vx += run.machinery.push(p) + run.pullOn(p);
         p.lungeVelocity *= Math.exp(-11 * dt);
         if (Math.abs(p.lungeVelocity) < 4) p.lungeVelocity = 0;
         boolean wasGrounded = p.grounded;
@@ -119,17 +123,29 @@ final class PlayerMotor {
     private void startDash() {
         var p = run.player;
         p.dashTime = .18;
-        p.dashCooldown = .9 * p.stats.cooldown();
+        p.dashCooldown = .9 * p.stats.cooldown() * (p.stacks(Item.PHASE_STORM) > 0 ? .5 : 1);
         p.invulnerableTime = Math.max(.26, p.invulnerableTime);
         if (!p.grounded) p.airDashUsed = true;
         p.swing = null;
         p.dashHits.clear();
         if (p.stacks(Item.AFTERBURNER) > 0) p.afterburner = true;
         if (p.stacks(Item.PHASE_CORE) > 0 && run.phase() == GameRun.Phase.RUNNING) {
-            var image =
-                    run.shoot(
-                            Projectile.Kind.AFTERIMAGE, true, p.x, p.centerY(), 0, 0, 34, 30, .55);
-            image.explosionRadius = 150;
+            boolean storm = p.stacks(Item.PHASE_STORM) > 0;
+            // Phasensturm: eine Spur aus Nachbildern entlang der Ausweichstrecke.
+            for (int i = 0; i < (storm ? 4 : 1); i++) {
+                var image =
+                        run.shoot(
+                                Projectile.Kind.AFTERIMAGE,
+                                true,
+                                p.x + p.facing * i * 40,
+                                p.centerY(),
+                                0,
+                                0,
+                                storm ? 60 : 34,
+                                30,
+                                .55 + i * .08);
+                image.explosionRadius = 150 * (storm ? p.stats.area() : 1);
+            }
         }
         run.emit(GameEvent.at(GameEvent.Type.DASH, p.x, p.y));
     }

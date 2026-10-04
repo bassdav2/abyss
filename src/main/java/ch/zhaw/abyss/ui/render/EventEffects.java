@@ -20,12 +20,15 @@ final class EventEffects {
     private final ScreenFeel feel;
 
     /** Effektbudget pro Bild: im Schwarm bleiben Funken, Trümmer und Wackeln im Rahmen. */
-    private int hits, downs;
+    private int hits, downs, blocks;
+
+    private double lastBlock;
 
     /** Setzt das Effektbudget für ein neues Bild zurück. */
     void frame() {
         hits = 0;
         downs = 0;
+        blocks = 0;
     }
 
     EventEffects(Effects fx, Camera camera, HudRenderer hud, ScreenFeel feel) {
@@ -49,7 +52,8 @@ final class EventEffects {
         switch (e.type()) {
             case HIT -> {
                 boolean burn = "BURN".equals(e.text());
-                if (!burn && ++hits <= 24) {
+                ++hits;
+                if (!burn && hits <= 24) {
                     fx.burst(
                             Effects.Kind.SPARK,
                             x,
@@ -64,9 +68,10 @@ final class EventEffects {
                         camera.shake(.06 * shake);
                     }
                 }
-                if (settings.damageNumbers() && (e.amount() >= 1 || !burn))
+                // In riesigen Schwärmen nur ein Teil der Zahlen, sonst wird das Bild unlesbar.
+                if (settings.damageNumbers() && (e.amount() >= 1 || !burn) && hits <= 14)
                     fx.text(
-                            "" + Math.round(e.amount()),
+                            number(e.amount()),
                             x + r.nextInt(7) - 3,
                             y - 6,
                             .6,
@@ -74,13 +79,29 @@ final class EventEffects {
                             1);
             }
             case CRIT -> {
-                fx.burst(Effects.Kind.SPARK, x, y, 12, 170, direction(run, x), 1.9, Pal.RUST_7);
-                fx.burst(Effects.Kind.STAR, x, y, 3, 40, -Math.PI / 2, 2, Pal.RUST_6);
-                fx.flash(x, y, 40, Pal.RUST_6, .8, .12);
-                feel.hitStop = Math.max(feel.hitStop, .07);
-                camera.shake(.14 * shake);
-                if (settings.damageNumbers())
-                    fx.text(Math.round(e.amount()) + "!", x, y - 8, .8, Pal.RUST_6, 2);
+                int tier =
+                        e.text().contains("#") ? e.text().charAt(e.text().length() - 1) - '0' : 1;
+                int color =
+                        tier >= 3
+                                ? Pal.prism(feel.time * 2 + x * .01)
+                                : tier == 2 ? Pal.VIOLET_4 : Pal.RUST_6;
+                if (++hits <= 30) {
+                    fx.burst(Effects.Kind.SPARK, x, y, 12, 170, direction(run, x), 1.9, Pal.RUST_7);
+                    fx.burst(Effects.Kind.STAR, x, y, 3 * tier, 40, -Math.PI / 2, 2, color);
+                    fx.flash(x, y, 40 + 14 * tier, color, .8, .12);
+                }
+                if (hits <= 6) {
+                    feel.hitStop = Math.max(feel.hitStop, .07);
+                    camera.shake(.14 * shake);
+                }
+                if (settings.damageNumbers() && hits <= 20)
+                    fx.text(
+                            number(e.amount()) + (tier >= 3 ? "!!!" : tier == 2 ? "!!" : "!"),
+                            x,
+                            y - 8,
+                            .8,
+                            color,
+                            2);
             }
             case PLAYER_HIT -> {
                 fx.burst(Effects.Kind.SPARK, x, y, 10, 120, -Math.PI / 2, 3, Pal.RED_4);
@@ -94,20 +115,31 @@ final class EventEffects {
                     fx.text("-" + Math.round(e.amount()), x, y - 10, .8, Pal.RED_4, 1);
             }
             case SHIELD_HIT, BLOCK -> {
+                if (++blocks > 3) return;
                 fx.burst(Effects.Kind.SPARK, x, y, 8, 100, -Math.PI / 2, 3, Pal.TEAL_5);
                 fx.ring(x, y, 4, 16, .25, Pal.TEAL_5);
-                if (e.type() == GameEvent.Type.BLOCK)
+                if (e.type() == GameEvent.Type.BLOCK
+                        && blocks == 1
+                        && feel.time - lastBlock > .35) {
+                    lastBlock = feel.time;
                     fx.text("GEBLOCKT", x, y - 12, .6, Pal.TEAL_5, 1);
+                }
             }
             case ENEMY_DOWN, ELITE_DOWN -> {
-                if (e.amount() >= EnemyKind.MITE.ordinal()
-                        && e.amount() <= EnemyKind.NANODRONE.ordinal()) {
+                var down = kind(e.amount());
+                if (down.swarm() || down == EnemyKind.EGG) {
                     // Schwarmgegner zerplatzen klein, damit hundert Abschüsse lesbar bleiben
                     if (++downs > 40) return;
                     int color =
-                            (int) e.amount() == EnemyKind.GLOWFISH.ordinal()
-                                    ? Pal.VIOLET_4
-                                    : Pal.RUST_4;
+                            switch (down) {
+                                case GLOWFISH -> Pal.VIOLET_4;
+                                case PRISM -> Pal.prism(feel.time + x * .02);
+                                case SPITTER -> Pal.GREEN_4;
+                                case LANCER -> Pal.TEAL_5;
+                                case CRAB -> Pal.STEEL_5;
+                                case FUSE -> Pal.RUST_6;
+                                default -> Pal.RUST_4;
+                            };
                     fx.burst(
                             Effects.Kind.DEBRIS,
                             x,
@@ -121,16 +153,13 @@ final class EventEffects {
                     if (downs <= 3) camera.shake(.04 * shake);
                     return;
                 }
-                var kind =
-                        EnemyKind.values()[
-                                (int)
-                                        Math.max(
-                                                0,
-                                                Math.min(
-                                                        EnemyKind.values().length - 1,
-                                                        e.amount()))];
+                var kind = down;
                 boolean organic =
-                        kind == EnemyKind.JELLY || kind == EnemyKind.EEL || kind == EnemyKind.BROOD;
+                        kind == EnemyKind.JELLY
+                                || kind == EnemyKind.EEL
+                                || kind == EnemyKind.BROOD
+                                || kind == EnemyKind.HIVE
+                                || kind == EnemyKind.EMPRESS;
                 if (organic) {
                     fx.burst(
                             Effects.Kind.GOO,
@@ -160,6 +189,9 @@ final class EventEffects {
                             y + r.nextInt(40) - 20,
                             14 + r.nextInt(16),
                             false);
+                if ((int) e.amount() == EnemyKind.EMPRESS.ordinal())
+                    for (int i = 0; i < 12; i++)
+                        fx.ring(x, y, 3, 40 + i * 18, .6 + i * .08, Pal.prism(i / 12.0));
                 fx.burst(Effects.Kind.DEBRIS, x, y, 40, 220, -Math.PI / 2, 3, Pal.STEEL_4);
                 camera.shake(1.0 * shake);
                 feel.slowMotion = 1.4;
@@ -266,6 +298,10 @@ final class EventEffects {
                 camera.shake(.35 * shake);
             }
             case SPAWN -> {
+                if ("hatch".equals(e.text())) {
+                    fx.burst(Effects.Kind.GOO, x, y - 4, 10, 70, -Math.PI / 2, 2, Pal.TEAL_4);
+                    return;
+                }
                 if ("vent".equals(e.text())) {
                     // Lüftung speit einen Schwarm aus
                     fx.burst(Effects.Kind.SMOKE, x, y - 4, 8, 60, -Math.PI / 2, 2.2, 0xFF3A3434);
@@ -460,6 +496,34 @@ final class EventEffects {
                     }
                     case "SEALED" ->
                             hud.banner("LECK ABGEDICHTET", "Die Pumpen laufen", Pal.TEAL_5, 2.2);
+                    case "MELTDOWN" -> {
+                        hud.banner(
+                                "KERNSCHMELZE",
+                                "Notschalter kühlt den Kern · sonst im letzten Moment ausweichen",
+                                Pal.RED_4,
+                                3.4);
+                        feel.flash = Math.max(feel.flash, .3);
+                        feel.flashColor = Pal.RED_3;
+                    }
+                    case "VENTED" -> {
+                        fx.burst(Effects.Kind.STEAM, x, y, 30, 140, -Math.PI / 2, 3, 0xFFE8F4F8);
+                        hud.banner(
+                                "KERN GEKÜHLT",
+                                "Der Kern liegt frei · jetzt angreifen",
+                                Pal.TEAL_5,
+                                2.4);
+                    }
+                    case "INK" -> hud.toast("TINTENWOLKE · ACHTE AUF DEN KÖDER", Pal.TEAL_5);
+                    case "BOARDING" -> hud.toast("ENTERKOMMANDO", Pal.RED_4);
+                    case "FURY" -> {
+                        hud.banner(
+                                "DAS LICHT RAST",
+                                "Die Kaiserin verliert die Geduld",
+                                Pal.MYTHIC,
+                                3);
+                        feel.flash = .6;
+                        feel.flashColor = Pal.WHITE;
+                    }
                     case "CONSOLE" -> {
                         int color =
                                 switch ((int) e.amount()) {
@@ -478,7 +542,14 @@ final class EventEffects {
                             default -> {}
                         }
                     }
-                    default -> {}
+                    default -> {
+                        if (e.text().startsWith("TRIAL:"))
+                            hud.toast(
+                                    "PRÜFUNG BESTANDEN · "
+                                            + e.text().substring(6).toUpperCase()
+                                            + " · +1 DATENKERN",
+                                    Pal.TEAL_5);
+                    }
                 }
             }
             case CONDITION -> {
@@ -490,8 +561,49 @@ final class EventEffects {
             case DOOR -> {
                 if (e.amount() >= 0) hud.roomCard(run.room());
             }
+            case THREAT -> {
+                if (e.amount() > 0) {
+                    var threat = ch.zhaw.abyss.domain.Threat.valueOf(e.text());
+                    hud.banner(
+                            "BEDROHUNG · " + threat.title().toUpperCase(),
+                            "Hilft: " + threat.counter(),
+                            Pal.RED_4,
+                            2.2);
+                    feel.flash = Math.max(feel.flash, .15);
+                    feel.flashColor = Pal.RED_3;
+                }
+            }
+            case ESCALATION -> {
+                hud.banner("DER ABGRUND ERWACHT", "Ab jetzt eskaliert jeder Raum", Pal.MYTHIC, 3.4);
+                feel.flash = Math.max(feel.flash, .4);
+                feel.flashColor = Pal.MYTHIC;
+                camera.shake(.6 * shake);
+            }
+            case EVOLUTION -> {
+                double px = run.player().x() * PX, py = run.player().centerY() * PX;
+                for (int i = 0; i < 6; i++)
+                    fx.ring(px, py, 3, 20 + i * 16, .5 + i * .1, Pal.prism(i / 6.0));
+                fx.burst(Effects.Kind.STAR, px, py, 40, 140, 0, 6.3, Pal.MYTHIC);
+                feel.flash = Math.max(feel.flash, .5);
+                feel.flashColor = Pal.MYTHIC;
+                camera.shake(.4 * shake);
+                hud.banner("ENTFESSELT", e.text().toUpperCase(), Pal.MYTHIC, 2.8);
+            }
             case SWING, TELEGRAPH -> {}
         }
+    }
+
+    private static EnemyKind kind(double ordinal) {
+        var kinds = EnemyKind.values();
+        return kinds[(int) Math.max(0, Math.min(kinds.length - 1, ordinal))];
+    }
+
+    /** Kurze Schadenszahl: ab zehntausend mit K, ab einer Million mit M. */
+    static String number(double amount) {
+        long value = Math.round(amount);
+        if (value >= 1_000_000) return String.format("%.1fM", value / 1e6);
+        if (value >= 10_000) return (value / 1000) + "K";
+        return Long.toString(value);
     }
 
     private double direction(GameRun run, double x) {
@@ -503,6 +615,7 @@ final class EventEffects {
             case "Der Schottmeister" -> "Wächter der Hecksektion";
             case "Der Reaktorkern" -> "Herz des Maschinendecks";
             case "Die Brutmutter" -> "Was im Labor entkam";
+            case "Die Prismenkaiserin" -> "Licht am Grund des Abgrunds";
             default -> "Herr über die Brücke";
         };
     }

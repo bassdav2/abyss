@@ -7,6 +7,7 @@ import ch.zhaw.abyss.domain.RoomCondition;
 import ch.zhaw.abyss.domain.RoomGenerator;
 import ch.zhaw.abyss.domain.RoomPlan;
 import ch.zhaw.abyss.domain.Synergy;
+import ch.zhaw.abyss.domain.Threat;
 import ch.zhaw.abyss.domain.Weapon;
 import ch.zhaw.abyss.ui.art.DiverArt;
 import ch.zhaw.abyss.ui.art.IconArt;
@@ -217,6 +218,26 @@ final class RunScreens {
         }
         boolean focused = g.focused(id);
         var f = g.frame();
+        boolean evolution = offer.type() == Offer.Type.ITEM && offer.item().evolution();
+        if (evolution)
+            // Entfesselung: schillernder Rahmen, der um die Karte läuft
+            for (int i = 0; i < 2 * (w + h); i += 2) {
+                int px, py;
+                if (i < w) {
+                    px = x + i;
+                    py = y - 1;
+                } else if (i < w + h) {
+                    px = x + w;
+                    py = y + i - w;
+                } else if (i < 2 * w + h) {
+                    px = x + w - (i - w - h);
+                    py = y + h;
+                } else {
+                    px = x - 1;
+                    py = y + h - (i - 2 * w - h);
+                }
+                f.pixel(px, py, Pal.prism(i / 120.0 - g.time() * .6));
+            }
         g.text(x + 4, y + 2, tag(offer), Pal.mix(accent, Pal.WHITE, .2));
         // Symbolschacht
         int cx = x + w / 2;
@@ -227,9 +248,17 @@ final class RunScreens {
         int ty = y + 62;
         ty += g.wrap(x + 6, ty, w - 12, offer.title().toUpperCase(), Gui.TEXT, 2) + 3;
         ty += g.wrap(x + 6, ty, w - 12, offer.effect().replace('\n', ' '), Pal.RUST_6, 3) + 3;
-        if (offer.type() == Offer.Type.ITEM)
+        if (evolution)
+            g.wrap(
+                    x + 6,
+                    ty,
+                    w - 12,
+                    "Aus " + offer.item().base().title() + " + " + offer.item().partner().title(),
+                    Pal.MYTHIC,
+                    3);
+        else if (offer.type() == Offer.Type.ITEM)
             g.wrap(x + 6, ty, w - 12, offer.item().description(), Gui.MUTED, 3);
-        if (offer.type() == Offer.Type.ITEM) {
+        if (offer.type() == Offer.Type.ITEM && !evolution) {
             var completes = Synergy.completedBy(p.items(), offer.item());
             if (!completes.isEmpty()) {
                 f.fill(x + 1, y + h - 30, w - 2, 11, 0x60401A60);
@@ -281,7 +310,7 @@ final class RunScreens {
     private boolean possible(Offer offer) {
         var p = nav.run().player();
         return switch (offer.type()) {
-            case ITEM -> p.stacks(offer.item()) < offer.item().maxStacks();
+            case ITEM -> p.stacks(offer.item()) < p.maxStacks(offer.item());
             case REPAIR_KIT -> p.repairKits() < p.stats().maxRepairKits();
             case HEAL -> p.health() < p.maxHealth();
             case WEAPON_UPGRADE -> p.weaponLevel() < Weapon.MAX_LEVEL;
@@ -301,11 +330,13 @@ final class RunScreens {
         var p = nav.run().player();
         return switch (offer.type()) {
             case ITEM ->
-                    offer.item().rarity().title().toUpperCase()
-                            + " "
-                            + (p.stacks(offer.item()) + 1)
-                            + "/"
-                            + offer.item().maxStacks();
+                    offer.item().evolution()
+                            ? "ENTFESSELUNG"
+                            : offer.item().rarity().title().toUpperCase()
+                                    + " "
+                                    + (p.stacks(offer.item()) + 1)
+                                    + "/"
+                                    + p.maxStacks(offer.item());
             case WEAPON -> "WAFFE";
             case WEAPON_UPGRADE -> "STUFE " + (p.weaponLevel() + 1) + "/" + Weapon.MAX_LEVEL;
             default -> "VORRAT";
@@ -479,7 +510,27 @@ final class RunScreens {
                 (index + 1) + " · " + room.typeName().toUpperCase() + " · " + room.sectorName(),
                 Gui.DIM);
         g.text(x + 25, ty + 10, room.title().toUpperCase(), Gui.TEXT);
-        if (room.condition() != RoomCondition.NONE)
+        var threat = room.threat();
+        if (threat != Threat.NONE) {
+            // Bedrohung: was der Raum verlangt und ob der aktuelle Build bereit ist
+            f.fill(mx + 1, my + 13, mw - 2, 11, 0xD0400A30);
+            f.fill(mx + 1, my + 23, mw - 2, 1, Pal.MYTHIC);
+            g.center(
+                    mx + mw / 2,
+                    my + 15,
+                    "BEDROHUNG · " + threat.title().toUpperCase(),
+                    Pal.MYTHIC);
+            int used = g.wrap(x + 6, ty + 24, w - 12, threat.description(), Pal.RED_4, 2);
+            boolean ready = threat.prepared(run.player());
+            g.wrap(
+                    x + 6,
+                    ty + 27 + used,
+                    w - 12,
+                    (ready ? "DEIN BUILD IST BEREIT" : "UNVORBEREITET · HILFT: " + threat.counter())
+                            .toUpperCase(),
+                    ready ? Pal.GREEN_4 : Pal.RUST_6,
+                    2);
+        } else if (room.condition() != RoomCondition.NONE)
             g.wrap(x + 6, ty + 24, w - 12, room.condition().description(), Pal.RED_4, 3);
         else g.wrap(x + 6, ty + 24, w - 12, room.description(), Gui.MUTED, 3);
         g.text(x + 6, y + h - 12, threat(room), Pal.mix(accent, Pal.WHITE, .2));
@@ -504,13 +555,25 @@ final class RunScreens {
         boolean elite =
                 room.waves().stream().flatMap(List::stream).anyMatch(s -> s.affix().elite());
         int swarm = room.hordeTotal();
-        return room.waveCount()
-                + (room.waveCount() == 1 ? " WELLE" : " WELLEN")
-                + " · "
-                + count
-                + " GEGNER"
-                + (swarm > 0 ? " + " + swarm + " SCHWARM" : "")
-                + (elite ? " · ELITE" : "");
+        String text =
+                room.waveCount()
+                        + (room.waveCount() == 1 ? " WELLE" : " WELLEN")
+                        + " · "
+                        + count
+                        + " GEGNER"
+                        + (swarm > 0 ? " + " + swarm + " SCHWARM" : "")
+                        + (elite ? " · ELITE" : "");
+        // Endgame-Zahlen werden knapp, damit die Zeile in die Karte passt.
+        if (text.length() > 36)
+            text =
+                    room.waveCount()
+                            + "W · "
+                            + count
+                            + " + "
+                            + (swarm >= 1000 ? String.format("%.1fK", swarm / 1000.0) : swarm)
+                            + " SCHWARM"
+                            + (elite ? " · ELITE" : "");
+        return text;
     }
 
     private static String iconName(RoomPlan.Kind kind) {
@@ -601,7 +664,7 @@ final class RunScreens {
             g.text(
                     196,
                     154,
-                    shown.title().toUpperCase() + "  " + p.stacks(shown) + "/" + shown.maxStacks(),
+                    shown.title().toUpperCase() + "  " + p.stacks(shown) + "/" + p.maxStacks(shown),
                     Gui.TEXT);
             g.text(
                     196,
@@ -702,7 +765,34 @@ final class RunScreens {
                 172,
                 run.player().weapon().title() + " · Stufe " + run.player().weaponLevel(),
                 Gui.MUTED);
-        g.text(8, 196, "♦ " + service.profile().cores() + " DATENKERNE IM ARCHIV", Pal.TEAL_5);
+        var report = service.lastCareer();
+        if (report.xp() > 0) {
+            String line =
+                    "+"
+                            + report.xp()
+                            + " LAUFBAHN-EP  ·  RANG "
+                            + report.rank()
+                            + (report.rankUps() > 0 ? " (+" + report.rankUps() + ")" : "")
+                            + "  ·  "
+                            + run.player().diver().title().toUpperCase()
+                            + " RANG "
+                            + report.classRank()
+                            + (report.classRankUps() > 0
+                                    ? " (+" + report.classRankUps() + ")"
+                                    : "");
+            g.text(
+                    8,
+                    186,
+                    line,
+                    report.rankUps() + report.classRankUps() > 0 ? Pal.VIOLET_5 : Pal.VIOLET_4);
+            if (!report.masteryUps().isEmpty()) {
+                var upgraded = new ArrayList<String>();
+                for (var weapon : report.masteryUps()) upgraded.add(weapon.title());
+                g.text(8, 198, "MEISTERSCHAFT ↑ " + String.join(", ", upgraded), Pal.RUST_6);
+            }
+        }
+        g.text(8, 212, "♦ " + service.profile().cores() + " DATENKERNE IM ARCHIV", Pal.TEAL_5);
+        if (g.button("career", 114, 238, 100, 16, "LAUFBAHN", Tone.VIOLET, true)) nav.career();
         if (won) {
             if (g.button("primary", 330, 236, 142, 20, "NÄCHSTER ZYKLUS  →", Tone.AMBER, true))
                 nav.nextCycle();

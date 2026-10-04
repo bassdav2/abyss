@@ -80,6 +80,13 @@ public final class EnemyArt {
             case MITE -> mite(p, anim, f);
             case GLOWFISH -> glowfish(p, anim, f);
             case NANODRONE -> nanodrone(p, anim, f);
+            case SPITTER -> spitter(p, anim, f);
+            case FUSE -> fuse(p, anim, f);
+            case PRISM -> prism(p, anim, f);
+            case LANCER -> lancer(p, anim, f);
+            case CRAB -> crab(p, anim, f);
+            case HIVE -> hive(p, anim, f);
+            case EGG -> egg(p, anim, f);
             default -> {}
         }
         p.outline(Pal.OUTLINE);
@@ -104,6 +111,13 @@ public final class EnemyArt {
             case MITE -> new int[] {22, 16, 14};
             case GLOWFISH -> new int[] {24, 16, 12};
             case NANODRONE -> new int[] {20, 18, 14};
+            case SPITTER -> new int[] {26, 22, 20};
+            case FUSE -> new int[] {22, 18, 15};
+            case PRISM -> new int[] {30, 38, 26};
+            case LANCER -> new int[] {34, 14, 10};
+            case CRAB -> new int[] {34, 24, 21};
+            case HIVE -> new int[] {40, 40, 38};
+            case EGG -> new int[] {18, 20, 18};
             default -> new int[] {32, 32, 30};
         };
     }
@@ -687,5 +701,215 @@ public final class EnemyArt {
         p.light((int) cx + 3, (int) cy - 1, charged ? Pal.RED_5 : Pal.RED_3);
         if (charged) p.light((int) cx, (int) cy + 4, Pal.RED_4);
         if (anim == Anim.HURT) p.light((int) cx - 1, (int) cy - 2, Pal.WHITE);
+    }
+
+    // --- Säurespucker: aufgeblähter Säuresack auf vier Stummelbeinen ----------------------------
+
+    private static final int[] ACID = {Pal.GREEN_1, Pal.GREEN_2, Pal.GREEN_3, Pal.GREEN_5};
+
+    private static void spitter(Painter p, Anim anim, int f) {
+        int bob = anim == Anim.MOVE ? f % 2 : 0;
+        boolean charged = anim == Anim.WINDUP;
+        double swell = charged ? 1.6 : anim == Anim.STRIKE ? -.6 : Math.sin(f * .9) * .4;
+        double cx = 12, cy = 11 - bob;
+        for (int i = 0; i < 4; i++) {
+            double hip = cx - 5 + i * 3.3;
+            double phase =
+                    anim == Anim.MOVE ? Math.sin((f / 6.0 + i * .25) * Math.PI * 2) * 1.5 : 0;
+            double foot = hip + (i < 2 ? -2 : 2) + phase;
+            p.line((int) hip, (int) cy + 3, (int) foot, 19, i % 2 == 0 ? Pal.STEEL_2 : Pal.STEEL_3);
+        }
+        p.sphere(cx - 1, cy, 7 + swell, 5.5 + swell * .6, ACID);
+        p.rect((int) cx - 7, (int) cy + 2, 12, 1, Pal.GREEN_1);
+        p.rect((int) cx - 5, (int) cy - 2, 1, 4, Pal.GREEN_2);
+        p.thick(cx + 5, cy - 2, cx + 10, cy - 5, 3, Pal.STEEL_3);
+        p.px((int) cx + 10, (int) cy - 6, Pal.STEEL_5);
+        p.light((int) cx - 3, (int) cy - 3, Pal.GREEN_5);
+        p.light((int) cx, (int) cy + 1, Pal.GREEN_4);
+        p.light((int) cx + 3, (int) cy - 3, charged ? Pal.WHITE : Pal.RED_4);
+        if (anim == Anim.STRIKE) {
+            p.light((int) cx + 12, (int) cy - 7, Pal.GREEN_5);
+            p.light((int) cx + 13, (int) cy - 8, Pal.GREEN_5);
+        }
+        if (anim == Anim.HURT) p.light((int) cx - 1, (int) cy - 2, Pal.WHITE);
+    }
+
+    // --- Zündmilbe: Rostkäfer mit glühendem Sprengsack und Zündschnur ---------------------------
+
+    private static void fuse(Painter p, Anim anim, int f) {
+        int bob = anim == Anim.MOVE ? f % 2 : 0;
+        boolean charged = anim == Anim.WINDUP || anim == Anim.STRIKE;
+        double cx = 11, cy = 10 - bob;
+        for (int i = 0; i < 3; i++) {
+            double phase = anim == Anim.MOVE ? Math.sin((f / 6.0 + i * .33) * Math.PI * 2) : 0;
+            for (int side = -1; side <= 1; side += 2) {
+                double hip = cx + (i - 1) * 2.5;
+                double foot = hip + side * 3 + phase * 1.8 * side;
+                p.line((int) hip, (int) cy + 2, (int) foot, 15, Pal.STEEL_2);
+            }
+        }
+        p.sphere(cx + 2, cy + 1, 5, 3.4, RUST);
+        boolean blink = charged && f % 2 == 0;
+        int[] bomb =
+                blink
+                        ? new int[] {Pal.RED_2, Pal.RED_4, Pal.RED_5, Pal.WHITE}
+                        : new int[] {Pal.RUST_3, Pal.RUST_5, Pal.RUST_6, Pal.RUST_7};
+        p.sphere(cx - 2, cy - 2, 4.5, 4, bomb);
+        for (int y = -4; y <= 1; y++) p.light((int) cx - 2, (int) cy + y - 1, bomb[2]);
+        p.line((int) cx - 2, (int) cy - 6, (int) cx - 4, (int) cy - 8, Pal.STEEL_4);
+        p.light((int) cx - 4, (int) cy - 9 + (f % 2), charged ? Pal.WHITE : Pal.RUST_6);
+        p.light((int) cx + 6, (int) cy, charged ? Pal.WHITE : Pal.RED_4);
+        if (anim == Anim.HURT) p.light((int) cx, (int) cy - 2, Pal.WHITE);
+    }
+
+    // --- Prismaqualle: kristalline Glocke mit schillernden Facetten ------------------------------
+
+    private static void prism(Painter p, Anim anim, int f) {
+        double pulse = anim == Anim.IDLE || anim == Anim.MOVE ? Math.sin(f / 4.0 * Math.PI * 2) : 0;
+        boolean charged = anim == Anim.WINDUP || anim == Anim.STRIKE;
+        double cx = 15, cy = 11 - pulse;
+        for (int t = 0; t < 4; t++) {
+            double x0 = cx - 6 + t * 4;
+            double prevX = x0, prevY = cy + 5;
+            for (int s = 1; s <= 8; s++) {
+                double y = cy + 5 + s * 2.7;
+                double x = x0 + Math.sin(s * .9 + f * 1.4 + t) * (1 + s * .2);
+                p.line((int) prevX, (int) prevY, (int) x, (int) y, Pal.prism(t / 4.0, .35));
+                prevX = x;
+                prevY = y;
+            }
+            p.light((int) prevX, (int) prevY, Pal.prism(t / 4.0 + .5, .5));
+        }
+        double rx = 10 + pulse * .6 + (charged ? 1 : 0), ry = 8;
+        for (int y = (int) (cy - ry); y <= cy + 4; y++)
+            for (int x = (int) (cx - rx); x <= cx + rx; x++) {
+                double dx = (x + .5 - cx) / rx, dy = (y + .5 - cy) / ry;
+                if (dx * dx + dy * dy > 1) continue;
+                // Facetten: Farbton nach Winkel, hell an der Kante
+                double angle = Math.atan2(dy, dx) / (Math.PI * 2) + .5;
+                double facet = Math.floor(angle * 6) / 6;
+                double rim = dx * dx + dy * dy;
+                int c = Pal.prism(facet + (charged ? f * .1 : 0), .3 + rim * .4);
+                p.px(x, y, Pal.shade(c, .55 + .45 * (1 - rim)));
+                if (rim > .7 || charged) p.glowOnly(x, y, c);
+            }
+        for (int x = (int) (cx - rx); x <= cx + rx; x += 2) p.light(x, (int) cy + 4, Pal.WHITE);
+        p.light((int) cx, (int) cy - 1, charged ? Pal.WHITE : Pal.prism(.6));
+        p.light((int) cx - 1, (int) cy, Pal.prism(.8));
+        p.light((int) cx + 1, (int) cy - 2, Pal.prism(.2));
+    }
+
+    // --- Speerfisch: schlanker Fisch mit Nadelschnauze
+    // --------------------------------------------
+
+    private static void lancer(Painter p, Anim anim, int f) {
+        boolean dash = anim == Anim.STRIKE;
+        double swish = dash ? 0 : Math.sin(f * Math.PI / 3) * 1.5;
+        double cx = 15, cy = 7;
+        p.thick(cx - 9, cy, cx - 14, cy - 4 + swish, 2, Pal.TEAL_2);
+        p.thick(cx - 9, cy, cx - 14, cy + 4 + swish, 2, Pal.TEAL_2);
+        p.sphere(cx - 2, cy, 8, 2.8, new int[] {Pal.TEAL_1, Pal.TEAL_2, Pal.TEAL_4, Pal.TEAL_6});
+        p.line((int) cx + 6, (int) cy, (int) cx + 17, (int) cy, Pal.STEEL_6);
+        p.px((int) cx + 6, (int) cy - 1, Pal.STEEL_5);
+        p.thick(cx - 3, cy - 2, cx, cy - 5, 2, Pal.TEAL_3);
+        p.lightRect((int) cx - 7, (int) cy + 1, 9, 1, Pal.TEAL_5);
+        boolean charged = anim == Anim.WINDUP || dash;
+        p.light((int) cx + 3, (int) cy - 1, charged ? Pal.WHITE : Pal.TEAL_6);
+        if (charged) p.light((int) cx + 17, (int) cy, Pal.WHITE);
+        if (dash)
+            for (int k = 1; k < 6; k++) p.glowOnly((int) cx - 12 - k * 2, (int) cy, Pal.TEAL_5);
+        if (anim == Anim.HURT) p.light((int) cx, (int) cy, Pal.WHITE);
+    }
+
+    // --- Panzerkrabbe: breiter Stahlpanzer, grosse Schere vorn
+    // ------------------------------------
+
+    private static void crab(Painter p, Anim anim, int f) {
+        int bob = anim == Anim.MOVE ? f % 2 : 0;
+        double cx = 15, cy = 13 - bob;
+        for (int i = 0; i < 3; i++) {
+            double phase = anim == Anim.MOVE ? Math.sin((f / 6.0 + i * .33) * Math.PI * 2) : 0;
+            for (int side = -1; side <= 1; side += 2) {
+                double hip = cx + side * (3 + i * 2.5);
+                p.line(
+                        (int) hip,
+                        (int) cy + 2,
+                        (int) (hip + side * (3 + phase)),
+                        23,
+                        i == 1 ? Pal.STEEL_3 : Pal.STEEL_2);
+            }
+        }
+        p.sphere(cx, cy, 11, 6, STEEL);
+        for (int x = (int) cx - 9; x <= cx + 9; x += 3) p.px(x, (int) cy - 4, Pal.STEEL_7);
+        p.rect((int) cx - 10, (int) cy + 3, 21, 1, Pal.STEEL_1);
+        p.rect((int) cx - 6, (int) cy - 2, 2, 2, Pal.RUST_3);
+        p.rect((int) cx + 3, (int) cy - 1, 2, 2, Pal.RUST_3);
+        double open = anim == Anim.WINDUP ? 3 : anim == Anim.STRIKE ? 0 : 1.5;
+        double reach = anim == Anim.STRIKE ? 7 : 3;
+        double clawX = cx + 9 + reach, clawY = cy - 2;
+        p.thick(cx + 8, cy, clawX, clawY, 3, Pal.STEEL_4);
+        p.thick(clawX, clawY, clawX + 5, clawY - open, 3, Pal.RUST_4);
+        p.thick(clawX, clawY + 1, clawX + 5, clawY + 1 + open, 2, Pal.RUST_3);
+        p.line((int) cx + 4, (int) cy - 5, (int) cx + 5, (int) cy - 8, Pal.STEEL_3);
+        p.line((int) cx + 7, (int) cy - 5, (int) cx + 8, (int) cy - 8, Pal.STEEL_3);
+        boolean charged = anim == Anim.WINDUP || anim == Anim.STRIKE;
+        p.light((int) cx + 5, (int) cy - 9, charged ? Pal.WHITE : Pal.RED_4);
+        p.light((int) cx + 8, (int) cy - 9, charged ? Pal.WHITE : Pal.RED_4);
+        if (anim == Anim.HURT) p.light((int) cx, (int) cy - 3, Pal.WHITE);
+    }
+
+    // --- Brutnest: organischer Rosthügel mit glühenden Brutlöchern
+    // --------------------------------
+
+    private static void hive(Painter p, Anim anim, int f) {
+        double pulse = Math.sin(f / (double) anim.frames() * Math.PI * 2) * .8;
+        boolean charged = anim == Anim.WINDUP || anim == Anim.STRIKE;
+        double cx = 20, base = 38;
+        double swell = charged ? 1.5 : pulse;
+        p.sphere(
+                cx,
+                base - 12,
+                17 + swell,
+                12 + swell * .6,
+                new int[] {0xFF3A1E14, Pal.RUST_2, Pal.RUST_3, Pal.RUST_4});
+        p.sphere(
+                cx - 4,
+                base - 24,
+                10 + swell * .5,
+                9,
+                new int[] {0xFF3A1E14, Pal.RUST_2, Pal.RUST_3, Pal.RUST_5});
+        p.rect((int) cx - 18, (int) base - 2, 37, 2, Pal.RUST_1);
+        int[][] holes = {{-9, -10}, {4, -6}, {10, -14}, {-4, -22}, {-12, -17}, {2, -27}};
+        for (int i = 0; i < holes.length; i++) {
+            int hx = (int) cx + holes[i][0], hy = (int) base + holes[i][1];
+            p.ellipse(hx, hy, 2.5, 2, Pal.INK);
+            boolean bright = charged && (i + f) % 2 == 0;
+            p.light(hx, hy, bright ? Pal.WHITE : Pal.RED_4);
+            p.glowOnly(hx + 1, hy, bright ? Pal.RED_5 : Pal.RED_3);
+        }
+        for (int i = 0; i < 6; i++) {
+            double a = i * 1.1 + f * .3;
+            p.px((int) (cx + Math.cos(a) * 15), (int) (base - 12 + Math.sin(a) * 9), Pal.RUST_5);
+        }
+        if (anim == Anim.STRIKE) {
+            p.sphere(cx + 4, base - 7, 3, 2.4, RUST);
+            p.light((int) cx + 6, (int) base - 8, Pal.RED_5);
+        }
+        if (anim == Anim.HURT) p.light((int) cx, (int) base - 14, Pal.WHITE);
+    }
+
+    // --- Brutei: durchscheinendes Ei mit zuckendem Embryo
+    // -----------------------------------------
+
+    private static void egg(Painter p, Anim anim, int f) {
+        double wobble = Math.sin(f * 1.7) * (anim == Anim.IDLE ? .5 : 1);
+        double cx = 9 + wobble * .5, cy = 11;
+        p.sphere(cx, cy, 6.5, 7.5, new int[] {Pal.TEAL_1, Pal.TEAL_2, Pal.TEAL_3, Pal.TEAL_6});
+        p.ellipse(cx + .5, cy + 1, 3, 3.5, 0xFF1A2A30);
+        p.px((int) cx - 1 + (f % 2), (int) cy, Pal.RUST_3);
+        p.light((int) cx + 1, (int) cy + 1, f % 2 == 0 ? Pal.RED_4 : Pal.RED_3);
+        p.light((int) cx - 3, (int) cy - 4, Pal.TEAL_6);
+        p.glowOnly((int) cx, (int) cy - 6, Pal.TEAL_4);
+        if (anim == Anim.HURT) p.light((int) cx, (int) cy, Pal.WHITE);
     }
 }

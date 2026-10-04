@@ -66,7 +66,19 @@ public enum Achievement {
     /** Sieg als Funkerin. */
     WIN_SPARK("Die Funkerin am Steuer", "Erobere die Brücke als Funkerin.", 4),
     /** Sieg mit allen Klassen. */
-    ALL_CLASSES("Die ganze Crew", "Erobere die Brücke mit jeder Klasse.", 15);
+    ALL_CLASSES("Die ganze Crew", "Erobere die Brücke mit jeder Klasse.", 15),
+    /** Eskalation erreicht. */
+    ABYSS("Der Abgrund erwacht", "Erreiche Raum 20, ab dem jeder Raum eskaliert.", 4),
+    /** Eine Bedrohung bestanden. */
+    TRIAL("Prüfling", "Sichere einen Raum mit einer Bedrohung.", 4),
+    /** Ein Modul entfesselt. */
+    UNLEASHED("Entfesselt", "Entfessle ein ausgereiztes Modul mit seinem Partner.", 6),
+    /** Überkritik. */
+    OVERCRIT("Überkritisch", "Erreiche mehr als 200 % kritische Chance.", 6),
+    /** Tiefe Eskalation. */
+    DEEP("Tausend Augen", "Sichere einen Raum ab Eskalation 30.", 10),
+    /** Prismenkaiserin besiegt. */
+    EMPRESS("Prismenbrecher", "Besiege die Prismenkaiserin.", 15);
 
     private final String title;
     private final String description;
@@ -138,6 +150,12 @@ public enum Achievement {
             case SMUGGLER -> run.smugglersCaught() > 0;
             case RED_ALERT -> run.clearedConditions().contains(RoomCondition.ALARM);
             case FLOODED -> run.clearedConditions().contains(RoomCondition.LEAK);
+            case ABYSS -> run.escalation() > 0;
+            case TRIAL -> !run.clearedThreats().isEmpty();
+            case UNLEASHED -> items.stream().anyMatch(Item::evolution);
+            case OVERCRIT -> run.player().stats().critChance() > 2;
+            case DEEP -> run.escalation() >= 30 && run.phase() == GameRun.Phase.ROOM_CLEARED;
+            case EMPRESS -> win && run.cycle() >= 1;
             case WIN_MECHANIC -> win && run.setup().diver() == DiverClass.MECHANIC;
             case WIN_HARPOONER -> win && run.setup().diver() == DiverClass.HARPOONER;
             case WIN_WELDER -> win && run.setup().diver() == DiverClass.WELDER;

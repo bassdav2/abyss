@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'ch.zhaw.abyss'
-version = '1.2.0'
+version = '1.4.0'
 
 repositories { mavenCentral() }
 
@@ -82,13 +82,19 @@ tasks.register('swarmBench', JavaExec) {
     mainClass = 'ch.zhaw.abyss.qa.SwarmBench'
 }
 
+tasks.register('endgameShots', JavaExec) {
+    description = 'Bildproben des Endgames: Schwärme, Bedrohungen, Bossmuster und die Prismenkaiserin.'
+    classpath = sourceSets.qa.runtimeClasspath
+    mainClass = 'ch.zhaw.abyss.qa.EndgameShots'
+}
+
 tasks.register('sceneShot', JavaExec) {
     description = 'Rendert Spielszenen ohne Fenster als PNG.'
     classpath = sourceSets.qa.runtimeClasspath
     mainClass = 'ch.zhaw.abyss.qa.SceneShot'
 }
 
-tasks.withType(JavaExec).matching { it.name in ['run', 'renderSoak', 'uiSmoke', 'renderDemo', 'balance', 'artSheet', 'sceneShot', 'contentCatalog', 'swarmBench'] }.configureEach {
+tasks.withType(JavaExec).matching { it.name in ['run', 'renderSoak', 'uiSmoke', 'renderDemo', 'balance', 'artSheet', 'sceneShot', 'contentCatalog', 'swarmBench', 'endgameShots'] }.configureEach {
     if (project.hasProperty('silent')) systemProperty 'abyss.silent', 'true'
     if (project.hasProperty('qaSave')) systemProperty 'abyss.saveDir', project.property('qaSave')
     doFirst {

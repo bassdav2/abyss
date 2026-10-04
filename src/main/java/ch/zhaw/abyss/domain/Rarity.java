@@ -5,7 +5,10 @@ public enum Rarity {
     COMMON("Standard", 30, 70),
     RARE("Selten", 55, 24),
     LEGENDARY("Legendär", 90, 6),
-    CURSED("Verflucht", 0, 0);
+    CURSED("Verflucht", 0, 0),
+
+    /** Entfesselung: entsteht aus einem ausgereizten Modul und seinem Partner. */
+    MYTHIC("Entfesselt", 0, 0);
 
     private final String title;
     private final int price;

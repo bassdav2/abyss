@@ -68,6 +68,7 @@ public final class IconArt {
             case RARE -> 0xFF5FD4FF;
             case LEGENDARY -> 0xFFFFC24A;
             case CURSED -> 0xFFC063FF;
+            case MYTHIC -> Pal.MYTHIC;
         };
     }
 
@@ -387,8 +388,110 @@ public final class IconArt {
                 p.light(8, 8, Pal.WHITE);
                 p.light(7, 7, Pal.RUST_7);
             }
+            case LIMIT_BREAK -> {
+                p.box(3, 4, 10, 9, r(Pal.STEEL_3));
+                p.thick(4, 13, 12, 3, 2, Pal.RUST_6);
+                bolt(p, 9, 2, Pal.WHITE);
+                p.light(12, 3, Pal.RUST_7);
+                p.light(4, 13, Pal.RUST_7);
+            }
+            default -> evolution(p, item);
         }
         return finish(p);
+    }
+
+    /** Entfesselungen: ein schillernder Ring um ein eigenes Emblem. */
+    private static void evolution(Painter p, Item item) {
+        for (int i = 0; i < 28; i++) {
+            double a = i * Math.PI * 2 / 28;
+            int x = (int) Math.round(8 + Math.cos(a) * 7),
+                    y = (int) Math.round(8 + Math.sin(a) * 7);
+            p.light(x, y, Pal.prism(i / 28.0, .5));
+        }
+        switch (item) {
+            case STORM_BLADES -> {
+                for (int k = 0; k < 6; k++) {
+                    double a = k * Math.PI / 3;
+                    double bx = 8 + Math.cos(a) * 4.5, by = 8 + Math.sin(a) * 4.5;
+                    p.thick(
+                            bx,
+                            by,
+                            bx + Math.cos(a + 1.6) * 2.5,
+                            by + Math.sin(a + 1.6) * 2.5,
+                            1.5,
+                            Pal.STEEL_7);
+                }
+                p.ellipse(8, 8, 1.5, 1.5, Pal.RUST_5);
+            }
+            case THUNDERHEAD -> {
+                p.ellipse(8, 6, 4.5, 2.5, Pal.STEEL_4);
+                p.ellipse(6, 5, 2.5, 2, Pal.STEEL_5);
+                bolt(p, 6, 7, Pal.TEAL_6);
+                p.light(9, 12, Pal.WHITE);
+            }
+            case SUPERNOVA -> {
+                p.sphere(8, 8, 4, 4, r(Pal.RUST_5));
+                for (int k = 0; k < 8; k++) {
+                    double a = k * Math.PI / 4;
+                    p.light(
+                            (int) Math.round(8 + Math.cos(a) * 5),
+                            (int) Math.round(8 + Math.sin(a) * 5),
+                            Pal.RUST_7);
+                }
+                p.light(8, 8, Pal.WHITE);
+            }
+            case TEMPEST -> {
+                for (int k = -2; k <= 2; k++)
+                    p.thick(4, 8, 12, 8 + k * 2.2, 1, k == 0 ? Pal.TEAL_6 : Pal.TEAL_4);
+                p.light(12, 8, Pal.WHITE);
+            }
+            case MISSILE_SWARM -> {
+                for (int k = 0; k < 3; k++) {
+                    int x = 4 + k * 3, y = 11 - k * 3;
+                    p.thick(x, y + 2, x + 2, y, 1.5, Pal.STEEL_6);
+                    p.light(x, y + 3, Pal.RUST_6);
+                }
+            }
+            case DEATH_EYE -> {
+                p.ellipse(8, 8, 5, 3, Pal.BONE);
+                p.ellipse(8, 8, 2.2, 2.2, Pal.RED_3);
+                p.light(8, 8, Pal.WHITE);
+                p.light(9, 7, Pal.RED_5);
+            }
+            case BASTION -> {
+                shield(p, r(Pal.TEAL_3), Pal.TEAL_6);
+                p.light(8, 7, Pal.WHITE);
+            }
+            case INFERNO -> {
+                flame(p, 8, 13, 1.1);
+                p.light(8, 8, Pal.WHITE);
+            }
+            case ABSOLUTE_ZERO -> {
+                for (int k = 0; k < 3; k++) {
+                    double a = k * Math.PI / 3;
+                    p.thick(
+                            8 - Math.cos(a) * 5,
+                            8 - Math.sin(a) * 5,
+                            8 + Math.cos(a) * 5,
+                            8 + Math.sin(a) * 5,
+                            1,
+                            Pal.TEAL_6);
+                }
+                p.light(8, 8, Pal.WHITE);
+            }
+            case BLOOD_PACT -> {
+                cross(p, Pal.RED_2, Pal.RED_5);
+                p.light(8, 8, Pal.RED_5);
+            }
+            case PHASE_STORM -> {
+                for (int k = 0; k < 3; k++) {
+                    int x = 4 + k * 3;
+                    p.rect(x, 5, 2, 7, Pal.prism(k / 3.0 + .6, .45));
+                }
+                p.light(13, 8, Pal.WHITE);
+            }
+            default -> {}
+        }
     }
 
     private static Sprite paintWeapon(Weapon weapon) {
@@ -434,6 +537,26 @@ public final class IconArt {
                 p.thick(11, 5, 14, 2, 1.5, Pal.STEEL_6);
                 p.thick(11, 5, 14, 7, 1.5, Pal.STEEL_6);
                 p.px(14, 1, Pal.STEEL_7);
+            }
+            case DRILL -> {
+                p.thick(2, 14, 7, 9, 2.5, Pal.RED_2);
+                p.box(6, 6, 4, 4, r(Pal.RUST_4));
+                p.poly(new double[] {9, 15, 11}, new double[] {5, 1, 11}, Pal.STEEL_6);
+                p.line(10, 6, 13, 3, Pal.STEEL_7);
+                p.line(10, 8, 14, 4, Pal.STEEL_4);
+            }
+            case PLASMA -> {
+                p.box(2, 7, 9, 4, r(Pal.STEEL_4));
+                p.rect(4, 11, 2, 3, Pal.RUST_2);
+                p.ellipse(12.5, 8.5, 2.5, 2.5, Pal.TEAL_3);
+                p.light(12, 8, Pal.TEAL_6);
+                p.light(14, 7, Pal.WHITE);
+            }
+            case SCYTHE -> {
+                p.thick(3, 15, 10, 2, 1.5, Pal.STEEL_3);
+                p.thick(10, 2, 15, 5, 2, Pal.STEEL_6);
+                p.thick(15, 5, 13, 9, 1.5, Pal.STEEL_7);
+                p.px(12, 9, Pal.TEAL_5);
             }
         }
         return finish(p);

@@ -1,4 +1,4 @@
-# ABYSS 1.2 – Überblick für David
+# ABYSS 1.4 – Überblick für David
 
 Stand 25.09.2026, Nachmittag. Version 1.1 baut auf dem Nachtstand 1.0 auf; was dazugekommen ist, steht direkt unter der Steuerung. Aus deinem Prototyp ist über Nacht ein vollständiges Pixel-Art-Roguelite geworden. Es bleibt dabei: ein riesiges U-Boot, du startest ganz hinten im Heck und kämpfst dich Raum für Raum bis zur Brücke vor. Geschrieben ist alles in Java mit JavaFX, ohne Frameworks und ohne neue Bibliotheken.
 
@@ -23,6 +23,101 @@ Aus dem Quellcode: `./run.command` oder `./gradlew run` (JDK 25).
 | Menüs | Pfeile/WASD oder Maus, Enter/Leertaste wählt, Ziffern wählen Karten direkt |
 
 Für den ersten Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen**. Bis du zum ersten Mal einen Raum sicherst, läuft vor dem Tauchgang ein kurzer Auftakt, den jede Taste überspringt. Wer es gemütlicher will, schaltet in der Vorbereitung **Entdecker** ein.
+
+## Neu in Version 1.4 · Entfesselt (Endgame)
+
+Stand 03.10.2026. Ab Raum 20 und nach dem ersten Sieg wird das Spiel bewusst verrückt.
+
+**Eskalation ab Raum 20.** Ab dem 20. Raum steigt die Eskalation mit jedem Raum, über alle Zyklen hinweg. Oben rechts zeigt das HUD sie als „E…“ an.
+- Schwärme wachsen quadratisch. Im zweiten Zyklus sind es Räume mit tausenden Gegnern, im dritten bis zu 1600 gleichzeitig.
+- Kampfräume werden bis zu drei Bildschirme breiter und bekommen ein Oberdeck.
+- Es gibt bis zu vier Wellen und deutlich mehr Elitegegner, die Besatzungen aller Decks mischen sich.
+- Das Licht kippt ins Violette des Abgrunds.
+- Beim ersten Mal kündigt ein Banner an: „Der Abgrund erwacht“.
+
+**Acht Schwarmangriffe.** Fünf neue Schwarmarten:
+- Säurespucker werfen Säure im Bogen.
+- Zündmilben rennen heran und sprengen sich. Wer sie vorher erwischt, sprengt ihre Nachbarn.
+- Prismaquallen entlassen Ringe aus Regenbogengeschossen.
+- Speerfische zielen mit einer sichtbaren Linie und schiessen quer durch den Raum.
+- Panzerkrabben fangen Treffer von vorn fast ganz ab.
+
+Zusammen mit Rostmilben, Glimmfischen und Nanodrohnen greift der Endgame-Schwarm auf acht verschiedene Arten an. Dazu kommen Brutnester, die Milben speien. Fällt ein Nest, stirbt seine Brut.
+
+**Bedrohungen.** Kampfräume tragen jetzt oft eine Bedrohung, die einen bestimmten Build verlangt. Im ersten Zyklus ist das ab dem Maschinendeck selten, im Endgame fast immer:
+- **Panzerschwarm:** Nur kritische Treffer, Brand, Explosionen und Blitze wirken voll.
+- **Flutwelle:** dreimal so viele, halb so zähe Gegner. Hilft: Flächenschaden.
+- **Kolosse:** wenige riesige Elitegegner mit vierfacher Integrität.
+- **Luftschlag:** nur fliegende Gegner.
+- **Brutnester**
+- **Sperrfeuer:** Geschosse und Einschläge.
+- **Regeneration:** Gegner heilen sich, solange sie weder brennen noch frieren.
+
+Die Routenwahl zeigt die Bedrohung und ob dein Build „bereit“ oder „unvorbereitet“ ist. Wer sie besteht, bekommt eine seltene Bergung und einen Datenkern.
+
+**Entfesselungen.** Ist ein Modul ausgereizt und sein Partner installiert, liegt beim nächsten Levelaufstieg eine schillernde Karte obenauf. Es gibt elf:
+
+| Entfesselung | aus | Wirkung |
+|---|---|---|
+| Klingensturm | Kreiselmesser + Druckkammer | zweiter Rotorring, dreifacher Schaden, schleudert Klingen |
+| Gewitterkern | Teslafeld + Teslaspule | Blitze von der Decke in acht Gegner, die weiterspringen |
+| Supernova | Kettenreaktion + Druckwellenkern | doppelt so grosse Abschussexplosionen, Nova alle 5 Abschüsse |
+| Klingenorkan | Klingenwelle + Mehrfachlader | jeder Schlag ein Fächer aus durchschlagenden Klingen |
+| Raketenschwarm | Zielsucher + Kondensator | alle 1,2 s Minitorpedos |
+| Todesblick | Glasfaserlinse + Hohlspitzen | mehr Kritik, kritische Treffer explodieren |
+| Bollwerk | Schildzelle + Verbundpanzerung | riesiger Schild, beim Bruch eine Druckwelle |
+| Höllenglut | Zündkerze + Übertakter | Brand stärker, Brennende stecken Nachbarn an |
+| Nullpunkt | Kälteschlange + Kühlkreislauf | Frostwelle, Gefrorene erleiden doppelten Schaden |
+| Blutsauger | Nanitenkultur + Rückgewinnung | Lebensraub bis 40 %, Abschüsse heilen |
+| Phasensturm | Phasenkern + Klingenrumpf | Ausweichen doppelt so oft, Spur aus Explosionen |
+
+**Grenzbrecher und Überkritik.** Stehen mehrere Module an ihrer Grenze, bieten Levelaufstiege den **Grenzbrecher** an: +2 Höchststufe für alle Standard- und Seltenmodule, stapelbar. Kritische Chance über 100 % wird zur **Überkritik**: zwei oder drei Ausrufezeichen, violett oder schillernd, viel mehr Schaden.
+
+**Bosse mit Lernkurve.** Jeder Wächter hat neue Muster, und jedes hat eine Lösung, die man lernen kann:
+- **Schottmeister:** Bei der Finte stürmt er los, bremst und kommt schneller zurück. Wer zu früh ausweicht, läuft hinein. Trifft sein Ankerwurf, zieht er dich heran und stampft sofort. Beim Schottfall krachen sieben Schotts als Welle durch die Arena, mit genau einer Lücke.
+- **Reaktorkern:**
+  - Die Kernspirale dreht sich um ihn, wer mitläuft, bleibt in der Lücke.
+  - Gitterstrahlen fallen in zwei versetzten Reihen.
+  - In der letzten Phase droht die Kernschmelze. Der Notschalter kühlt den Kern und legt ihn lange frei, aber nur, wenn du ihn vorher nicht verbraucht hast. Sonst musst du genau im richtigen Moment ausweichen.
+- **Brutmutter:** Sie legt Eier, die zu Milben schlüpfen, wenn du sie nicht schnell zerschlägst. Dazu kommen eine Tintenwolke, in der nur ihr Köder leuchtet, und ein Sog mit Säureregen.
+- **Lotse:**
+  - Torpedos verfolgen dich, betäuben ihn aber, wenn du sie in ihn lenkst.
+  - Beim Kreuzfeuer von beiden Wänden kommt erst ein Schuss auf Kopfhöhe, dann einer in Sprunghöhe.
+  - Das Sperrfeuer fällt im Schachbrettmuster.
+  - Ein Enterkommando kommt dazu.
+
+Ab dem zweiten Zyklus sind die Wächter **entfesselt**: Nietenringe mit Druckwellen auf zwei Höhen, Prismenspiralen, Leuchtsporen und Fischzüge auf drei Höhen.
+
+**Die Prismenkaiserin.** Ab dem zweiten Zyklus wartet auf der Brücke statt des Lotsen die Prismenkaiserin, ein Bullet-Hell-Kampf aus Licht:
+- Prismenbolzen hängen in der Luft und schnellen dann auf deine Position zu.
+- Lichtlanzen kommen in Reihen mit einer Lücke. In der ersten Phase liegt die Lücke am Boden, später musst du springen oder auf die Stege.
+- Beim Lanzenregen fällt jede Salve versetzt.
+- Der Ewige Regenbogen ist eine Spirale aus Geschossen.
+- Bei Lichtstürzen jagt sie quer durch den Saal.
+- Beim Sonnentanz drehen sich Strahlen um sie. Unter ihr sind die Lücken am langsamsten.
+
+Nach jedem Muster sinkt sie erschöpft herab, das ist dein Fenster zum Zuschlagen. Bei jedem Phasenwechsel entrückt sie kurz und lässt einen Sternenbruch los. Nach vier Minuten Kampf rast sie.
+
+**Laufbahn.** Abschüsse über 500 pro Tauchgang zählen mit abnehmendem Ertrag. Ein riesiger Endgame-Lauf bringt viele Ränge, füllt aber nicht alle Bäume auf einmal.
+
+**Ehrlich:** Wie schwer das für Menschen ist, ist nicht getestet. Der Testspieler reagiert perfekt, hat aber keine Laufbahnboni. Den ersten Zyklus gewinnt er mit allen Klassen (40 von 40 Läufen). In zwei Endgame-Läufen besiegte er die Prismenkaiserin im zweiten Zyklus. Einer fiel im dritten Zyklus an ihr, der andere spielte mit einem ausgereizten Build alle fünf Zyklen durch. Weil dort die Wächter in wenigen Sekunden fielen, sind sie ab Eskalation 40 jetzt zusätzlich zäher. Bei über 1000 Gegnern braucht ein Bild im Mittel knapp 4 ms zum Zeichnen und 1 ms Simulation.
+
+## Neu in Version 1.3 · Laufbahn
+
+**Dauerhaft stärker werden.** Jeder Tauchgang gibt Laufbahn-Erfahrung, auch eine Niederlage. Es gibt einen Laufbahnrang und einen Rang je Klasse. Jeder Rang bringt einen Skill-Punkt, jeder Laufbahnrang zusätzlich drei Datenkerne. Spätere Zyklen und höhere Druckstufen geben deutlich mehr Erfahrung.
+
+**Acht Skill-Bäume.** Im Hauptmenü unter **Laufbahn**:
+- **Tiefenbaum** (immer offen): Kraft, Überladung und Rumpf. Endknoten: ein zusätzliches Geschoss.
+- **Arsenal** (nach 5 Knoten im Tiefenbaum): Werkstattstufe zu Beginn, seltene Startmodule, Kreiselmesser, Doppellauf.
+- **Abgrund** (nach dem ersten Sieg): mehr Datenkerne, grössere Schwärme für mehr Erfahrung, eine zusätzliche Karte.
+- **Fünf Klassenbäume**: Sie wirken nur mit ihrer Klasse. Die Endknoten der Mechanikerin, der Schweisserin und des Koloss schalten neue Waffen frei.
+
+**Drei neue Waffen, nur über die Laufbahn:**
+- Tiefenbohrer: fünf rasende Stösse.
+- Plasmawerfer: explodierende Plasmakugeln.
+- Tiefseesense: weite Schwünge, der dritte mäht rundherum.
+
+**Waffenmeisterschaft.** Jede Waffe steigt durch Abschüsse bis Stufe 10 auf. Das bringt +4 % Schaden je Stufe und ab Stufe 5 und 10 mehr Kritik. Den Stand zeigt der Reiter „WAFFEN“ in der Laufbahn.
 
 ## Neu in Version 1.2 · Schwarm-Update
 

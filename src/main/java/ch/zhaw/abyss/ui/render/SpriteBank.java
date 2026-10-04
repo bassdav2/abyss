@@ -23,6 +23,8 @@ public final class SpriteBank {
     private final Map<String, Map<DiverArt.Anim, List<Sprite>>> divers = new HashMap<>();
     private final Map<EnemyKind, Map<EnemyArt.Anim, List<Sprite>>> enemies =
             new EnumMap<>(EnemyKind.class);
+    private final Map<EnemyKind, Map<EnemyArt.Anim, List<Sprite>>> giants =
+            new EnumMap<>(EnemyKind.class);
     private RoomPlan roomPlan;
     private long roomSeed;
     private RoomArt room;
@@ -44,6 +46,27 @@ public final class SpriteBank {
      */
     public Map<EnemyArt.Anim, List<Sprite>> enemy(EnemyKind kind) {
         return enemies.computeIfAbsent(kind, EnemyArt::build);
+    }
+
+    /**
+     * @param kind Gegnerart
+     * @return alle Animationen in Kolossgrösse
+     */
+    public Map<EnemyArt.Anim, List<Sprite>> giant(EnemyKind kind) {
+        return giants.computeIfAbsent(
+                kind,
+                key -> {
+                    var result = new EnumMap<EnemyArt.Anim, List<Sprite>>(EnemyArt.Anim.class);
+                    enemy(key)
+                            .forEach(
+                                    (anim, frames) ->
+                                            result.put(
+                                                    anim,
+                                                    frames.stream()
+                                                            .map(f -> f.scaled(1.45))
+                                                            .toList()));
+                    return result;
+                });
     }
 
     /**

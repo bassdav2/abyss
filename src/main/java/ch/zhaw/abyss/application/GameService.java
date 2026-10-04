@@ -3,6 +3,7 @@ package ch.zhaw.abyss.application;
 import ch.zhaw.abyss.domain.GameRun;
 import ch.zhaw.abyss.domain.RunCheckpoint;
 import ch.zhaw.abyss.domain.RunSetup;
+import ch.zhaw.abyss.domain.Weapon;
 import ch.zhaw.abyss.ports.GameRepository;
 
 import java.io.IOException;
@@ -23,6 +24,9 @@ public final class GameService {
     private Optional<RunCheckpoint> saved = Optional.empty();
     private GameRun run;
     private int accountedKills, accountedCores;
+    private final java.util.EnumMap<Weapon, Integer> accountedWeaponKills =
+            new java.util.EnumMap<>(Weapon.class);
+    private CareerReport lastCareer = CareerReport.NONE;
     private boolean outcomeRecorded;
     private int lastCoreReward;
     private String storageMessage = "";
@@ -89,10 +93,12 @@ public final class GameService {
                         profile.bonusHealth(),
                         profile.bonusKits(),
                         profile.startSalvage(),
-                        profile.meta());
+                        profile.meta(loadout.diver()));
         run = new GameRun(setup);
         accountedKills = 0;
         accountedCores = 0;
+        accountedWeaponKills.clear();
+        lastCareer = CareerReport.NONE;
         outcomeRecorded = false;
         var edit = profile.edit();
         edit.runs++;
@@ -118,9 +124,11 @@ public final class GameService {
                             checkpoint,
                             profile.itemPool(),
                             profile.weaponPool(checkpoint.diver()),
-                            profile.meta());
+                            profile.meta(checkpoint.diver()));
             accountedKills = run.kills();
             accountedCores = run.player().cores();
+            accountedWeaponKills.clear();
+            lastCareer = CareerReport.NONE;
             outcomeRecorded = false;
             return Optional.of(run);
         } catch (IllegalArgumentException e) {
@@ -170,6 +178,22 @@ public final class GameService {
         return true;
     }
 
+    /**
+     * Laufbahnwert der Abschüsse eines Tauchgangs. Die ersten 500 zählen voll, danach wächst der
+     * Wert mit der Wurzel: Endgame-Schwärme mit zehntausenden Abschüssen bringen viel, aber nicht
+     * die ganze Laufbahn auf einmal.
+     *
+     * @param kills Abschüsse im Tauchgang
+     * @return Erfahrung dafür
+     */
+    static long killCredit(int kills) {
+        if (kills <= KILL_CREDIT_FULL) return Math.max(0, kills);
+        return KILL_CREDIT_FULL + Math.round(18 * Math.sqrt(kills - KILL_CREDIT_FULL));
+    }
+
+    /** Abschüsse pro Tauchgang, die voll in die Laufbahn zählen. */
+    static final int KILL_CREDIT_FULL = 500;
+
     private void updateProgress(boolean win, boolean finished) {
         int reached =
                 run.phase() == GameRun.Phase.DEFEAT ? run.room().depth() : run.room().depth() + 1;
@@ -179,11 +203,50 @@ public final class GameService {
         int newCores = Math.max(0, run.player().cores() - accountedCores);
         accountedCores = run.player().cores();
         lastCoreReward = 0;
+        var career = profile.career();
         if (finished) {
             int bonus = reached / 4 + (win ? 3 + run.pressure() : 0);
+            double factor = 1 + career.sum(SkillTree.Perk.CORES, null);
+            bonus =
+                    (int) Math.round((bonus + run.player().cores()) * factor)
+                            - run.player().cores();
             newCores += bonus;
             lastCoreReward = run.player().cores() + bonus;
         }
+        // Laufbahn: Abschüsse zählen sofort, Tiefe, Wächter und Sieg beim Abschluss.
+        double multiplier = 1 + .5 * run.cycle() + .2 * run.pressure();
+        long gained = killCredit(run.kills()) - killCredit(run.kills() - newKills);
+        if (finished) gained += 50 + reached * 25L + (reached / 6) * 150L + (win ? 600 : 0);
+        gained = Math.round(gained * multiplier);
+        var weaponGains = new java.util.EnumMap<Weapon, Integer>(Weapon.class);
+        run.weaponKills()
+                .forEach(
+                        (weapon, kills) -> {
+                            int fresh =
+                                    (int)
+                                            (killCredit(kills)
+                                                    - killCredit(
+                                                            accountedWeaponKills.getOrDefault(
+                                                                    weapon, 0)));
+                            if (fresh > 0) weaponGains.put(weapon, fresh);
+                            accountedWeaponKills.put(weapon, kills);
+                        });
+        var diver = run.player().diver();
+        var updated = career.gain(gained, diver, weaponGains);
+        int rankUps = updated.rank() - career.rank();
+        var masteryUps = new ArrayList<Weapon>();
+        for (var weapon : weaponGains.keySet())
+            if (updated.mastery(weapon) > career.mastery(weapon)) masteryUps.add(weapon);
+        lastCareer =
+                lastCareer.add(
+                        gained,
+                        updated.rank(),
+                        rankUps,
+                        updated.rank(diver),
+                        updated.rank(diver) - career.rank(diver),
+                        masteryUps);
+        edit.career = updated;
+        newCores += 3 * Math.max(0, rankUps);
         edit.totalKills += newKills;
         edit.cores += newCores;
         edit.bestRoom = Math.max(edit.bestRoom, reached);
@@ -218,6 +281,62 @@ public final class GameService {
         var result = List.copyOf(newAchievements);
         newAchievements.clear();
         return result;
+    }
+
+    /**
+     * Kauft einen Knoten eines Skill-Baums mit Punkten der Laufbahn.
+     *
+     * @param node Knoten
+     * @return {@code true}, wenn gekauft und gespeichert wurde
+     */
+    public boolean purchase(SkillTree.SkillNode node) {
+        if (!profile.career().canBuy(node, profile)) return false;
+        var edit = profile.edit();
+        edit.career = profile.career().with(node);
+        profile = edit.build();
+        persistProfile();
+        return true;
+    }
+
+    /**
+     * @return Laufbahn-Ergebnis des letzten Tauchgangs für die Auswertung
+     */
+    public CareerReport lastCareer() {
+        return lastCareer;
+    }
+
+    /**
+     * Laufbahn-Ergebnis eines Tauchgangs.
+     *
+     * @param xp gewonnene Laufbahnerfahrung
+     * @param rank Laufbahnrang danach
+     * @param rankUps gewonnene Laufbahnränge
+     * @param classRank Rang der Klasse danach
+     * @param classRankUps gewonnene Klassenränge
+     * @param masteryUps Waffen mit neuer Meisterschaftsstufe
+     */
+    public record CareerReport(
+            long xp,
+            int rank,
+            int rankUps,
+            int classRank,
+            int classRankUps,
+            List<Weapon> masteryUps) {
+        /** Noch kein Ergebnis. */
+        public static final CareerReport NONE = new CareerReport(0, 0, 0, 0, 0, List.of());
+
+        /** Kopiert die Liste. */
+        public CareerReport {
+            masteryUps = List.copyOf(masteryUps);
+        }
+
+        CareerReport add(
+                long gained, int rank, int ups, int classRank, int classUps, List<Weapon> mastery) {
+            var weapons = new ArrayList<>(masteryUps);
+            for (var weapon : mastery) if (!weapons.contains(weapon)) weapons.add(weapon);
+            return new CareerReport(
+                    xp + gained, rank, rankUps + ups, classRank, classRankUps + classUps, weapons);
+        }
     }
 
     /**

@@ -21,6 +21,7 @@ public final class SwarmBench {
     public static void main(String[] args) {
         long seed = args.length > 0 ? Long.parseLong(args[0]) : 4242;
         int cycles = args.length > 1 ? Integer.parseInt(args[1]) : 1;
+        int pressure = args.length > 2 ? Integer.parseInt(args[2]) : 5;
         var base = RunSetup.standard(seed, DiverClass.values()[0]);
         var run =
                 new GameRun(
@@ -30,7 +31,7 @@ public final class SwarmBench {
                                 base.weapon(),
                                 base.module(),
                                 false,
-                                5,
+                                pressure,
                                 base.itemPool(),
                                 base.weaponPool(),
                                 0,
@@ -38,12 +39,14 @@ public final class SwarmBench {
                                 0));
         var renderer = new WorldRenderer(PixelFont.load(), new SpriteBank());
         var settings = Settings.DEFAULT;
-        int[] limits = {50, 100, 200, 300, Integer.MAX_VALUE};
+        int[] limits = {50, 100, 200, 300, 600, 1000, Integer.MAX_VALUE};
         double[] sum = new double[limits.length], worst = new double[limits.length];
         double[] sim = new double[limits.length];
         int[] frames = new int[limits.length];
         int peak = 0;
-        for (int frame = 0; frame < 60 * 60 * 40; frame++) {
+        int lastRoom = -1;
+        double roomStart = 0;
+        for (int frame = 0; frame < 60 * 60 * 90; frame++) {
             if (run.phase() == GameRun.Phase.DEFEAT) break;
             if (run.phase() == GameRun.Phase.VICTORY) {
                 if (run.cycle() + 1 >= cycles) break;
@@ -56,7 +59,26 @@ public final class SwarmBench {
             renderer.update(1.0 / 60, run, settings);
             renderer.render(run, settings, true);
             long t2 = System.nanoTime();
-            if (run.phase() == GameRun.Phase.ROOM_CLEARED) CampaignPilot.advance(run, 1);
+            if (run.phase() == GameRun.Phase.ROOM_CLEARED) {
+                int room = run.globalDepth();
+                if (room != lastRoom) {
+                    lastRoom = room;
+                    System.out.printf(
+                            "room %3d esc %2d %-8s %-12s %5.0fs kills %6d level %3d hp"
+                                    + " %4.0f/%4.0f%n",
+                            room,
+                            run.escalation(),
+                            run.room().kind(),
+                            run.room().threat(),
+                            run.elapsed() - roomStart,
+                            run.kills(),
+                            run.player().level(),
+                            run.player().health(),
+                            run.player().maxHealth());
+                    roomStart = run.elapsed();
+                }
+                CampaignPilot.advance(run, 1);
+            }
             int alive = (int) run.enemies().stream().filter(e -> e.alive()).count();
             peak = Math.max(peak, alive);
             int bucket = 0;
@@ -69,7 +91,7 @@ public final class SwarmBench {
                 frames[bucket]++;
             }
         }
-        String[] names = {"0-49", "50-99", "100-199", "200-299", "300+"};
+        String[] names = {"0-49", "50-99", "100-199", "200-299", "300-599", "600-999", "1000+"};
         for (int i = 0; i < limits.length; i++)
             if (frames[i] > 0)
                 System.out.printf(
@@ -77,7 +99,13 @@ public final class SwarmBench {
                                 + " ms%n",
                         names[i], frames[i], sum[i] / frames[i], worst[i], sim[i] / frames[i]);
         System.out.printf(
-                "RESULT %s cycle %d depth %d level %d peak %d%n",
-                run.phase(), run.cycle(), run.room().depth(), run.player().level(), peak);
+                "RESULT %s cycle %d depth %d level %d peak %d kills %d items %s%n",
+                run.phase(),
+                run.cycle(),
+                run.room().depth(),
+                run.player().level(),
+                peak,
+                run.kills(),
+                run.player().items());
     }
 }

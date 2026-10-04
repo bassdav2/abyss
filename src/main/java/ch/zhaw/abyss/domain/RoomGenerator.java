@@ -19,7 +19,10 @@ public final class RoomGenerator {
     /** Gesamtzahl der Raumpositionen vom Heck bis zur Brücke. */
     public static final int ROOM_COUNT = SECTORS * SECTOR_ROOMS;
 
-    private static final double LOW = 470, HIGH = 335;
+    /** Raumindex, ab dem die Eskalation einsetzt: Raum 20 des ersten Zyklus. */
+    public static final int ESCALATION_START = 19;
+
+    private static final double LOW = 470, HIGH = 335, SKY = 215;
     private final long seed;
     private final int cycle, pressure;
 
@@ -40,6 +43,36 @@ public final class RoomGenerator {
      */
     public RoomGenerator(long seed, int cycle) {
         this(seed, cycle, 0);
+    }
+
+    /**
+     * Eskalationsstufe eines Raums: 0 bis Raum 19 des ersten Zyklus, danach +1 je Raum über alle
+     * Zyklen. Sie treibt Schwarmgrösse, Raumbreite, Wellen und Gegnermischung im Endgame.
+     *
+     * @param cycle Zyklus ab 0
+     * @param depth Raumposition
+     * @return Eskalationsstufe ab 0
+     */
+    public static int escalation(int cycle, int depth) {
+        return Math.max(0, cycle * ROOM_COUNT + depth - ESCALATION_START + 1);
+    }
+
+    /**
+     * Schwarmvervielfacher der Eskalation: anfangs ein deutlicher Sprung, danach quadratisch.
+     *
+     * @param escalation Eskalationsstufe
+     * @return Faktor ab 1
+     */
+    public static double surge(int escalation) {
+        return 1 + .22 * escalation + .007 * escalation * escalation;
+    }
+
+    /**
+     * @param escalation Eskalationsstufe
+     * @return Höchstzahl fest platzierter Gegner pro Welle
+     */
+    public static int maxCore(int escalation) {
+        return Math.min(26, MAX_CORE + Math.max(0, escalation - 2) / 2);
     }
 
     /**
@@ -95,10 +128,23 @@ public final class RoomGenerator {
             throw new IllegalArgumentException("Ungültiger Raum");
         var random = random(depth, branch);
         int sector = depth / SECTOR_ROOMS;
+        int escalation = escalation(cycle, depth);
         var kind = kind(depth, branch);
         var theme = theme(kind, sector, random);
-        var layout = layout(kind, sector, random);
-        var waves = waves(kind, depth, sector, layout, random);
+        var layout =
+                layout(kind, sector, random, escalation, cycle, random(depth, branch).nextLong());
+        // Eigener Zufallsstrom, damit Raumzustände die übrigen Raumdaten nicht verschieben.
+        var special = new Random(random(depth, branch).nextLong() ^ 0x5DEECE66DL);
+        var condition = condition(kind, depth, sector, special);
+        var threat =
+                threat(
+                        kind,
+                        depth,
+                        sector,
+                        escalation,
+                        condition,
+                        new Random(random(depth, branch).nextLong() ^ 0x7E4EA7L));
+        var waves = waves(kind, depth, sector, layout, random, escalation, threat);
         var hazards = new ArrayList<RoomPlan.HazardSlot>();
         if (sector > 0 && (kind == RoomPlan.Kind.COMBAT || kind == RoomPlan.Kind.ELITE)) {
             int count = layout.width() > 2000 ? 2 : 1;
@@ -120,9 +166,6 @@ public final class RoomGenerator {
                     case CACHE -> 10;
                     default -> 0;
                 };
-        // Eigener Zufallsstrom, damit Raumzustände die übrigen Raumdaten nicht verschieben.
-        var special = new Random(random(depth, branch).nextLong() ^ 0x5DEECE66DL);
-        var condition = condition(kind, depth, sector, special);
         // Gelegentlich flieht eine Schmugglerdrohne mit Beute durch den Raum.
         var smuggler = new Random(random(depth, branch).nextLong() ^ 0x5A5A5A5AL);
         if (kind == RoomPlan.Kind.COMBAT
@@ -130,7 +173,7 @@ public final class RoomGenerator {
                 && condition != RoomCondition.BREACH
                 && smuggler.nextInt(100) < 14
                 && !waves.isEmpty()
-                && waves.getFirst().size() < MAX_CORE) {
+                && waves.getFirst().size() < maxCore(escalation)) {
             var first = new ArrayList<>(waves.getFirst());
             first.add(
                     new RoomPlan.Spawn(
@@ -149,10 +192,10 @@ public final class RoomGenerator {
                 var reinforced = new ArrayList<List<RoomPlan.Spawn>>();
                 for (var wave : waves) {
                     var spawns = new ArrayList<>(wave);
-                    if (spawns.size() < MAX_CORE)
+                    if (spawns.size() < maxCore(escalation) && threat != Threat.COLOSSUS)
                         spawns.add(
                                 place(
-                                        pick(sector, depth, special),
+                                        pick(sector, depth, special, escalation, threat),
                                         Affix.NONE,
                                         spawns.size(),
                                         layout,
@@ -186,21 +229,52 @@ public final class RoomGenerator {
                 random.nextInt(4),
                 kind,
                 theme,
-                description(kind, sector),
+                description(kind, sector, cycle),
                 waves,
                 layout,
                 hazards,
                 crates,
                 salvage,
                 condition,
-                fixtures(kind, depth, sector, layout, hazards, random(depth, branch).nextLong()),
+                fixtures(
+                        kind,
+                        depth,
+                        sector,
+                        cycle,
+                        layout,
+                        hazards,
+                        random(depth, branch).nextLong()),
                 hordes(
                         kind,
                         depth,
                         sector,
                         waves.size(),
                         condition,
-                        random(depth, branch).nextLong()));
+                        threat,
+                        random(depth, branch).nextLong()),
+                threat);
+    }
+
+    /**
+     * Wählt die Bedrohung eines Kampfraums. Im ersten Zyklus selten und erst ab dem Maschinendeck,
+     * im Endgame fast immer.
+     */
+    private Threat threat(
+            RoomPlan.Kind kind,
+            int depth,
+            int sector,
+            int escalation,
+            RoomCondition condition,
+            Random random) {
+        if (kind != RoomPlan.Kind.COMBAT && kind != RoomPlan.Kind.ELITE) return Threat.NONE;
+        // Ohne Wahl keine Prüfung: feste Räume und Hüllenbrüche bleiben frei.
+        if (cycle == 0 && depth < SECTOR_ROOMS || fixed(depth) || condition == RoomCondition.BREACH)
+            return Threat.NONE;
+        int chance =
+                escalation > 0 ? Math.min(90, 55 + 2 * escalation) : 12 + 9 * sector + 3 * pressure;
+        if (random.nextInt(100) >= chance) return Threat.NONE;
+        var options = Threat.values();
+        return options[1 + random.nextInt(options.length - 1)];
     }
 
     /** Höchstzahl fest platzierter Gegner pro Welle; Schwärme kommen zusätzlich. */
@@ -217,54 +291,141 @@ public final class RoomGenerator {
             int sector,
             int waveCount,
             RoomCondition condition,
+            Threat threat,
             long seed) {
         var result = new ArrayList<List<RoomPlan.Horde>>();
         var random = new Random(seed ^ 0x6D1E5A11L);
-        double scale = hordeScale();
+        int escalation = escalation(cycle, depth);
+        // Über die Zyklen zählt die Tiefe weiter; die Eskalation übernimmt das Wachstum.
+        int reach = Math.min(cycle * ROOM_COUNT + depth, ROOM_COUNT - 1);
+        double scale = hordeScale() * surge(escalation);
         for (int wave = 0; wave < waveCount; wave++) {
             double base =
                     switch (kind) {
-                        case COMBAT, ELITE -> 3 + depth * 1.6;
-                        case BOSS, BRIDGE -> sector == 0 ? 0 : 5 + 5 * sector;
+                        case COMBAT, ELITE -> 3 + reach * 1.6;
+                        case BOSS, BRIDGE ->
+                                sector == 0 && cycle == 0 ? 0 : 5 + 5 * sector + 4 * cycle;
                         default -> 0;
                     };
-            if (kind == RoomPlan.Kind.ELITE) base *= 1.5;
+            if (kind == RoomPlan.Kind.ELITE) base *= escalation > 0 ? 1.25 : 1.5;
             if (condition == RoomCondition.ALARM) base *= 1.5;
             if (condition == RoomCondition.BREACH) base *= .6;
-            int total = depth == 0 ? 3 : (int) Math.round(base * scale * (1 + wave * .25));
-            result.add(total <= 0 ? List.of() : split(sector, total, random));
+            base *=
+                    switch (threat) {
+                        case FLOOD -> 3;
+                        case COLOSSUS -> .35;
+                        case NESTS -> .5;
+                        default -> 1;
+                    };
+            boolean boss = kind == RoomPlan.Kind.BOSS || kind == RoomPlan.Kind.BRIDGE;
+            int total =
+                    depth == 0 && cycle == 0
+                            ? 3
+                            : (int)
+                                    Math.min(
+                                            MAX_HORDE,
+                                            Math.round(
+                                                    base
+                                                            * (boss ? hordeScale() : scale)
+                                                            * (1 + wave * .25)));
+            result.add(
+                    total <= 0
+                            ? List.of()
+                            : split(sector, depth, escalation, threat, total, random));
         }
         return result;
     }
 
+    /** Obergrenze der Schwarmgegner pro Welle. */
+    static final int MAX_HORDE = 4000;
+
     /**
-     * @return Vervielfacher der Schwarmgrösse aus Zyklus und Druckstufe
+     * @return Vervielfacher der Schwarmgrösse aus der Druckstufe
      */
     double hordeScale() {
-        return Math.min(20, (1 + cycle * 1.4) * (1 + .4 * pressure));
+        return 1 + .4 * pressure;
     }
 
-    private static List<RoomPlan.Horde> split(int sector, int total, Random random) {
+    private static List<RoomPlan.Horde> split(
+            int sector, int depth, int escalation, Threat threat, int total, Random random) {
         EnemyKind[] kinds;
         double[] share;
-        switch (sector) {
-            case 0 -> {
-                kinds = new EnemyKind[] {EnemyKind.MITE};
-                share = new double[] {1};
+        if (threat == Threat.SKY) {
+            kinds =
+                    new EnemyKind[] {
+                        EnemyKind.GLOWFISH, EnemyKind.NANODRONE, EnemyKind.LANCER, EnemyKind.PRISM
+                    };
+            share = new double[] {.3, .3, .2, .2};
+        } else if (threat == Threat.BARRAGE) {
+            kinds =
+                    new EnemyKind[] {
+                        EnemyKind.SPITTER, EnemyKind.PRISM, EnemyKind.MITE, EnemyKind.FUSE
+                    };
+            share = new double[] {.35, .3, .2, .15};
+        } else if (threat == Threat.ARMORED) {
+            kinds = new EnemyKind[] {EnemyKind.CRAB, EnemyKind.MITE, EnemyKind.SPITTER};
+            share = new double[] {.3, .4, .3};
+        } else if (threat == Threat.FLOOD) {
+            kinds = new EnemyKind[] {EnemyKind.MITE, EnemyKind.FUSE, EnemyKind.GLOWFISH};
+            share = new double[] {.5, .25, .25};
+        } else if (escalation > 0) {
+            // Im Endgame mischt der Abgrund alle Schwärme: acht Arten, acht Angriffe.
+            kinds =
+                    new EnemyKind[] {
+                        EnemyKind.MITE,
+                        EnemyKind.NANODRONE,
+                        EnemyKind.GLOWFISH,
+                        EnemyKind.FUSE,
+                        EnemyKind.SPITTER,
+                        EnemyKind.CRAB,
+                        EnemyKind.LANCER,
+                        EnemyKind.PRISM
+                    };
+            share = new double[] {.17, .14, .12, .13, .12, .11, .11, .10};
+        } else
+            switch (sector) {
+                case 0 -> {
+                    kinds =
+                            depth >= 3
+                                    ? new EnemyKind[] {EnemyKind.MITE, EnemyKind.FUSE}
+                                    : new EnemyKind[] {EnemyKind.MITE};
+                    share = depth >= 3 ? new double[] {.88, .12} : new double[] {1};
+                }
+                case 1 -> {
+                    kinds =
+                            new EnemyKind[] {
+                                EnemyKind.MITE,
+                                EnemyKind.NANODRONE,
+                                EnemyKind.FUSE,
+                                EnemyKind.SPITTER
+                            };
+                    share = new double[] {.5, .25, .13, .12};
+                }
+                case 2 -> {
+                    kinds =
+                            new EnemyKind[] {
+                                EnemyKind.GLOWFISH,
+                                EnemyKind.MITE,
+                                EnemyKind.SPITTER,
+                                EnemyKind.CRAB,
+                                EnemyKind.LANCER
+                            };
+                    share = new double[] {.4, .2, .14, .13, .13};
+                }
+                default -> {
+                    kinds =
+                            new EnemyKind[] {
+                                EnemyKind.NANODRONE,
+                                EnemyKind.MITE,
+                                EnemyKind.GLOWFISH,
+                                EnemyKind.LANCER,
+                                EnemyKind.CRAB,
+                                EnemyKind.PRISM,
+                                EnemyKind.FUSE
+                            };
+                    share = new double[] {.25, .17, .1, .15, .12, .11, .1};
+                }
             }
-            case 1 -> {
-                kinds = new EnemyKind[] {EnemyKind.MITE, EnemyKind.NANODRONE};
-                share = new double[] {.7, .3};
-            }
-            case 2 -> {
-                kinds = new EnemyKind[] {EnemyKind.GLOWFISH, EnemyKind.MITE};
-                share = new double[] {.6, .4};
-            }
-            default -> {
-                kinds = new EnemyKind[] {EnemyKind.NANODRONE, EnemyKind.MITE, EnemyKind.GLOWFISH};
-                share = new double[] {.45, .35, .2};
-            }
-        }
         var result = new ArrayList<RoomPlan.Horde>();
         int left = total;
         for (int i = 0; i < kinds.length; i++) {
@@ -292,10 +453,18 @@ public final class RoomGenerator {
             RoomPlan.Kind kind,
             int depth,
             int sector,
+            int cycle,
             RoomLayout layout,
             List<RoomPlan.HazardSlot> hazards,
             long stream) {
         var result = new ArrayList<RoomPlan.FixtureSlot>();
+        if (kind == RoomPlan.Kind.BRIDGE && cycle > 0) {
+            // Thronsaal der Prismenkaiserin: Dampfdüsen tragen über die Lanzenreihen.
+            double w = layout.width();
+            result.add(new RoomPlan.FixtureSlot(Fixture.Kind.VENT_PAD, w * .3, 1, 0));
+            result.add(new RoomPlan.FixtureSlot(Fixture.Kind.VENT_PAD, w * .7, 1, 0));
+            return result;
+        }
         if (kind == RoomPlan.Kind.BOSS || kind == RoomPlan.Kind.BRIDGE) {
             // Bossarenen: feste Anlagen, die sich gegen den Wächter einsetzen lassen.
             double w = layout.width();
@@ -481,11 +650,14 @@ public final class RoomGenerator {
         };
     }
 
-    private static RoomLayout layout(RoomPlan.Kind kind, int sector, Random random) {
+    private static RoomLayout layout(
+            RoomPlan.Kind kind, int sector, Random random, int escalation, int cycle, long stream) {
+        // Im Endgame wachsen die Kampfräume um bis zu drei Bildschirmbreiten.
+        double extra = 400 * Math.min(6, escalation / 4);
         double width =
                 switch (kind) {
-                    case COMBAT -> 1600 + 400 * random.nextInt(3);
-                    case ELITE -> 2400 + 400 * random.nextInt(2);
+                    case COMBAT -> 1600 + 400 * random.nextInt(3) + extra;
+                    case ELITE -> 2400 + 400 * random.nextInt(2) + extra;
                     default -> 1600;
                 };
         var platforms = new ArrayList<Platform>();
@@ -496,8 +668,18 @@ public final class RoomGenerator {
                     if (span < 550) break;
                     addTemplate(platforms, random.nextInt(5), start, span);
                 }
+                if (escalation >= 4) skyDeck(platforms, width, new Random(stream ^ 0x5CA1AB1EL));
             }
-            case BOSS, BRIDGE -> {
+            case BRIDGE -> {
+                platforms.add(new Platform(150, LOW, 230));
+                platforms.add(new Platform(1220, LOW, 230));
+                if (cycle > 0) {
+                    // Thronsaal: zwei hohe Stege, um über tiefe Lanzenreihen zu gelangen.
+                    platforms.add(new Platform(470, HIGH, 190));
+                    platforms.add(new Platform(940, HIGH, 190));
+                }
+            }
+            case BOSS -> {
                 double y = sector == 1 ? 440 : LOW;
                 platforms.add(new Platform(150, y, 230));
                 platforms.add(new Platform(1220, y, 230));
@@ -513,6 +695,22 @@ public final class RoomGenerator {
                     default -> 800;
                 };
         return new RoomLayout(width, platforms, reward);
+    }
+
+    /**
+     * Oberdeck breiter Endgame-Räume: hohe Stege über den unteren, damit Horden auch von oben
+     * kommen und die Figur Höhe als Ausweg nutzen kann.
+     */
+    private static void skyDeck(List<Platform> out, double width, Random random) {
+        for (double x = 700 + random.nextInt(200);
+                x < width - 600;
+                x += 900 + random.nextInt(300)) {
+            boolean clear = true;
+            for (var platform : out)
+                if (platform.y() < LOW && Math.abs(platform.centerX() - x) < 260) clear = false;
+            out.add(new Platform(x - 110, clear ? HIGH : SKY, 220));
+            if (clear && random.nextBoolean()) out.add(new Platform(x + 230, SKY, 180));
+        }
     }
 
     private static void addTemplate(List<Platform> out, int template, double x, double span) {
@@ -536,29 +734,42 @@ public final class RoomGenerator {
     }
 
     private List<List<RoomPlan.Spawn>> waves(
-            RoomPlan.Kind kind, int depth, int sector, RoomLayout layout, Random random) {
+            RoomPlan.Kind kind,
+            int depth,
+            int sector,
+            RoomLayout layout,
+            Random random,
+            int escalation,
+            Threat threat) {
         var waves = new ArrayList<List<RoomPlan.Spawn>>();
         switch (kind) {
-            case BOSS, BRIDGE ->
-                    waves.add(
-                            List.of(
-                                    new RoomPlan.Spawn(
-                                            boss(sector),
-                                            Affix.NONE,
-                                            1180,
-                                            boss(sector) == EnemyKind.BROOD
-                                                    ? GameRun.FLOOR - 200
-                                                    : GameRun.FLOOR)));
+            case BOSS, BRIDGE -> {
+                var boss = boss(sector, kind == RoomPlan.Kind.BRIDGE ? cycle : 0);
+                waves.add(
+                        List.of(
+                                new RoomPlan.Spawn(
+                                        boss,
+                                        Affix.NONE,
+                                        1180,
+                                        boss.flying()
+                                                ? GameRun.FLOOR
+                                                        - (boss == EnemyKind.EMPRESS ? 330 : 200)
+                                                : GameRun.FLOOR)));
+            }
             case COMBAT, ELITE -> {
                 int count =
                         kind == RoomPlan.Kind.ELITE
-                                ? 3
-                                : depth < 2 ? 1 : sector == 0 && depth < 3 ? 1 : 2;
+                                ? 3 + (escalation >= 12 ? 1 : 0)
+                                : (depth < 2 && cycle == 0
+                                                ? 1
+                                                : sector == 0 && depth < 3 && cycle == 0 ? 1 : 2)
+                                        + (escalation >= 6 ? 1 : 0)
+                                        + (escalation >= 24 ? 1 : 0);
                 for (int wave = 0; wave < count; wave++) {
                     boolean elite =
                             kind == RoomPlan.Kind.ELITE && wave == count - 1
                                     || sector >= 2 && wave == count - 1 && random.nextInt(4) == 0;
-                    waves.add(wave(depth, sector, wave, layout, random, elite));
+                    waves.add(wave(depth, sector, wave, layout, random, elite, escalation, threat));
                 }
             }
             default -> {}
@@ -567,9 +778,16 @@ public final class RoomGenerator {
     }
 
     private List<RoomPlan.Spawn> wave(
-            int depth, int sector, int wave, RoomLayout layout, Random random, boolean elite) {
+            int depth,
+            int sector,
+            int wave,
+            RoomLayout layout,
+            Random random,
+            boolean elite,
+            int escalation,
+            Threat threat) {
         var spawns = new ArrayList<RoomPlan.Spawn>();
-        if (depth == 0) {
+        if (depth == 0 && cycle == 0) {
             spawns.add(new RoomPlan.Spawn(EnemyKind.SCUTTLER, Affix.NONE, 980, GameRun.FLOOR));
             spawns.add(new RoomPlan.Spawn(EnemyKind.SCUTTLER, Affix.NONE, 1320, GameRun.FLOOR));
             return spawns;
@@ -580,21 +798,61 @@ public final class RoomGenerator {
                         + (depth % SECTOR_ROOMS) * .6
                         + wave * .6
                         + Math.min(12, cycle * 1.6)
-                        + pressure * .8;
+                        + pressure * .8
+                        + Math.min(24, escalation * .7);
+        int cap = maxCore(escalation);
+        if (threat == Threat.COLOSSUS || threat == Threat.FLOOD)
+            cap = Math.min(cap, 2 + escalation / 12);
         int eliteIndex = elite ? 0 : -1;
-        while (budget >= 1 && spawns.size() < MAX_CORE) {
-            var kind = pick(sector, depth, random);
-            if (kind.threat() > budget + .5 && spawns.size() > 0) {
-                kind = EnemyKind.SCUTTLER;
+        while (budget >= 1 && spawns.size() < cap) {
+            var kind =
+                    threat == Threat.COLOSSUS
+                            ? heavy(sector, escalation, random)
+                            : pick(sector, depth, random, escalation, threat);
+            if (kind.threat() > budget + .5 && spawns.size() > 0 && threat != Threat.COLOSSUS) {
+                kind = threat == Threat.SKY ? EnemyKind.DRONE : EnemyKind.SCUTTLER;
             }
             budget -= kind.threat();
+            boolean champion = threat == Threat.COLOSSUS || spawns.size() == eliteIndex;
+            if (!champion && escalation > 0 && random.nextInt(100) < Math.min(45, escalation * 2))
+                champion = true;
             var affix =
-                    spawns.size() == eliteIndex
+                    champion
                             ? Affix.values()[1 + random.nextInt(Affix.values().length - 1)]
                             : Affix.NONE;
             spawns.add(place(kind, affix, spawns.size(), layout, random));
         }
+        if (threat == Threat.NESTS) {
+            int nests = 2 + sector / 2 + (escalation > 10 ? 1 : 0) + (escalation > 30 ? 1 : 0);
+            double min = 640, max = layout.width() - 220;
+            for (int i = 0; i < nests; i++) {
+                double x = min + (max - min) * (i + .2 + random.nextDouble() * .6) / nests;
+                spawns.add(new RoomPlan.Spawn(EnemyKind.HIVE, Affix.NONE, x, GameRun.FLOOR));
+            }
+        }
         return spawns;
+    }
+
+    /** Schwere Bodengegner für Kolosse, passend zur Sektion. */
+    private EnemyKind heavy(int sector, int escalation, Random random) {
+        var pool = new ArrayList<EnemyKind>(List.of(EnemyKind.SENTINEL));
+        if (sector >= 1 || escalation > 0) pool.add(EnemyKind.WELDER);
+        if (sector >= 2 || escalation > 0) pool.add(EnemyKind.SHIELDBEARER);
+        if (sector >= 3 || escalation > 0) pool.add(EnemyKind.ENFORCER);
+        return pool.get(random.nextInt(pool.size()));
+    }
+
+    private EnemyKind pick(int sector, int depth, Random random, int escalation, Threat threat) {
+        if (threat == Threat.SKY) {
+            var pool = new ArrayList<EnemyKind>(List.of(EnemyKind.DRONE, EnemyKind.DRONE));
+            if (sector >= 2 || escalation > 0) pool.add(EnemyKind.JELLY);
+            if (sector >= 3 || escalation > 0) pool.add(EnemyKind.SEEKER);
+            return pool.get(random.nextInt(pool.size()));
+        }
+        // Im Endgame mischt der Abgrund die Besatzungen aller Decks.
+        if (escalation > 0 && random.nextInt(escalation + 8) >= 8)
+            return pick(random.nextInt(SECTORS), depth, random);
+        return pick(sector, depth, random);
     }
 
     private static EnemyKind pick(int sector, int depth, Random random) {
@@ -721,15 +979,24 @@ public final class RoomGenerator {
      * @return Wächter des Sektors
      */
     public static EnemyKind boss(int sector) {
+        return boss(sector, 0);
+    }
+
+    /**
+     * @param sector Sektorindex
+     * @param cycle Zyklus ab 0
+     * @return Wächter des Sektors; auf der Brücke ab dem zweiten Zyklus die Prismenkaiserin
+     */
+    public static EnemyKind boss(int sector, int cycle) {
         return switch (sector) {
             case 0 -> EnemyKind.WARDEN;
             case 1 -> EnemyKind.REACTOR;
             case 2 -> EnemyKind.BROOD;
-            default -> EnemyKind.CAPTAIN;
+            default -> cycle > 0 ? EnemyKind.EMPRESS : EnemyKind.CAPTAIN;
         };
     }
 
-    private static String description(RoomPlan.Kind kind, int sector) {
+    private static String description(RoomPlan.Kind kind, int sector, int cycle) {
         return switch (kind) {
             case COMBAT -> "Sichere den Raum. Berge ein Modul und zerschlage Vorratskisten.";
             case ELITE ->
@@ -746,7 +1013,10 @@ public final class RoomGenerator {
                         case 1 -> "Der Reaktorkern: Springe über Wellen, lies seine Strahlen.";
                         default -> "Die Brutmutter: Etwas Grosses schwimmt hinter dem Glas.";
                     };
-            case BRIDGE -> "Die letzte Begegnung. Der Lotse erwartet dich.";
+            case BRIDGE ->
+                    cycle > 0
+                            ? "Am Grund des Abgrunds wartet etwas Leuchtendes."
+                            : "Die letzte Begegnung. Der Lotse erwartet dich.";
         };
     }
 }

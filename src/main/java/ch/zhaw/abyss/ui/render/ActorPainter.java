@@ -54,7 +54,7 @@ final class ActorPainter {
 
     void drawEnemy(Enemy e, int camX, int camY) {
         if (e.state() == Enemy.State.HIDDEN) return;
-        var anims = bank.enemy(e.kind());
+        var anims = e.size() > 1.2 ? bank.giant(e.kind()) : bank.enemy(e.kind());
         EnemyArt.Anim anim;
         switch (e.state()) {
             case WINDUP -> anim = EnemyArt.Anim.WINDUP;
@@ -81,6 +81,13 @@ final class ActorPainter {
             alpha = e.kind().boss() ? 1 : Math.max(.15, 1 - t / .55);
             if (!e.kind().boss())
                 frame.silhouette(sprite, x, y, flip, Frame.alpha(Pal.TEAL_5, .5 * (1 - alpha)));
+        }
+        if (e.plated()) {
+            // Panzerschwarm: stählerner Rand um den Gegner
+            int c = Frame.alpha(Pal.STEEL_6, .85);
+            frame.silhouette(sprite, x - 1, y, flip, c);
+            frame.silhouette(sprite, x + 1, y, flip, c);
+            frame.silhouette(sprite, x, y - 1, flip, c);
         }
         if (e.affix().elite()) {
             int c = affixColor(e);
@@ -128,7 +135,8 @@ final class ActorPainter {
                         .5);
             }
         }
-        if (!e.kind().boss() && e.health() < e.maxHealth()) {
+        boolean swarm = e.kind().swarm();
+        if (!e.kind().boss() && !swarm && e.health() < e.maxHealth()) {
             int w = Math.max(10, px(e.width()));
             int by = y - px(e.height()) - 5;
             frame.fill(x - w / 2 - 1, by - 1, w + 2, 4, Pal.OUTLINE);
@@ -147,7 +155,7 @@ final class ActorPainter {
                         1,
                         Pal.TEAL_5);
         }
-        if (e.state() == Enemy.State.WINDUP) {
+        if (e.state() == Enemy.State.WINDUP && !swarm) {
             int ey = y - px(e.height()) - 14;
             font.drawOutlined(
                     frame,

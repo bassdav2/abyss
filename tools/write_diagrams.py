@@ -303,7 +303,18 @@ class WardenBrain
 class ReactorBrain
 class BroodBrain
 class CaptainBrain
-class "Behaviors.*\n(10 reguläre Arten)" as Regular
+class EmpressBrain
+class "Behaviors.*\n(17 reguläre und Schwarmarten)" as Regular
+class Lance {
+ - angle, speed, delay
+ + progress(): double
+}
+class Beam <<record>> {
+ + touches(x, y, radius): boolean
+}
+enum Threat {
+ + prepared(player): boolean
+}
 class Fixture {
  - kind: Kind
  - x, direction, sector
@@ -318,6 +329,8 @@ class Machinery {
 class RoomGenerator {
  + choices(depth): List<RoomPlan>
  + room(depth, branch): RoomPlan
+ + {static} escalation(cycle, depth): int
+ + {static} surge(escalation): double
 }
 class StatSheet <<record>> {
  + {static} compute(diver, weapon, level, items, bonus)
@@ -351,6 +364,8 @@ GameRun *-- Loot
 GameRun *-- Rewards
 GameRun *-- Machinery
 GameRun *-- "0..*" Fixture
+GameRun *-- "0..*" Lance
+GameRun *-- "0..*" Beam
 Machinery ..> Fixture
 PlayerMotor ..> Physics
 StatSheet ..> Synergy
@@ -363,6 +378,7 @@ GameRun --> RunSetup
 GameRun ..> RunCheckpoint
 RoomPlan *-- RoomLayout
 RoomPlan --> RoomCondition
+RoomPlan --> Threat
 RoomLayout *-- "0..*" Platform
 Actor <|-- Player
 Actor <|-- Enemy
@@ -379,6 +395,7 @@ Brain <|-- WardenBrain
 Brain <|-- ReactorBrain
 Brain <|-- BroodBrain
 Brain <|-- CaptainBrain
+Brain <|-- EmpressBrain
 Brain <|-- Regular
 note right of Brain : Schablonenmethode:\ngemeinsame Zustandsmaschine,\nArten überschreiben Einstiegspunkte
 note bottom of EnemyBehavior : Strategie: austauschbares\nVerhalten pro Gegnerart

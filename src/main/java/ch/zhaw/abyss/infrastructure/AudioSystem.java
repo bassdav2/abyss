@@ -167,6 +167,8 @@ public final class AudioSystem implements AutoCloseable {
                     case PICKUP -> "pickup";
                     case CORE -> "core";
                     case DOOR -> "door";
+                    case THREAT, ESCALATION -> "warning";
+                    case EVOLUTION -> "victory";
                     case CONDITION -> "ALARM".equals(event.text()) ? "warning" : "down";
                     case MACHINE ->
                             switch (event.text()) {
@@ -178,7 +180,8 @@ public final class AudioSystem implements AutoCloseable {
                                 case "SEALED" -> "clear";
                                 case "LIST_WARN" -> "warning";
                                 case "LIST" -> "down";
-                                case "EXPOSED" -> "crit";
+                                case "EXPOSED", "VENTED" -> "crit";
+                                case "MELTDOWN", "FURY", "INK", "BOARDING" -> "roar";
                                 default -> "pulse";
                             };
                 };

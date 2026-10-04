@@ -656,6 +656,46 @@ public final class DiverArt {
                             y,
                             angle,
                             false);
+            case DRILL ->
+                    p.stamp(
+                            new String[] {".rrmmmmmOOkkk..", ".rrmmmmmOOkkkkw", ".rrmmmmmOOkkk.."},
+                            WEAPON_COLORS,
+                            2,
+                            1,
+                            x,
+                            y,
+                            angle,
+                            false);
+            case PLASMA ->
+                    p.stamp(
+                            new String[] {
+                                "....mmmmmmmmC..",
+                                "ddddmmmmmmmmCCY",
+                                "..tt.......C...",
+                                "..tt..........."
+                            },
+                            WEAPON_COLORS,
+                            4,
+                            1.5,
+                            x,
+                            y,
+                            angle,
+                            false);
+            case SCYTHE ->
+                    p.stamp(
+                            new String[] {
+                                "...........kkkw",
+                                "............kkk",
+                                ".ttggggggggg.kk",
+                                ".ttggggggggg..k"
+                            },
+                            WEAPON_COLORS,
+                            2,
+                            2,
+                            x,
+                            y,
+                            angle,
+                            false);
         }
     }
 

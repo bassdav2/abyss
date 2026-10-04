@@ -28,7 +28,7 @@ public record Unlock(
         WEAPON("Waffen"),
         MODULE("Module"),
         ITEM("Baupläne"),
-        PERK("Tiefenbaum"),
+        PERK("Ausrüstung"),
         COSMETIC("Garderobe");
 
         private final String title;
@@ -94,21 +94,6 @@ public record Unlock(
         return "item:" + item.name();
     }
 
-    /** Legt eine Kette aufeinander aufbauender Stufen im Tiefenbaum an. */
-    private static void tree(
-            List<Unlock> list, String id, String title, String effect, int[] costs, String root) {
-        String[] numerals = {"I", "II", "III", "IV", "V"};
-        for (int i = 0; i < costs.length; i++)
-            list.add(
-                    new Unlock(
-                            id + (i + 1),
-                            Category.PERK,
-                            title + " " + numerals[i],
-                            effect + (i == 0 ? " in jedem Tauchgang." : ", weitere Stufe."),
-                            costs[i],
-                            i == 0 ? root : id + i));
-    }
-
     private static List<Unlock> build() {
         var list = new ArrayList<Unlock>();
         for (var diver : DiverClass.values())
@@ -122,7 +107,7 @@ public record Unlock(
                                 diver.unlockCost(),
                                 null));
         for (var weapon : Weapon.values())
-            if (!weapon.startsUnlocked())
+            if (!weapon.startsUnlocked() && !weapon.career())
                 list.add(
                         new Unlock(
                                 of(weapon),
@@ -142,7 +127,12 @@ public record Unlock(
                                 module.unlockCost(),
                                 null));
         Arrays.stream(Item.values())
-                .filter(item -> !item.startsUnlocked() && !item.cursed())
+                .filter(
+                        item ->
+                                !item.startsUnlocked()
+                                        && !item.cursed()
+                                        && !item.evolution()
+                                        && item != Item.LIMIT_BREAK)
                 .forEach(
                         item ->
                                 list.add(
@@ -193,50 +183,6 @@ public record Unlock(
                         "Jeder Tauchgang beginnt mit 25 Schrott.",
                         8,
                         null));
-        tree(
-                list,
-                "perk:dmg",
-                "Schneidwerk",
-                "+8 % Werkzeug- und Modulschaden",
-                new int[] {6, 9, 13, 18, 24},
-                null);
-        tree(
-                list,
-                "perk:spd",
-                "Taktgeber",
-                "+6 % Angriffstempo",
-                new int[] {8, 13, 19},
-                "perk:dmg1");
-        tree(
-                list,
-                "perk:area",
-                "Druckverstärker",
-                "+8 % Wirkungsbereich",
-                new int[] {8, 13, 19},
-                "perk:dmg1");
-        tree(
-                list,
-                "perk:xp",
-                "Datenlink",
-                "+12 % Überladung aus Splittern",
-                new int[] {6, 10, 15},
-                null);
-        tree(list, "perk:mag", "Magnetspule", "+25 % Sammelradius", new int[] {5, 9}, "perk:xp1");
-        tree(
-                list,
-                "perk:crit",
-                "Zielsystem",
-                "+4 % kritische Trefferchance",
-                new int[] {9, 15},
-                "perk:spd1");
-        list.add(
-                new Unlock(
-                        "perk:choice",
-                        Category.PERK,
-                        "Erweiterte Auswahl",
-                        "Jeder Levelaufstieg bietet eine zusätzliche Karte.",
-                        25,
-                        "perk:xp2"));
         String[][] cosmetics = {
             {"suit", "Anzugfarbe"},
             {"helmet", "Helmform"},

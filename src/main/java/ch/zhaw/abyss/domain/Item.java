@@ -277,7 +277,107 @@ public enum Item {
             "+25 % Angriffstempo\n−1 Energie pro Sekunde",
             "Das Herz rast. Die Batterie auch.",
             Rarity.CURSED,
-            1);
+            1),
+
+    /** Grenzbrecher: hebt die Höchststufe aller Standard- und Seltenmodule. */
+    LIMIT_BREAK(
+            "Grenzbrecher",
+            "+2 Höchststufe für alle\nStandard- und Seltenmodule",
+            "Die Sicherungen sind längst durchgebrannt.",
+            Rarity.LEGENDARY,
+            99,
+            false),
+
+    // --- Entfesselungen: ein ausgereiztes Modul verschmilzt mit seinem Partner -----------------
+
+    /** Kreiselmesser und Druckkammer. */
+    STORM_BLADES(
+            "Klingensturm",
+            "Zweiter Rotorring, dreifacher\nSchaden, schleudert Klingen",
+            "Ein Wirbel aus Stahl, der nie zur Ruhe kommt.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Teslafeld und Teslaspule. */
+    THUNDERHEAD(
+            "Gewitterkern",
+            "Blitze alle 0,4 s in 8 Gegner,\njeder springt dreimal weiter",
+            "Im Boot zieht ein Gewitter auf.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Kettenreaktion und Druckwellenkern. */
+    SUPERNOVA(
+            "Supernova",
+            "Abschussexplosionen doppelt,\nNova alle 5 Abschüsse",
+            "Jeder Treffer ein kleiner Stern.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Klingenwelle und Mehrfachlader. */
+    TEMPEST(
+            "Klingenorkan",
+            "Jeder Schlag: Fächer aus fünf\ndurchschlagenden Klingen",
+            "Die Luft schneidet in alle Richtungen.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Zielsucher und Kondensator. */
+    MISSILE_SWARM(
+            "Raketenschwarm",
+            "Alle 1,2 s: sechs zielsuchende\nMinitorpedos",
+            "Ein Magazin voller kleiner Jäger.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Glasfaserlinse und Hohlspitzen. */
+    DEATH_EYE(
+            "Todesblick",
+            "+25 % Kritik, Überkritik ×1,5\nkritische Treffer explodieren",
+            "Es sieht jede Schwachstelle gleichzeitig.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Schildzelle und Verbundpanzerung. */
+    BASTION(
+            "Bollwerk",
+            "+120 Schild, schnelle Ladung\nBruch löst eine Druckwelle aus",
+            "Eine Festung, die zurückschlägt.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Zündkerze und Übertakter. */
+    INFERNO(
+            "Höllenglut",
+            "+40 % Brand, Brand ×3\nBrennende stecken Nachbarn an",
+            "Das Feuer springt von Rumpf zu Rumpf.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Kälteschlange und Kühlkreislauf. */
+    ABSOLUTE_ZERO(
+            "Nullpunkt",
+            "Alle 3 s: Frostwelle\nGefrorene erleiden doppelten Schaden",
+            "Selbst die Zeit wird spröde.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Nanitenkultur und Rückgewinnung. */
+    BLOOD_PACT(
+            "Blutsauger",
+            "+8 % Lebensraub (bis 40 %)\nAbschüsse heilen 1 %",
+            "Die Naniten haben Hunger.",
+            Rarity.MYTHIC,
+            1,
+            false),
+    /** Phasenkern und Klingenrumpf. */
+    PHASE_STORM(
+            "Phasensturm",
+            "Ausweichen doppelt so oft, Spur\naus Explosionen, Abschüsse laden",
+            "Du bist überall und nirgends.",
+            Rarity.MYTHIC,
+            1,
+            false);
     private final String title, effect, description;
     private final Rarity rarity;
     private final int maxStacks;
@@ -311,7 +411,7 @@ public enum Item {
             case COMMON -> 8;
             case RARE -> 5;
             case LEGENDARY -> 2;
-            case CURSED -> 1;
+            case CURSED, MYTHIC -> 1;
         };
     }
 
@@ -372,7 +472,7 @@ public enum Item {
             case COMMON -> 4;
             case RARE -> 7;
             case LEGENDARY -> 12;
-            case CURSED -> 0;
+            case CURSED, MYTHIC -> 0;
         };
     }
 
@@ -381,8 +481,78 @@ public enum Item {
      */
     public static List<Item> lootable() {
         return Arrays.stream(values())
-                .filter(item -> !item.cursed() && item != OVERCHARGE)
+                .filter(
+                        item ->
+                                !item.cursed()
+                                        && !item.evolution()
+                                        && item != OVERCHARGE
+                                        && item != LIMIT_BREAK)
                 .toList();
+    }
+
+    /**
+     * @return {@code true} für Entfesselungen, die nur aus einem Rezept entstehen
+     */
+    public boolean evolution() {
+        return rarity == Rarity.MYTHIC;
+    }
+
+    /**
+     * @return Modul, das ausgereizt sein muss, oder {@code null} ausser bei Entfesselungen
+     */
+    public Item base() {
+        return switch (this) {
+            case STORM_BLADES -> ORBITAL;
+            case THUNDERHEAD -> TESLA_FIELD;
+            case SUPERNOVA -> CHAIN_REACTION;
+            case TEMPEST -> BLADE_WAVE;
+            case MISSILE_SWARM -> HOMING;
+            case DEATH_EYE -> LENS;
+            case BASTION -> SHIELD_CELL;
+            case INFERNO -> IGNITER;
+            case ABSOLUTE_ZERO -> CRYO_COIL;
+            case BLOOD_PACT -> NANITES;
+            case PHASE_STORM -> PHASE_CORE;
+            default -> null;
+        };
+    }
+
+    /**
+     * @return Partnermodul, das mindestens einmal installiert sein muss, oder {@code null}
+     */
+    public Item partner() {
+        return switch (this) {
+            case STORM_BLADES -> AREA;
+            case THUNDERHEAD -> ARC_COIL;
+            case SUPERNOVA -> NOVA;
+            case TEMPEST -> MULTISHOT;
+            case MISSILE_SWARM -> CAPACITOR;
+            case DEATH_EYE -> CRIT_DAMAGE;
+            case BASTION -> PLATING;
+            case INFERNO -> OVERCLOCK;
+            case ABSOLUTE_ZERO -> COOLANT;
+            case BLOOD_PACT -> RECOVERY;
+            case PHASE_STORM -> DASH_BLADE;
+            default -> null;
+        };
+    }
+
+    /**
+     * @return alle Entfesselungen in Katalogreihenfolge
+     */
+    public static List<Item> evolutions() {
+        return Arrays.stream(values()).filter(Item::evolution).toList();
+    }
+
+    /**
+     * Entfesselung, die ein Modul als Grundlage hat.
+     *
+     * @param base ausgereiztes Modul
+     * @return Entfesselung oder {@code null}
+     */
+    public static Item evolutionOf(Item base) {
+        for (var item : values()) if (item.base() == base) return item;
+        return null;
     }
 
     /**

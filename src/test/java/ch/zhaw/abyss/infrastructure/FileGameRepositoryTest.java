@@ -3,6 +3,7 @@ package ch.zhaw.abyss.infrastructure;
 import static org.junit.jupiter.api.Assertions.*;
 
 import ch.zhaw.abyss.application.Achievement;
+import ch.zhaw.abyss.application.Career;
 import ch.zhaw.abyss.application.Cosmetics;
 import ch.zhaw.abyss.application.GameService;
 import ch.zhaw.abyss.application.Loadout;
@@ -47,7 +48,12 @@ class FileGameRepositoryTest {
                         Set.of(Achievement.WARDEN, Achievement.DARKNESS),
                         new Cosmetics(3, 2, 1, 0),
                         new Loadout(DiverClass.MECHANIC, Weapon.WRENCH, ActiveModule.ARC, 1, true),
-                        new Settings(.4, .2, true, false, true, .5, false, true));
+                        new Settings(.4, .2, true, false, true, .5, false, true),
+                        new Career(
+                                12_345,
+                                java.util.Map.of(DiverClass.TITAN, 4_000L),
+                                java.util.Map.of(Weapon.ANCHOR, 900L),
+                                Set.of("d.dmg1", "t.1")));
         var run = new GameRun(RunSetup.standard(123456, DiverClass.TITAN));
         repository.saveProfile(profile);
         repository.saveCheckpoint(run.checkpoint());

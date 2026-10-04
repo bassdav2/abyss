@@ -27,10 +27,34 @@ public enum EnemyKind {
 
     /** Schwarm: Nanodrohne, kreist um die Figur und stürzt sich im Pulk herab. */
     NANODRONE("Nanodrohne", 12, 30, 28, 230, 0, 1, 0),
+
+    /** Schwarm: Säurespucker, bleibt auf Abstand und wirft Säureklumpen im Bogen. */
+    SPITTER("Säurespucker", 14, 34, 26, 150, 0, 1, 0),
+
+    /** Schwarm: Zündmilbe, rennt heran und sprengt sich; besiegt reisst sie Nachbarn mit. */
+    FUSE("Zündmilbe", 9, 28, 22, 280, 0, 1, 0),
+
+    /** Schwarm: Prismaqualle, schwebt und entlässt Ringe aus Prismageschossen. */
+    PRISM("Prismaqualle", 22, 36, 40, 95, 0, 3, 0),
+
+    /** Schwarm: Speerfisch, zielt sichtbar und schiesst geradlinig durch den Raum. */
+    LANCER("Speerfisch", 16, 48, 20, 210, 0, 2, 0),
+
+    /** Schwarm: Panzerkrabbe, deren Schale Treffer von vorn fast ganz abfängt. */
+    CRAB("Panzerkrabbe", 30, 44, 30, 140, 0, 2, 0),
+
+    /** Brutnest: speit Milben, bis es zerstört ist; fällt das Nest, stirbt seine Brut. */
+    HIVE("Brutnest", 170, 58, 62, 0, 2, 1, 3),
+
+    /** Brutei der Brutmutter: schlüpft nach kurzer Zeit zu drei Rostmilben. */
+    EGG("Brutei", 28, 30, 30, 0, 0, 2, 0),
     WARDEN("Der Schottmeister", 600, 150, 170, 120, 0, 0, 35),
     REACTOR("Der Reaktorkern", 720, 170, 180, 60, 0, 1, 40),
     BROOD("Die Brutmutter", 820, 200, 150, 150, 0, 2, 45),
-    CAPTAIN("Der Lotse", 1100, 110, 160, 125, 0, 3, 60);
+    CAPTAIN("Der Lotse", 1100, 110, 160, 125, 0, 3, 60),
+
+    /** Endgegnerin ab dem zweiten Zyklus: Lichtlanzen, Prismenbolzen und Sonnentanz. */
+    EMPRESS("Die Prismenkaiserin", 450, 150, 170, 140, 0, 3, 80);
     final double health, width, height, speed;
     private final String title;
     private final int threat, minSector, salvage;
@@ -58,14 +82,28 @@ public enum EnemyKind {
      * @return {@code true} für Sektorwächter und den Lotsen
      */
     public boolean boss() {
-        return this == WARDEN || this == REACTOR || this == BROOD || this == CAPTAIN;
+        return this == WARDEN
+                || this == REACTOR
+                || this == BROOD
+                || this == CAPTAIN
+                || this == EMPRESS;
     }
 
     /**
      * @return {@code true} für Schwarmgegner, die in Horden nachströmen
      */
     public boolean swarm() {
-        return this == MITE || this == GLOWFISH || this == NANODRONE;
+        return switch (this) {
+            case MITE, GLOWFISH, NANODRONE, SPITTER, FUSE, PRISM, LANCER, CRAB -> true;
+            default -> false;
+        };
+    }
+
+    /**
+     * @return {@code true} für ortsfeste Arten, die weder Rückstoss noch Abstossung bewegt
+     */
+    public boolean stationary() {
+        return this == TURRET || this == HIVE || this == EGG;
     }
 
     /**
@@ -79,7 +117,10 @@ public enum EnemyKind {
                 || this == TURRET
                 || this == BROOD
                 || this == SEEKER
-                || this == SMUGGLER;
+                || this == SMUGGLER
+                || this == PRISM
+                || this == LANCER
+                || this == EMPRESS;
     }
 
     /**
@@ -140,6 +181,7 @@ public enum EnemyKind {
             case REACTOR -> .38;
             case BROOD -> .5;
             case CAPTAIN -> .3;
+            case EMPRESS -> .35;
             default -> 1;
         };
     }
@@ -167,10 +209,18 @@ public enum EnemyKind {
             case MITE -> Behaviors.MITE;
             case GLOWFISH -> Behaviors.GLOWFISH;
             case NANODRONE -> Behaviors.NANODRONE;
+            case SPITTER -> Behaviors.SPITTER;
+            case FUSE -> Behaviors.FUSE;
+            case PRISM -> Behaviors.PRISM;
+            case LANCER -> Behaviors.LANCER;
+            case CRAB -> Behaviors.CRAB;
+            case HIVE -> Behaviors.HIVE;
+            case EGG -> Behaviors.EGG;
             case WARDEN -> Behaviors.WARDEN;
             case REACTOR -> Behaviors.REACTOR;
             case BROOD -> Behaviors.BROOD;
             case CAPTAIN -> Behaviors.CAPTAIN;
+            case EMPRESS -> Behaviors.EMPRESS;
         };
     }
 }

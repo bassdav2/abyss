@@ -41,6 +41,7 @@ final class Rewards {
                             rewardOffers(
                                     room.condition() == RoomCondition.ALARM
                                                     || room.condition() == RoomCondition.BREACH
+                                                    || room.threat() != Threat.NONE
                                             ? Rarity.RARE
                                             : Rarity.COMMON);
             case ELITE -> offers = rewardOffers(Rarity.RARE);
@@ -56,11 +57,51 @@ final class Rewards {
         }
     }
 
+    /**
+     * @param p Figur
+     * @param evolution Entfesselung
+     * @return {@code true}, wenn Grundmodul ausgereizt und Partner installiert sind
+     */
+    static boolean evolvable(Player p, Item evolution) {
+        return evolution.evolution()
+                && p.stacks(evolution) == 0
+                && p.stacks(evolution.base()) >= evolution.base().maxStacks()
+                && p.stacks(evolution.partner()) > 0;
+    }
+
+    /**
+     * @return eine jetzt mögliche Entfesselung oder {@code null}
+     */
+    Item evolution() {
+        var p = run.player;
+        var ready = new ArrayList<Item>();
+        for (var item : Item.evolutions()) if (evolvable(p, item)) ready.add(item);
+        return ready.isEmpty() ? null : ready.get(run.rng.nextInt(ready.size()));
+    }
+
+    /**
+     * @return {@code true}, wenn ein Grenzbrecher angeboten werden soll: mehrere Module stehen an
+     *     ihrer Grenze
+     */
+    boolean limitBreakDue() {
+        var p = run.player;
+        if (p.stacks(Item.LIMIT_BREAK) >= Item.LIMIT_BREAK.maxStacks()) return false;
+        int capped = 0;
+        for (var entry : p.items.entrySet())
+            if (!entry.getKey().evolution()
+                    && entry.getKey().rarity() != Rarity.LEGENDARY
+                    && entry.getKey().rarity() != Rarity.CURSED
+                    && entry.getValue() >= p.maxStacks(entry.getKey())) capped++;
+        return capped >= 3 && run.rng.nextInt(100) < 30;
+    }
+
     private List<Offer> rewardOffers(Rarity minimum) {
         var player = run.player;
         int count = 3 + player.stacks(Item.COMPASS);
         var result = new ArrayList<Offer>();
-        for (var item : rollItems(count, minimum)) result.add(Offer.item(item, 0));
+        var evolution = minimum != Rarity.COMMON ? evolution() : null;
+        if (evolution != null) result.add(Offer.item(evolution, 0));
+        for (var item : rollItems(count - result.size(), minimum)) result.add(Offer.item(item, 0));
         if (minimum == Rarity.COMMON && !result.isEmpty() && run.rng.nextInt(100) < 22) {
             var weapons =
                     run.setup.weaponPool().stream()
@@ -135,7 +176,7 @@ final class Rewards {
         var player = run.player;
         var candidates = new ArrayList<Item>();
         for (var item : Item.lootable())
-            if (run.setup.itemPool().contains(item) && player.stacks(item) < item.maxStacks())
+            if (run.setup.itemPool().contains(item) && player.stacks(item) < player.maxStacks(item))
                 candidates.add(item);
         var result = new ArrayList<Item>();
         for (int i = 0; i < count && !candidates.isEmpty(); i++) {
@@ -214,9 +255,19 @@ final class Rewards {
     private boolean apply(Player p, Offer offer) {
         switch (offer.type()) {
             case ITEM -> {
-                if (p.stacks(offer.item()) >= offer.item().maxStacks()) return false;
-                p.install(offer.item());
-                run.emit(new GameEvent(GameEvent.Type.UPGRADE, p.x, p.y, 0, offer.item().title()));
+                var item = offer.item();
+                if (p.stacks(item) >= p.maxStacks(item)) return false;
+                if (item.evolution() && !evolvable(p, item)) return false;
+                p.install(item);
+                run.emit(
+                        new GameEvent(
+                                item.evolution()
+                                        ? GameEvent.Type.EVOLUTION
+                                        : GameEvent.Type.UPGRADE,
+                                p.x,
+                                p.y,
+                                0,
+                                item.title()));
             }
             case WEAPON -> {
                 p.weapon = offer.weapon();
@@ -317,7 +368,7 @@ final class Rewards {
     private void grantRandom(Rarity minimum, int count) {
         var player = run.player;
         for (var item : rollItems(count, minimum))
-            if (player.stacks(item) < item.maxStacks()) {
+            if (player.stacks(item) < player.maxStacks(item)) {
                 player.install(item);
                 run.emit(
                         new GameEvent(GameEvent.Type.UPGRADE, player.x, player.y, 0, item.title()));

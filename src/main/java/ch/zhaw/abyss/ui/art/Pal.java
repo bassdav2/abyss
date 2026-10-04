@@ -73,6 +73,68 @@ public final class Pal {
     public static final int PAPER = 0xFFD9D4C3;
     public static final int WHITE = 0xFFFFFFFF;
 
+    /** Schillerndes Rosa der Entfesselungen. */
+    public static final int MYTHIC = 0xFFFF8AE6;
+
+    /**
+     * Schillernde Regenbogenfarbe für Prismageschosse und die Prismenkaiserin.
+     *
+     * @param hue Farbton, wird auf 0 bis 1 gefaltet
+     * @param saturation Sättigung 0 bis 1
+     * @return helle, gesättigte Farbe
+     */
+    public static int prism(double hue, double saturation) {
+        double h = (hue % 1 + 1) % 1 * 6;
+        int sector = (int) h;
+        double f = h - sector;
+        double v = 1, p = 1 - saturation, q = 1 - saturation * f, t = 1 - saturation * (1 - f);
+        double r, g, b;
+        switch (sector) {
+            case 0 -> {
+                r = v;
+                g = t;
+                b = p;
+            }
+            case 1 -> {
+                r = q;
+                g = v;
+                b = p;
+            }
+            case 2 -> {
+                r = p;
+                g = v;
+                b = t;
+            }
+            case 3 -> {
+                r = p;
+                g = q;
+                b = v;
+            }
+            case 4 -> {
+                r = t;
+                g = p;
+                b = v;
+            }
+            default -> {
+                r = v;
+                g = p;
+                b = q;
+            }
+        }
+        return 0xFF000000
+                | (int) Math.round(r * 255) << 16
+                | (int) Math.round(g * 255) << 8
+                | (int) Math.round(b * 255);
+    }
+
+    /**
+     * @param hue Farbton 0 bis 1
+     * @return schillernde Farbe mittlerer Sättigung
+     */
+    public static int prism(double hue) {
+        return prism(hue, .62);
+    }
+
     /**
      * Hellt eine Farbe auf oder dunkelt sie ab.
      *

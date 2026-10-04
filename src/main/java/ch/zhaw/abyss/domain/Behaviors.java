@@ -23,10 +23,18 @@ final class Behaviors {
     static final EnemyBehavior MITE = new Mite();
     static final EnemyBehavior GLOWFISH = new Glowfish();
     static final EnemyBehavior NANODRONE = new Nanodrone();
+    static final EnemyBehavior SPITTER = new Spitter();
+    static final EnemyBehavior FUSE = new Fuse();
+    static final EnemyBehavior PRISM = new Prism();
+    static final EnemyBehavior LANCER = new Lancer();
+    static final EnemyBehavior CRAB = new Crab();
+    static final EnemyBehavior HIVE = new Hive();
+    static final EnemyBehavior EGG = new Egg();
     static final EnemyBehavior WARDEN = new WardenBrain();
     static final EnemyBehavior REACTOR = new ReactorBrain();
     static final EnemyBehavior BROOD = new BroodBrain();
     static final EnemyBehavior CAPTAIN = new CaptainBrain();
+    static final EnemyBehavior EMPRESS = new EmpressBrain();
 
     private Behaviors() {}
 
@@ -803,6 +811,337 @@ final class Behaviors {
         @Override
         double cooldown(Enemy e) {
             return 1.1 + (e.id % 5) * .22;
+        }
+    }
+
+    // --- Endgame-Schwärme: jede Art greift anders an -------------------------------------------
+
+    /** Säurespucker: hält Abstand und wirft Säureklumpen im hohen Bogen auf die Figur. */
+    static final class Spitter extends Brain {
+        static final double FLIGHT = .85, GRAVITY = 1500;
+
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            keepDistance(e, run, 250, 460 + (e.id % 5) * 30);
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.abs(dx(e, run)) < 640 && Math.abs(dy(e, run)) < 280;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .55;
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            double x0 = e.x + e.facing * 14, y0 = e.y - e.height * .7;
+            double vx = (run.player.x - x0) / FLIGHT;
+            double vy = (run.player.centerY() - y0 - GRAVITY * FLIGHT * FLIGHT / 2) / FLIGHT;
+            var glob =
+                    run.shoot(
+                            Projectile.Kind.GLOB,
+                            false,
+                            x0,
+                            y0,
+                            vx,
+                            vy,
+                            6 * run.enemyDamage(),
+                            9,
+                            3);
+            glob.gravity = GRAVITY;
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .5;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            return 2.2 + (e.id % 5) * .2;
+        }
+    }
+
+    /**
+     * Zündmilbe: rennt heran, glüht auf und sprengt sich. Wer sie vorher erwischt, löst ihre Ladung
+     * gegen die Nachbarn aus.
+     */
+    static final class Fuse extends Brain {
+        static final double BLAST = 95;
+
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            close(e, run, 20);
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.abs(dx(e, run)) < 70 && Math.abs(dy(e, run)) < 90;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .5;
+        }
+
+        @Override
+        Telegraph telegraph(Enemy e, GameRun run) {
+            return new Telegraph(Telegraph.Shape.CIRCLE, e.x, e.centerY(), BLAST, 0);
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            run.combat.explode(e.x, e.centerY(), BLAST, 13 * run.enemyDamage(), true, false, null);
+            // Selbstzerstörung zählt nicht als Abschuss.
+            e.health = 0;
+        }
+    }
+
+    /** Prismaqualle: schwebt über dem Kampf und entlässt Ringe aus Prismageschossen. */
+    static final class Prism extends Brain {
+        static final int RING = 8;
+
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            face(e, run);
+            double side = e.x < run.player.x ? -1 : 1;
+            double tx = run.player.x + side * (260 + (e.id % 4) * 45);
+            double ty =
+                    GameRun.FLOOR
+                            - 250
+                            - (e.id % 3) * 55
+                            + Math.sin(run.elapsed() * 1.4 + e.id) * 20;
+            flyTo(e, tx, ty, speed(e));
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.hypot(dx(e, run), run.player.centerY() - e.centerY()) < 680;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .9;
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            double offset = e.id * .37 + e.attacks * .39;
+            for (int k = 0; k < RING; k++) {
+                double angle = offset + k * Math.PI * 2 / RING;
+                var bolt =
+                        run.shoot(
+                                Projectile.Kind.PRISM,
+                                false,
+                                e.x,
+                                e.centerY(),
+                                Math.cos(angle) * 165,
+                                Math.sin(angle) * 165,
+                                7 * run.enemyDamage(),
+                                8,
+                                5.5);
+                bolt.hue = (k / (double) RING + run.elapsed() * .1) % 1;
+            }
+            run.emit(GameEvent.at(GameEvent.Type.SHOT, e.x, e.centerY()));
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .6;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            return 3.2 + (e.id % 4) * .35;
+        }
+    }
+
+    /** Speerfisch: zielt mit einer sichtbaren Linie und schiesst geradlinig durch den Raum. */
+    static final class Lancer extends Brain {
+        static final double SPEED = 950;
+
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            double side = e.x < run.player.x ? -1 : 1;
+            double tx = run.player.x + side * (540 + (e.id % 4) * 50);
+            double ty = run.player.centerY() + ((e.id % 3) - 1) * 90;
+            flyTo(e, tx, Math.min(GameRun.FLOOR - 30, ty), speed(e));
+            face(e, run);
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.hypot(dx(e, run), run.player.centerY() - e.centerY()) < 820;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .75;
+        }
+
+        @Override
+        Telegraph telegraph(Enemy e, GameRun run) {
+            double angle = Math.atan2(e.targetY - e.centerY(), e.targetX - e.x);
+            return new Telegraph(
+                    Telegraph.Shape.AIM,
+                    e.x,
+                    e.centerY(),
+                    e.x + Math.cos(angle) * 700,
+                    e.centerY() + Math.sin(angle) * 700);
+        }
+
+        @Override
+        double strikeTime(Enemy e) {
+            return .75;
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            double angle = Math.atan2(e.targetY - e.centerY(), e.targetX - e.x);
+            e.vx = Math.cos(angle) * SPEED;
+            e.vy = Math.sin(angle) * SPEED;
+            e.facing = e.vx >= 0 ? 1 : -1;
+        }
+
+        @Override
+        void strike(Enemy e, GameRun run, double dt) {
+            contact(e, run, 9);
+        }
+
+        @Override
+        void strikeEnd(Enemy e, GameRun run) {
+            e.vx *= .2;
+            e.vy *= .2;
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .9;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            return 1.8 + (e.id % 4) * .3;
+        }
+    }
+
+    /** Panzerkrabbe: kneift im Nahkampf; ihre Schale fängt Treffer von vorn fast ganz ab. */
+    static final class Crab extends Brain {
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            close(e, run, 55);
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return Math.abs(dx(e, run)) < 85 && Math.abs(dy(e, run)) < 70;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .45;
+        }
+
+        @Override
+        double strikeTime(Enemy e) {
+            return .2;
+        }
+
+        @Override
+        void strike(Enemy e, GameRun run, double dt) {
+            melee(e, run, 80, 60, 9);
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .55;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            return .7 + (e.id % 3) * .1;
+        }
+    }
+
+    /** Brutnest: speit im Takt Milben aus, bis es zerstört ist. */
+    static final class Hive extends Brain {
+        @Override
+        void idle(Enemy e, GameRun run, double dt) {
+            e.vx = 0;
+        }
+
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {
+            face(e, run);
+        }
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            if (minions(e, run) < run.hiveBrood()) return true;
+            e.actionCooldown = .6;
+            return false;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return .9;
+        }
+
+        @Override
+        void strikeStart(Enemy e, GameRun run) {
+            var kind = run.escalation() > 0 && e.attacks % 3 == 2 ? EnemyKind.FUSE : EnemyKind.MITE;
+            double side = e.attacks % 2 == 0 ? -1 : 1;
+            run.summon(kind, e.x + side * 40, GameRun.FLOOR, e);
+            run.emit(new GameEvent(GameEvent.Type.SPAWN, e.x, e.y - 20, kind.ordinal(), "vent"));
+        }
+
+        @Override
+        double recoverTime(Enemy e) {
+            return .4;
+        }
+
+        @Override
+        double cooldown(Enemy e) {
+            // aux hält die Eskalation beim Erscheinen: tiefe Nester brüten schneller.
+            return e.aux > 10 ? 1.5 : 2.2;
+        }
+
+        @Override
+        void spawned(Enemy e, GameRun run) {
+            e.aux = run.escalation();
+        }
+    }
+
+    /** Brutei: liegt am Boden und schlüpft nach kurzer Zeit zu drei Rostmilben. */
+    static final class Egg extends Brain {
+        @Override
+        void approach(Enemy e, GameRun run, double dt) {}
+
+        @Override
+        boolean ready(Enemy e, GameRun run) {
+            return false;
+        }
+
+        @Override
+        double windupTime(Enemy e) {
+            return 1;
+        }
+
+        @Override
+        void spawned(Enemy e, GameRun run) {
+            Enemy mother = null;
+            for (var other : run.enemies)
+                if (other.id == e.parentId && other.alive()) mother = other;
+            var parent = mother != null ? mother : e;
+            for (int i = -1; i <= 1; i++)
+                run.summon(EnemyKind.MITE, e.x + i * 26, GameRun.FLOOR, parent);
+            run.emit(
+                    new GameEvent(
+                            GameEvent.Type.SPAWN, e.x, e.y, EnemyKind.EGG.ordinal(), "hatch"));
+            e.escaped = true;
         }
     }
 }

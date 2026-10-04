@@ -33,6 +33,11 @@ public final class Player extends Actor {
     /** Taktgeber für Teslafeld und Druckwellenkern. */
     double teslaTime;
 
+    /**
+     * Taktgeber der Entfesselungen: Raketenschwarm, Nullpunkt, Klingensturm, Todesblick, Bollwerk.
+     */
+    double missileTime, frostTime, stormTime, deathEyeTime, bastionTime;
+
     int novaKills;
 
     /** Klingenwelle dieses Schlags bereits ausgelöst. */
@@ -111,7 +116,7 @@ public final class Player extends Actor {
      */
     void install(Item item) {
         int current = stacks(item);
-        if (current >= item.maxStacks())
+        if (current >= maxStacks(item))
             throw new IllegalStateException("Modul bereits auf Höchststufe");
         items.put(item, current + 1);
         recompute();
@@ -267,6 +272,27 @@ public final class Player extends Actor {
      */
     public int stacks(Item item) {
         return items.getOrDefault(item, 0);
+    }
+
+    /**
+     * Höchststufe eines Moduls in diesem Tauchgang; Grenzbrecher heben sie für Standard- und
+     * Seltenmodule.
+     *
+     * @param item Modul
+     * @return erlaubte Höchststufe
+     */
+    public int maxStacks(Item item) {
+        return maxStacks(item, stacks(Item.LIMIT_BREAK));
+    }
+
+    /**
+     * @param item Modul
+     * @param breaks installierte Grenzbrecher
+     * @return erlaubte Höchststufe
+     */
+    static int maxStacks(Item item, int breaks) {
+        boolean breakable = item.rarity() == Rarity.COMMON || item.rarity() == Rarity.RARE;
+        return item.maxStacks() + (breakable ? 2 * breaks : 0);
     }
 
     /**

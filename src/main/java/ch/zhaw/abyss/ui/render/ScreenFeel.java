@@ -8,6 +8,10 @@ import ch.zhaw.abyss.ui.art.Pal;
  */
 final class ScreenFeel {
     double flash, aberration, hitStop, slowMotion, dashGhost;
+
+    /** Laufende Zeit für schillernde Farben. */
+    double time;
+
     int flashColor = Pal.WHITE;
 
     /**
@@ -16,6 +20,7 @@ final class ScreenFeel {
      * @param dt Sekunden
      */
     void update(double dt) {
+        time += dt;
         flash = Math.max(0, flash - dt * 2.2);
         aberration = Math.max(0, aberration - dt);
         slowMotion = Math.max(0, slowMotion - dt);

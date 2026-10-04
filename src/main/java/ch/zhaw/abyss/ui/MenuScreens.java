@@ -1,10 +1,12 @@
 package ch.zhaw.abyss.ui;
 
 import ch.zhaw.abyss.application.Achievement;
+import ch.zhaw.abyss.application.Career;
 import ch.zhaw.abyss.application.Cosmetics;
 import ch.zhaw.abyss.application.GameService;
 import ch.zhaw.abyss.application.Loadout;
 import ch.zhaw.abyss.application.Settings;
+import ch.zhaw.abyss.application.SkillTree;
 import ch.zhaw.abyss.application.Unlock;
 import ch.zhaw.abyss.domain.ActiveModule;
 import ch.zhaw.abyss.domain.DiverClass;
@@ -49,6 +51,8 @@ final class MenuScreens {
     private Settings draft;
     private String seed = "";
     private int archiveTab, archivePage;
+    private int careerTab;
+    private String careerNode;
 
     MenuScreens(Navigator nav) {
         this.nav = nav;
@@ -102,8 +106,17 @@ final class MenuScreens {
             nav.wardrobe();
         if (g.button("settings", x + 3 * (w + gap), y, w, 18, "OPTIONEN", Tone.STEEL, true))
             nav.settings(false);
-        if (g.button("help", 170, 228, 66, 12, "STEUERUNG", Tone.QUIET, true)) nav.help(false);
-        if (g.button("quit", 244, 228, 66, 12, "BEENDEN", Tone.QUIET, true)) nav.quit();
+        if (g.button(
+                "career",
+                136,
+                226,
+                90,
+                14,
+                "LAUFBAHN · R" + profile.career().rank(),
+                Tone.VIOLET,
+                true)) nav.career();
+        if (g.button("help", 232, 228, 60, 12, "STEUERUNG", Tone.QUIET, true)) nav.help(false);
+        if (g.button("quit", 296, 228, 50, 12, "BEENDEN", Tone.QUIET, true)) nav.quit();
         g.center(
                 240,
                 252,
@@ -118,7 +131,204 @@ final class MenuScreens {
                         + "/"
                         + RoomGenerator.ROOM_COUNT,
                 Gui.DIM);
-        g.right(474, 260, "V1.1", 0xFF3A4654);
+        g.right(474, 260, "V1.4", 0xFF3A4654);
+    }
+
+    // --- Laufbahn: Ränge, Skill-Bäume, Waffenmeisterschaft ---------------------------------------
+
+    /**
+     * Öffnet die Laufbahn, auf Wunsch direkt im Baum der zuletzt getauchten Klasse.
+     *
+     * @param tab Reiter: Bäume in Aufzählungsreihenfolge, danach die Waffenmeisterschaft
+     */
+    void openCareer(int tab) {
+        careerTab = Math.max(0, Math.min(SkillTree.values().length, tab));
+        careerNode = null;
+    }
+
+    void career(Gui g) {
+        var service = nav.service();
+        var profile = service.profile();
+        var career = profile.career();
+        var trees = SkillTree.values();
+        g.header(
+                "LAUFBAHN",
+                "RANG " + career.rank() + " · " + career.points(SkillTree.DEPTH) + " PUNKTE FREI",
+                Tone.VIOLET);
+        var f = g.frame();
+        // Rangleiste unten rechts
+        int barX = 250, barW = 150;
+        g.text(barX - 44, 253, "RANG " + career.rank(), Pal.VIOLET_5);
+        f.fill(barX, 254, barW, 5, Pal.OUTLINE);
+        f.fill(
+                barX + 1,
+                255,
+                (int) Math.round((barW - 2) * Career.rankProgress(career.xp())),
+                3,
+                Pal.VIOLET_4);
+        g.right(472, 253, career.xp() + " EP", Pal.VIOLET_5);
+        int tabW = 50, gap = 3;
+        for (int i = 0; i <= trees.length; i++) {
+            boolean weapons = i == trees.length;
+            String label = weapons ? "WAFFEN" : trees[i].tab();
+            boolean open = weapons || trees[i].open(profile);
+            boolean active = i == careerTab;
+            if (g.button(
+                    "ctab." + i,
+                    3 + i * (tabW + gap),
+                    33,
+                    tabW,
+                    14,
+                    open ? label : "× " + label,
+                    active ? Tone.VIOLET : open ? Tone.STEEL : Tone.QUIET,
+                    true)) {
+                careerTab = i;
+                careerNode = null;
+            }
+        }
+        g.prefer("ctab." + careerTab);
+        if (g.button("back", 8, 250, 70, 14, "← ZURÜCK", Tone.QUIET, true)) nav.title();
+        if (careerTab == trees.length) {
+            masteries(g, career);
+            return;
+        }
+        tree(g, profile, trees[careerTab]);
+    }
+
+    private void tree(Gui g, ch.zhaw.abyss.application.Profile profile, SkillTree tree) {
+        var service = nav.service();
+        var career = profile.career();
+        var f = g.frame();
+        boolean open = tree.open(profile);
+        g.panel(4, 50, 472, 146);
+        var nodes = tree.nodes();
+        int w = 72, h = 34;
+        java.util.function.IntUnaryOperator nx = c -> 12 + c * 77;
+        java.util.function.IntUnaryOperator ny = r -> 58 + r * 45;
+        // Verbindungen zuerst, damit Karten darüber liegen
+        for (var node : nodes)
+            for (String id : node.requires()) {
+                var from = SkillTree.SkillNode.find(id).orElseThrow();
+                int x0 = nx.applyAsInt(from.column()) + w, y0 = ny.applyAsInt(from.row()) + h / 2;
+                int x1 = nx.applyAsInt(node.column()), y1 = ny.applyAsInt(node.row()) + h / 2;
+                int color =
+                        career.nodes().contains(id)
+                                ? career.nodes().contains(node.id()) ? Pal.TEAL_5 : Pal.VIOLET_4
+                                : 0xFF3A4654;
+                int mid = (x0 + x1) / 2;
+                f.line(x0, y0, mid, y0, color);
+                f.line(mid, y0, mid, y1, color);
+                f.line(mid, y1, x1, y1, color);
+            }
+        SkillTree.SkillNode shown = null;
+        for (var node : nodes) {
+            int x = nx.applyAsInt(node.column()), y = ny.applyAsInt(node.row());
+            boolean owned = career.nodes().contains(node.id());
+            boolean buyable = career.canBuy(node, profile);
+            boolean reachable = open && career.reachable(node);
+            int accent =
+                    owned
+                            ? Pal.TEAL_5
+                            : buyable ? Pal.VIOLET_4 : reachable ? Pal.STEEL_5 : 0xFF3A4654;
+            String id = "node." + node.id();
+            if (g.card(id, x, y, w, h, accent, true)) careerNode = node.id();
+            if (g.focused(id) && careerNode == null) shown = node;
+            if (node.id().equals(careerNode)) shown = node;
+            if (node.weapon() != null)
+                g.icon(IconArt.weapon(node.weapon()), x + w - 19, y + h - 18, 1);
+            g.wrap(
+                    x + 4,
+                    y + 3,
+                    w - 8,
+                    node.title().toUpperCase(),
+                    owned ? Gui.TEXT : reachable ? Gui.MUTED : Gui.DIM,
+                    2);
+            g.text(
+                    x + 4,
+                    y + h - 10,
+                    owned ? "AKTIV" : node.cost() + " P",
+                    owned ? Pal.TEAL_5 : buyable ? Pal.VIOLET_5 : Gui.DIM);
+        }
+        if (shown == null && !nodes.isEmpty()) shown = nodes.getFirst();
+        g.screen(4, 200, 472, 46, Tone.VIOLET);
+        String points =
+                tree.classTree()
+                        ? tree.diver().title().toUpperCase()
+                                + " · RANG "
+                                + career.rank(tree.diver())
+                                + " · "
+                                + career.points(tree)
+                                + " P"
+                        : "KONTO · RANG " + career.rank() + " · " + career.points(tree) + " P";
+        g.right(470, 204, points, Pal.VIOLET_5);
+        if (!open) {
+            g.big(12, 206, "GESPERRT", Pal.RED_4, 1);
+            g.text(12, 222, tree.requirement(), Gui.MUTED);
+            return;
+        }
+        if (shown == null) return;
+        g.big(12, 205, shown.title().toUpperCase(), Gui.TEXT, 1);
+        g.wrap(12, 219, 300, shown.effect(), Pal.RUST_6, 2);
+        if (!shown.requires().isEmpty() && !career.reachable(shown)) {
+            var names = new ArrayList<String>();
+            for (String id : shown.requires())
+                if (!career.nodes().contains(id))
+                    names.add(SkillTree.SkillNode.find(id).orElseThrow().title());
+            g.text(12, 236, "Benötigt: " + String.join(", ", names), Gui.DIM);
+        }
+        boolean owned = career.nodes().contains(shown.id());
+        boolean buyable = career.canBuy(shown, profile);
+        String label = owned ? "AKTIV" : "FREISCHALTEN · " + shown.cost() + " P";
+        if (g.button("buy", 340, 224, 130, 18, label, Tone.VIOLET, buyable && !owned)) {
+            if (service.purchase(shown)) {
+                nav.toast(
+                        shown.weapon() != null
+                                ? shown.weapon().title()
+                                        + " freigeschaltet · in der Schleuse wählbar"
+                                : shown.title() + " freigeschaltet");
+            } else nav.toast("Nicht genug Punkte");
+        }
+    }
+
+    private void masteries(Gui g, Career career) {
+        var profile = nav.service().profile();
+        var f = g.frame();
+        g.panel(4, 50, 472, 196);
+        var weapons = Weapon.values();
+        for (int i = 0; i < weapons.length; i++) {
+            var weapon = weapons[i];
+            int col = i % 2, row = i / 2;
+            int x = 10 + col * 234, y = 56 + row * 37;
+            boolean owned = profile.owns(weapon);
+            int level = career.mastery(weapon);
+            g.icon(IconArt.weapon(weapon), x, y + 4, 1);
+            g.text(x + 20, y + 2, weapon.title().toUpperCase(), owned ? Gui.TEXT : Gui.DIM);
+            g.right(
+                    x + 224,
+                    y + 2,
+                    "STUFE " + level + "/10",
+                    level >= 10 ? Pal.RUST_6 : Pal.VIOLET_5);
+            f.fill(x + 20, y + 13, 204, 4, Pal.OUTLINE);
+            f.fill(
+                    x + 21,
+                    y + 14,
+                    (int) Math.round(202 * career.masteryProgress(weapon)),
+                    2,
+                    Pal.VIOLET_4);
+            String note =
+                    owned
+                            ? "+"
+                                    + (4 * level)
+                                    + " % Schaden"
+                                    + (level >= 5
+                                            ? ", +" + (level >= 10 ? 10 : 5) + " % Kritik"
+                                            : "")
+                            : weapon.career()
+                                    ? "Laufbahn: Endknoten eines Klassenbaums"
+                                    : "Archiv: für Datenkerne";
+            g.text(x + 20, y + 21, note, owned ? Gui.MUTED : Gui.DIM);
+        }
+        g.text(84, 244, "Abschüsse mit einer Waffe steigern ihre Meisterschaft.", 0xFF3A4654);
     }
 
     // --- Schleuse: Vorbereitung ------------------------------------------------------------------
@@ -537,7 +747,7 @@ final class MenuScreens {
         Item shown = null;
         for (int i = 0; i < items.length; i++) {
             var item = items[i];
-            int x = 106 + (i % 12) * 20, y = 52 + (i / 12) * 20;
+            int x = 106 + (i % 18) * 20, y = 52 + (i / 18) * 20;
             boolean known = profile.discovered().contains(item);
             String id = "item." + item.name();
             g.card(id, x, y, 18, 18, known ? rarityColor(item.rarity()) : Pal.STEEL_3, true);
@@ -564,7 +774,14 @@ final class MenuScreens {
         g.text(
                 152,
                 160,
-                shown.rarity().title().toUpperCase() + "  ·  BIS STUFE " + shown.maxStacks(),
+                shown.evolution()
+                        ? "ENTFESSELT  ·  AUS "
+                                + shown.base().title().toUpperCase()
+                                + " + "
+                                + shown.partner().title().toUpperCase()
+                        : shown.rarity().title().toUpperCase()
+                                + "  ·  BIS STUFE "
+                                + shown.maxStacks(),
                 rarityColor(shown.rarity()));
         g.wrap(114, 184, 352, shown.effect().replace('\n', ' '), Pal.RUST_6, 2);
         g.wrap(114, 208, 352, shown.description(), Gui.MUTED, 3);
@@ -589,14 +806,15 @@ final class MenuScreens {
         for (int i = 0; i < entries.length; i++) {
             var entry = entries[i];
             boolean done = earned.contains(entry);
-            int x = 106 + (i / 12) * 186, y = 50 + (i % 12) * 12;
+            // Zwei Spalten zu je sechzehn Zeilen passen über das Detailfeld.
+            int x = 106 + (i / 16) * 186, y = 49 + (i % 16) * 9;
             String id = "feat." + entry.name();
-            g.target(id, x, y - 1, 182, 11);
+            g.target(id, x, y - 1, 182, 9);
             if (g.focused(id) || shown == null) shown = entry;
             boolean focused = g.focused(id);
-            if (focused) f.fill(x, y - 1, 182, 11, 0x40F5C45E);
-            f.fill(x + 1, y + 1, 6, 6, done ? Pal.GREEN_4 : 0xFF1A232C);
-            f.rect(x, y, 8, 8, done ? Pal.GREEN_2 : Pal.STEEL_3);
+            if (focused) f.fill(x, y - 1, 182, 9, 0x40F5C45E);
+            f.fill(x + 1, y + 1, 5, 5, done ? Pal.GREEN_4 : 0xFF1A232C);
+            f.rect(x, y, 7, 7, done ? Pal.GREEN_2 : Pal.STEEL_3);
             g.text(x + 12, y, entry.title(), done ? Gui.TEXT : focused ? Gui.TEXT : Gui.MUTED);
         }
         g.screen(106, 200, 368, 56, Tone.TEAL);
@@ -637,6 +855,7 @@ final class MenuScreens {
             case RARE -> Pal.TEAL_5;
             case LEGENDARY -> Pal.RUST_6;
             case CURSED -> Pal.VIOLET_4;
+            case MYTHIC -> Pal.MYTHIC;
         };
     }
 

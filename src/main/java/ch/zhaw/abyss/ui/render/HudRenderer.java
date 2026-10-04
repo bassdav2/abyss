@@ -5,6 +5,7 @@ import ch.zhaw.abyss.domain.Item;
 import ch.zhaw.abyss.domain.RoomCondition;
 import ch.zhaw.abyss.domain.RoomGenerator;
 import ch.zhaw.abyss.domain.RoomPlan;
+import ch.zhaw.abyss.domain.Threat;
 import ch.zhaw.abyss.domain.Weapon;
 import ch.zhaw.abyss.ui.art.IconArt;
 import ch.zhaw.abyss.ui.art.Pal;
@@ -231,6 +232,15 @@ public final class HudRenderer {
         font.drawShadow(f, "/" + RoomGenerator.ROOM_COUNT, 412, 13, MUTED, SHADOW, 1);
         String cycle = "Z" + (run.cycle() + 1) + (run.pressure() > 0 ? " D" + run.pressure() : "");
         font.drawShadow(f, cycle, 388, 22, run.pressure() > 0 ? Pal.RED_4 : MUTED, SHADOW, 1);
+        if (run.escalation() > 0)
+            font.drawShadow(
+                    f,
+                    "E" + run.escalation(),
+                    388 + font.width(cycle) + 4,
+                    22,
+                    Pal.prism(time * .2, .45),
+                    SHADOW,
+                    1);
         f.draw(IconArt.misc("scrap"), 441, 11, false);
         font.drawShadow(
                 f,
@@ -269,6 +279,16 @@ public final class HudRenderer {
             if (swarm > 0)
                 font.drawCentered(
                         f, "SCHWARM " + swarm, 240, breach > 0 ? 20 : 15, Pal.RED_4, SHADOW, 1);
+            var threat = run.room().threat();
+            if (threat != Threat.NONE)
+                font.drawCentered(
+                        f,
+                        "BEDROHUNG · " + threat.title().toUpperCase(),
+                        240,
+                        breach > 0 ? 30 : 25,
+                        ((int) (time * 2)) % 2 == 0 ? Pal.RED_4 : Pal.RUST_6,
+                        SHADOW,
+                        1);
         }
 
         // Waffe, Modul und Ausweichen unten links

@@ -30,6 +30,7 @@ import java.util.Set;
  * @param cosmetics gewähltes Aussehen
  * @param loadout letzte Vorbereitung
  * @param settings Einstellungen
+ * @param career dauerhafte Laufbahn mit Rängen, Meisterschaft und Skill-Bäumen
  */
 public record Profile(
         int runs,
@@ -44,10 +45,12 @@ public record Profile(
         Set<Achievement> achievements,
         Cosmetics cosmetics,
         Loadout loadout,
-        Settings settings) {
+        Settings settings,
+        Career career) {
 
     /** Prüft Wertebereiche und kopiert Mengen. */
     public Profile {
+        if (career == null) career = Career.NEW;
         unlocks = Set.copyOf(unlocks);
         discovered = discovered.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(discovered));
         achievements = achievements.isEmpty() ? Set.of() : Set.copyOf(EnumSet.copyOf(achievements));
@@ -82,7 +85,8 @@ public record Profile(
                 Set.of(),
                 Cosmetics.DEFAULT,
                 Loadout.DEFAULT,
-                Settings.DEFAULT);
+                Settings.DEFAULT,
+                Career.NEW);
     }
 
     /**
@@ -106,7 +110,12 @@ public record Profile(
      * @return {@code true}, wenn als Startwaffe und in Waffenkisten verfügbar
      */
     public boolean owns(Weapon weapon) {
-        return weapon.startsUnlocked() || unlocks.contains(Unlock.of(weapon));
+        return weapon.startsUnlocked()
+                || unlocks.contains(Unlock.of(weapon))
+                || career.nodes().stream()
+                        .map(SkillTree.SkillNode::find)
+                        .flatMap(java.util.Optional::stream)
+                        .anyMatch(node -> node.weapon() == weapon);
     }
 
     /**
@@ -182,23 +191,11 @@ public record Profile(
     }
 
     /**
-     * @return Verstärkungen aus dem Tiefenbaum für jeden Tauchgang
+     * @param diver tauchende Klasse
+     * @return Verstärkungen aus Laufbahn und Waffenmeisterschaft für einen Tauchgang
      */
-    public MetaBonus meta() {
-        return new MetaBonus(
-                1 + .08 * ranks("perk:dmg", 5),
-                1 + .06 * ranks("perk:spd", 3),
-                1 + .08 * ranks("perk:area", 3),
-                1 + .12 * ranks("perk:xp", 3),
-                1 + .25 * ranks("perk:mag", 2),
-                .04 * ranks("perk:crit", 2),
-                unlocks.contains("perk:choice") ? 1 : 0);
-    }
-
-    private int ranks(String prefix, int max) {
-        int ranks = 0;
-        for (int i = 1; i <= max; i++) if (unlocks.contains(prefix + i)) ranks++;
-        return ranks;
+    public MetaBonus meta(DiverClass diver) {
+        return career.bonus(diver);
     }
 
     /**
@@ -225,8 +222,10 @@ public record Profile(
         Cosmetics cosmetics;
         Loadout loadout;
         Settings settings;
+        Career career;
 
         private Builder(Profile p) {
+            career = p.career;
             runs = p.runs;
             wins = p.wins;
             bestRoom = p.bestRoom;
@@ -263,7 +262,8 @@ public record Profile(
                     achievements,
                     cosmetics,
                     loadout,
-                    settings);
+                    settings,
+                    career);
         }
     }
 }

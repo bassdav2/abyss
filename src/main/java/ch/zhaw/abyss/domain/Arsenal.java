@@ -139,10 +139,12 @@ final class Arsenal {
     private void bladeWaves(Swing swing, int direction) {
         var p = run.player;
         int stacks = p.stacks(Item.BLADE_WAVE);
-        int count = 1 + p.stats.extraProjectiles();
+        boolean tempest = p.stacks(Item.TEMPEST) > 0;
+        // Klingenorkan: ein breiter Fächer aus durchschlagenden Klingen.
+        int count = 1 + p.stats.extraProjectiles() + (tempest ? 4 : 0);
         double area = p.stats.area();
         for (int i = 0; i < count; i++) {
-            double spread = (i - (count - 1) / 2.0) * .14;
+            double spread = (i - (count - 1) / 2.0) * (tempest ? .2 : .14);
             var blade =
                     run.shoot(
                             Projectile.Kind.BLADE,
@@ -154,7 +156,7 @@ final class Arsenal {
                             swing.damage() * (.4 + .1 * (stacks - 1)),
                             26 * area,
                             .5 + .06 * stacks);
-            blade.pierce = 2 + stacks;
+            blade.pierce = tempest ? Integer.MAX_VALUE : 2 + stacks;
             blade.knockback = swing.knockback() * .4;
         }
     }
@@ -173,6 +175,9 @@ final class Arsenal {
                             p.y - height + 40,
                             reach + 30,
                             height);
+        else if (p.weapon == Weapon.SCYTHE && p.swingIndex == 2)
+            // Sensenschwung rundherum: trifft vor und hinter der Figur
+            zone = new Bounds(p.x - reach, p.y - height - 4, reach * 2, height);
         else
             zone =
                     new Bounds(
@@ -243,6 +248,10 @@ final class Arsenal {
         double originX = p.x + p.facing * 40, originY = p.y - 62;
         double aim = aimAssist(originX, originY);
         int count = 1 + p.stats.extraProjectiles();
+        if (p.weapon == Weapon.PLASMA) {
+            firePlasma(swing, originX, originY, aim, count);
+            return;
+        }
         for (int i = 0; i < count; i++) {
             double angle = aim + (i - (count - 1) / 2.0) * .12;
             var harpoon =
@@ -286,6 +295,30 @@ final class Arsenal {
         }
         if (best == null) return 0;
         return Math.atan2(best.centerY() - originY, (best.x - originX) * p.facing);
+    }
+
+    /** Plasmakugeln: explodieren beim Aufprall, die dritte Ladung besonders gross. */
+    private void firePlasma(Swing swing, double originX, double originY, double aim, int count) {
+        var p = run.player;
+        boolean heavy = p.swingIndex == 2;
+        for (int i = 0; i < count; i++) {
+            double angle = aim + (i - (count - 1) / 2.0) * .12;
+            var plasma =
+                    run.shoot(
+                            Projectile.Kind.PLASMA,
+                            true,
+                            originX,
+                            originY,
+                            p.facing * Math.cos(angle) * 880,
+                            Math.sin(angle) * 880,
+                            swing.damage(),
+                            heavy ? 18 : 12,
+                            1.2);
+            plasma.explosionRadius = (heavy ? 150 : 85) * p.stats.area();
+            plasma.homing = p.stacks(Item.HOMING) > 0;
+        }
+        p.lungeVelocity = p.facing * swing.lunge() * 11;
+        run.emit(GameEvent.at(GameEvent.Type.SHOT, originX, originY));
     }
 
     private void useAbility() {
@@ -417,7 +450,19 @@ final class Arsenal {
      * @return Bahnradius der Kreiselmesser
      */
     static double orbitRadius(Player p) {
-        return (95 + 10 * p.stacks(Item.ORBITAL)) * p.stats.area();
+        return (95 + 10 * Math.min(12, orbitalCount(p))) * p.stats.area();
+    }
+
+    /**
+     * @param p Figur
+     * @return Kreiselmesser aus Modulen und Laufbahn
+     */
+    static int orbitalCount(Player p) {
+        return p.stacks(Item.ORBITAL) + p.meta.orbitals() + (storm(p) ? 6 : 0);
+    }
+
+    private static boolean storm(Player p) {
+        return p.stacks(Item.STORM_BLADES) > 0;
     }
 
     /**
@@ -428,13 +473,21 @@ final class Arsenal {
      */
     double[] orbitals(double time) {
         var p = run.player;
-        int count = p.stacks(Item.ORBITAL);
+        int count = orbitalCount(p);
         var result = new double[count * 2];
         double radius = orbitRadius(p);
+        // Klingensturm: ein zweiter, weiterer Ring dreht gegenläufig.
+        int inner = storm(p) ? (count + 1) / 2 : count;
         for (int i = 0; i < count; i++) {
-            double angle = time * ORBIT_SPEED + i * Math.PI * 2 / count;
-            result[i * 2] = p.x + Math.cos(angle) * radius;
-            result[i * 2 + 1] = p.centerY() + Math.sin(angle) * radius * .7;
+            boolean outer = i >= inner;
+            int ring = outer ? count - inner : inner;
+            int slot = outer ? i - inner : i;
+            double angle =
+                    time * ORBIT_SPEED * (outer ? -1.25 : 1)
+                            + slot * Math.PI * 2 / Math.max(1, ring);
+            double r = radius * (outer ? 1.6 : 1);
+            result[i * 2] = p.x + Math.cos(angle) * r;
+            result[i * 2 + 1] = p.centerY() + Math.sin(angle) * r * .7;
         }
         return result;
     }
@@ -453,7 +506,7 @@ final class Arsenal {
                 p.frenzyTime = .5;
             }
         }
-        int orbitals = p.stacks(Item.ORBITAL);
+        int orbitals = orbitalCount(p);
         if (orbitals > 0) {
             var blades = orbitals(run.elapsed());
             double reach = 34 * p.stats.area();
@@ -466,24 +519,101 @@ final class Arsenal {
                     double last = p.orbitHits.getOrDefault(e.id, -9.0);
                     if (run.elapsed() - last < .35) continue;
                     p.orbitHits.put(e.id, run.elapsed());
-                    run.combat.hitEnemy(e, 12, Combat.Source.ORBIT, 140, p.x);
+                    run.combat.hitEnemy(e, storm(p) ? 36 : 12, Combat.Source.ORBIT, 140, p.x);
                 }
             }
-            if (p.orbitHits.size() > 600) p.orbitHits.clear();
+            if (p.orbitHits.size() > 2400) p.orbitHits.clear();
+            if (storm(p)) {
+                p.stormTime -= dt;
+                if (p.stormTime <= 0) {
+                    p.stormTime = .9;
+                    for (int i = 0; i < blades.length; i += 4) fling(blades[i], blades[i + 1]);
+                }
+            }
+        }
+        if (p.stacks(Item.MISSILE_SWARM) > 0) {
+            p.missileTime -= dt;
+            if (p.missileTime <= 0) {
+                p.missileTime = 1.2;
+                missiles(p);
+            }
+        }
+        if (p.stacks(Item.ABSOLUTE_ZERO) > 0) {
+            p.frostTime -= dt;
+            if (p.frostTime <= 0) {
+                p.frostTime = 3;
+                double radius = 420 * p.stats.area();
+                run.combat.explode(
+                        p.x,
+                        p.centerY(),
+                        radius,
+                        40,
+                        false,
+                        true,
+                        Status.FREEZE,
+                        Combat.Source.ABILITY);
+            }
         }
         int tesla = p.stacks(Item.TESLA_FIELD);
         if (tesla > 0) {
+            boolean thunder = p.stacks(Item.THUNDERHEAD) > 0;
             p.teslaTime -= dt;
             if (p.teslaTime <= 0) {
-                p.teslaTime = 1.2 * Math.pow(.9, tesla - 1);
-                var targets = run.grid().nearest(p.x, p.centerY(), 340 * p.stats.area(), 1 + tesla);
+                p.teslaTime = thunder ? .4 : 1.2 * Math.pow(.9, tesla - 1);
+                double range = 340 * p.stats.area() * (thunder ? 1.5 : 1);
+                var targets = run.grid().nearest(p.x, p.centerY(), range, thunder ? 8 : 1 + tesla);
+                double damage = (14 + 3 * tesla) * (thunder ? 2.5 : 1);
                 for (var e : targets) {
-                    run.emit(
-                            GameEvent.link(
-                                    GameEvent.Type.CHAIN, p.x, p.centerY() - 20, e.x, e.centerY()));
-                    run.combat.hitEnemy(e, 14 + 3 * tesla, Combat.Source.CHAIN, 40, p.x);
+                    // Gewitterkern: der Blitz fällt von der Decke und springt weiter.
+                    double fromX = thunder ? e.x + (e.id % 7 - 3) * 12 : p.x;
+                    double fromY = thunder ? 30 : p.centerY() - 20;
+                    run.emit(GameEvent.link(GameEvent.Type.CHAIN, fromX, fromY, e.x, e.centerY()));
+                    run.combat.hitEnemy(e, damage, Combat.Source.CHAIN, 40, p.x);
+                    if (thunder && e.alive()) run.combat.chain(e, damage * .6, 300, 3);
                 }
             }
         }
+    }
+
+    /** Klingensturm: eine Kreiselklinge löst sich und fliegt nach aussen. */
+    private void fling(double bx, double by) {
+        var p = run.player;
+        double angle = Math.atan2(by - p.centerY(), bx - p.x);
+        var blade =
+                run.shoot(
+                        Projectile.Kind.BLADE,
+                        true,
+                        bx,
+                        by,
+                        Math.cos(angle) * 760,
+                        Math.sin(angle) * 760,
+                        20,
+                        22 * p.stats.area(),
+                        .55);
+        blade.pierce = 4;
+        blade.knockback = 120;
+    }
+
+    /** Raketenschwarm: zielsuchende Minitorpedos fächern über der Figur auf. */
+    private void missiles(Player p) {
+        int count = 6 + p.stats.extraProjectiles();
+        for (int i = 0; i < count; i++) {
+            double angle = -Math.PI / 2 + (i - (count - 1) / 2.0) * .32;
+            var missile =
+                    run.shoot(
+                            Projectile.Kind.MISSILE,
+                            true,
+                            p.x,
+                            p.y - 90,
+                            Math.cos(angle) * 520,
+                            Math.sin(angle) * 520,
+                            26,
+                            9,
+                            2.4);
+            missile.homing = true;
+            missile.steerStart = .15;
+            missile.explosionRadius = 90 * p.stats.area();
+        }
+        run.emit(GameEvent.at(GameEvent.Type.TORPEDO, p.x, p.y - 90));
     }
 }

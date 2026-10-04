@@ -77,7 +77,7 @@ Primärer Akteur: Spieler/in. Nachbarsystem: lokales Dateisystem. Kein Konto, ke
 - **UC-05:** Esc pausiert; Hauptmenü oder Beenden setzt beim letzten Raumeingang fort. Beschädigte oder unbekannte Stände blockieren den Start nicht, Originale werden gesichert. Stände 0.1/0.2 werden übernommen.
 - **UC-06:** Sieg zeigt zuerst eine Szene mit dem auftauchenden Boot (überspringbar), dann Raum, Abschüsse, Zeit, Kerne; nächster Zyklus mit gleichem Build und stärkeren Gegnern; Sieg auf Druckstufe n schaltet n+1 frei.
 - **UC-07:** Niederlage zeigt Ergebnis; Kerne und Entdeckungen bleiben; R startet neu.
-- **UC-08:** Archiv mit Kategorien Taucher, Waffen, Module, Baupläne, Ausrüstung, Garderobe; Kauf mit Datenkernen, Voraussetzungen; Kompendium entdeckter Module; Logbuch mit 26 Zielen, die beim ersten Erreichen Kerne gutschreiben.
+- **UC-08:** Archiv mit Kategorien Taucher, Waffen, Module, Baupläne, Ausrüstung, Garderobe; Kauf mit Datenkernen, Voraussetzungen; Kompendium entdeckter Module; Logbuch mit 32 Zielen, die beim ersten Erreichen Kerne gutschreiben.
 - **UC-09:** Anzugfarbe, Helmform, Visier, Metallton mit Vorschau; gesperrte Optionen kaufen.
 - **UC-10:** I/Tab: Werte, Waffe, Modul, alle Module; M: Längsschnitt des Bootes mit Position und Wächtern. Beide pausieren.
 - **UC-11:** Lautstärken, Kamerawackeln, Röhrenfilter, Schadenszahlen, ruhige Darstellung, Vollbild, Entdecker-Vorgabe; Steuerungsübersicht.

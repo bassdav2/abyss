@@ -23,6 +23,9 @@ Automatisch aus dem Quellcode erzeugt (`./gradlew contentCatalog`).
 | Harpunenwerfer | 24 → 24 → 34 Schaden | 20 | Durchschlagende Harpunen auf Distanz. Jeder dritte Schuss trifft mehrere Gegner. |
 | Tesla-Handschuh | 12 → 12 → 18 Schaden | 12 | Schnelle Schläge. Jeder Treffer springt als Blitz auf einen weiteren Gegner über. |
 | Enterhaken | 15 → 15 → 22 Schaden | 14 | Weite Hakenstösse. Der dritte Stoss zieht getroffene Gegner zu dir heran. |
+| Tiefenbohrer | 8 → 8 → 8 → 9 → 16 Schaden | 8 | Fünf rasende Bohrstösse mit wenig Rückstoss. Zerlegt dichte Schwärme im Sekundentakt. |
+| Plasmawerfer | 20 → 20 → 34 Schaden | 18 | Plasmakugeln, die beim Aufprall explodieren. Der dritte Schuss ist eine grosse Ladung. |
+| Tiefseesense | 24 → 24 → 36 Schaden | 22 | Weite Sensenschwünge. Der dritte Schwung mäht rundherum, auch hinter dir. |
 
 ## Aktive Module
 
@@ -86,11 +89,30 @@ Automatisch aus dem Quellcode erzeugt (`./gradlew contentCatalog`).
 | Phasenkern | Legendär | 3 | Archiv, 12 Kerne | Ausweichen hinterlässt ein explodierendes Nachbild |
 | Singularitätszelle | Legendär | 2 | Archiv, 12 Kerne | −50 % Modul-Abklingzeit +25 % Modulschaden |
 | Leviathanzahn | Legendär | 3 | Archiv, 12 Kerne | Kritische Treffer: Kettenblitz und +2 Integrität |
-| Überladungskern | Legendär | 999 | ja | +6 % Schaden, +6 % Tempo +6 Integrität (unbegrenzt) |
+| Überladungskern | Legendär | 999 | bei ausgereiztem Build | +6 % Schaden, +6 % Tempo +6 Integrität (unbegrenzt) |
 | Druckwellenkern | Legendär | 3 | Archiv, 12 Kerne | Alle 12 Abschüsse: Nova (weniger je Stufe) |
 | Gläserner Rumpf | Verflucht | 1 | nur Kapelle | +40 % Schaden −30 % max. Integrität |
 | Gier der Tiefe | Verflucht | 1 | nur Kapelle | +60 % Schrott Gegner +15 % Schaden |
 | Druckfieber | Verflucht | 1 | nur Kapelle | +25 % Angriffstempo −1 Energie pro Sekunde |
+| Grenzbrecher | Legendär | 99 | bei ausgereiztem Build | +2 Höchststufe für alle Standard- und Seltenmodule |
+
+## Entfesselungen
+
+Ist ein Modul auf seiner Grundhöchststufe und der Partner mindestens einmal installiert, liegt die Entfesselung beim nächsten Levelaufstieg obenauf (auch in Elite- und Bossbergungen).
+
+| Entfesselung | Grundmodul (voll) | Partner | Wirkung |
+|---|---|---|---|
+| Klingensturm | Kreiselmesser (6) | Druckkammer | Zweiter Rotorring, dreifacher Schaden, schleudert Klingen |
+| Gewitterkern | Teslafeld (5) | Teslaspule | Blitze alle 0,4 s in 8 Gegner, jeder springt dreimal weiter |
+| Supernova | Kettenreaktion (5) | Druckwellenkern | Abschussexplosionen doppelt, Nova alle 5 Abschüsse |
+| Klingenorkan | Klingenwelle (5) | Mehrfachlader | Jeder Schlag: Fächer aus fünf durchschlagenden Klingen |
+| Raketenschwarm | Zielsucher (3) | Kondensator | Alle 1,2 s: sechs zielsuchende Minitorpedos |
+| Todesblick | Glasfaserlinse (8) | Hohlspitzen | +25 % Kritik, Überkritik ×1,5 kritische Treffer explodieren |
+| Bollwerk | Schildzelle (5) | Verbundpanzerung | +120 Schild, schnelle Ladung Bruch löst eine Druckwelle aus |
+| Höllenglut | Zündkerze (8) | Übertakter | +40 % Brand, Brand ×3 Brennende stecken Nachbarn an |
+| Nullpunkt | Kälteschlange (8) | Kühlkreislauf | Alle 3 s: Frostwelle Gefrorene erleiden doppelten Schaden |
+| Blutsauger | Nanitenkultur (5) | Rückgewinnung | +8 % Lebensraub (bis 40 %) Abschüsse heilen 1 % |
+| Phasensturm | Phasenkern (3) | Klingenrumpf | Ausweichen doppelt so oft, Spur aus Explosionen, Abschüsse laden |
 
 ## Gegner
 
@@ -112,10 +134,18 @@ Automatisch aus dem Quellcode erzeugt (`./gradlew contentCatalog`).
 | Rostmilbe | 10 | 1 | 0 | 0 |
 | Glimmfisch | 8 | 3 | 0 | 0 |
 | Nanodrohne | 12 | 2 | 0 | 0 |
+| Säurespucker | 14 | 2 | 0 | 0 |
+| Zündmilbe | 9 | 2 | 0 | 0 |
+| Prismaqualle | 22 | 4 | 0 | 0 |
+| Speerfisch | 16 | 3 | 0 | 0 |
+| Panzerkrabbe | 30 | 3 | 0 | 0 |
+| Brutnest | 170 | 2 | 2 | 3 |
+| Brutei | 28 | 3 | 0 | 0 |
 | Der Schottmeister (Boss) | 600 | 1 | 0 | 35 |
 | Der Reaktorkern (Boss) | 720 | 2 | 0 | 40 |
 | Die Brutmutter (Boss) | 820 | 3 | 0 | 45 |
 | Der Lotse (Boss) | 1100 | 4 | 0 | 60 |
+| Die Prismenkaiserin (Boss) | 450 | 4 | 0 | 80 |
 
 ## Elite-Eigenschaften
 
@@ -184,6 +214,33 @@ Automatisch aus dem Quellcode erzeugt (`./gradlew contentCatalog`).
 | Schrotthändler | Schrottmagnet + Werkzeuggürtel | +20 % Schrott und +1 Reparaturset-Kapazität. |
 | Schwergewicht | Ballastgurt + Servoverstärker | +10 % Schaden. |
 
+## Bedrohungen
+
+Prüfungen für den Build: im ersten Zyklus ab dem Maschinendeck selten, im Endgame fast in jedem Kampfraum. Bestanden gibt es eine seltene Bergung und einen Datenkern.
+
+| Bedrohung | Wirkung | Hilft |
+|---|---|---|
+| Panzerschwarm | Alle Gegner tragen Panzer. Normale Treffer wirken nur zu 35 %. | Kritische Treffer, Brand, Explosionen, Blitze |
+| Flutwelle | Dreimal so viele Schwarmgegner mit halber Integrität. | Flächenschaden, Kreiselmesser, Teslafeld, Kettenreaktion |
+| Kolosse | Wenige Elitegegner, riesig und vierfach so zäh. | Einzelschaden, Kritik, Werkstattstufe |
+| Luftschlag | Nur fliegende Gegner, hoch über dem Boden. | Geschosse, Zielsucher, Teslafeld, Sprünge |
+| Brutnester | Nester speien Milben. Fällt ein Nest, stirbt seine Brut. | Hoher Einzelschaden, schnelles Vorrücken |
+| Sperrfeuer | Spucker und Prismaquallen füllen den Raum mit Geschossen, dazu Einschläge. | Ausweichen, Schild, Barriere, Tempo |
+| Regeneration | Gegner heilen sich rasch, solange sie weder brennen noch frieren. | Brand, Kälte, Schadensspitzen |
+
+## Eskalation
+
+Ab Raum 20 des ersten Zyklus steigt die Eskalation um 1 je Raum, über alle Zyklen hinweg. Schwarmgrösse ×(1 + 0,22·E + 0,007·E²), bis zu 1600 gleichzeitig lebende Gegner, Räume bis drei Bildschirme breiter, bis zu vier Wellen, alle Schwarmarten gemischt, mehr Elitegegner.
+
+| Raum | Eskalation | Schwarmfaktor |
+|---|---|---|
+| Zyklus 1, Raum 20 | 1 | ×1.2 |
+| Zyklus 1, Raum 24 | 5 | ×2.3 |
+| Zyklus 2, Raum 12 | 17 | ×6.8 |
+| Zyklus 2, Raum 24 | 29 | ×13.3 |
+| Zyklus 3, Raum 12 | 41 | ×21.8 |
+| Zyklus 3, Raum 24 | 53 | ×32.3 |
+
 ## Raumzustände
 
 - **Stromausfall:** Nur Stirnlampe und Gegneraugen leuchten. +60 % Schrott.
@@ -222,3 +279,145 @@ Automatisch aus dem Quellcode erzeugt (`./gradlew contentCatalog`).
 | Der Koloss am Steuer | Erobere die Brücke als Koloss. | 4 |
 | Die Funkerin am Steuer | Erobere die Brücke als Funkerin. | 4 |
 | Die ganze Crew | Erobere die Brücke mit jeder Klasse. | 15 |
+| Der Abgrund erwacht | Erreiche Raum 20, ab dem jeder Raum eskaliert. | 4 |
+| Prüfling | Sichere einen Raum mit einer Bedrohung. | 4 |
+| Entfesselt | Entfessle ein ausgereiztes Modul mit seinem Partner. | 6 |
+| Überkritisch | Erreiche mehr als 200 % kritische Chance. | 6 |
+| Tausend Augen | Sichere einen Raum ab Eskalation 30. | 10 |
+| Prismenbrecher | Besiege die Prismenkaiserin. | 15 |
+
+## Laufbahn: Skill-Bäume
+
+Jeder Laufbahnrang gibt einen Punkt für Tiefe, Arsenal und Abgrund, jeder Klassenrang einen Punkt für den Baum dieser Klasse.
+
+### Tiefenbaum
+
+*Öffnet sich: Immer offen.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Schneidwerk I | +8 % Werkzeugschaden | 1 | – |
+| Schneidwerk II | +8 % Werkzeugschaden | 1 | Schneidwerk I |
+| Taktgeber | +8 % Angriffstempo | 2 | Schneidwerk II |
+| Zielsystem | +5 % kritische Trefferchance | 2 | Taktgeber |
+| Schneidwerk III | +12 % Werkzeugschaden | 3 | Zielsystem |
+| Datenlink I | +12 % Überladung | 1 | – |
+| Magnetspule | +30 % Sammelradius | 1 | Datenlink I |
+| Datenlink II | +15 % Überladung | 2 | Magnetspule |
+| Erweiterte Auswahl | +1 Karte bei jedem Levelaufstieg | 3 | Datenlink II |
+| Frühstart | 2 Levelaufstiege direkt zu Beginn | 3 | Erweiterte Auswahl |
+| Verstärkter Anzug | +15 maximale Integrität | 1 | – |
+| Druckplatten | −6 % erlittener Schaden | 1 | Verstärkter Anzug |
+| Druckfeld | +10 % Wirkungsbereich | 2 | Druckplatten |
+| Titanrippen | +25 maximale Integrität | 2 | Druckfeld |
+| Tiefenpanzer | −10 % erlittener Schaden | 3 | Titanrippen |
+| Abgrundblick | +1 Geschoss für alle Schusswerkzeuge | 4 | Schneidwerk III, Frühstart, Tiefenpanzer |
+
+### Arsenal
+
+*Öffnet sich: 5 Knoten im Tiefenbaum freischalten.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Schmiede I | Waffe beginnt auf Werkstattstufe 1 | 1 | – |
+| Schmiede II | +1 Werkstattstufe zu Beginn | 2 | Schmiede I |
+| Schmiede III | +1 Werkstattstufe zu Beginn | 3 | Schmiede II |
+| Waffenkenner | +50 % Waffenmeisterschaft | 1 | – |
+| Hohlschliff | +40 % kritischer Schaden | 2 | Waffenkenner |
+| Beutekiste | 1 seltenes Modul zu Beginn | 3 | Hohlschliff |
+| Kreiselwerk | +1 Kreiselmesser dauerhaft | 2 | – |
+| Sprengkunst | +12 % Wirkungsbereich | 2 | Kreiselwerk |
+| Doppellauf | +1 Geschoss für alle Schusswerkzeuge | 4 | Sprengkunst |
+| Volles Arsenal | +1 seltenes Modul zu Beginn | 5 | Schmiede III, Beutekiste, Doppellauf |
+
+### Abgrund
+
+*Öffnet sich: Einmal die Brücke erobern.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Kernsammler I | +25 % Datenkerne nach jedem Tauchgang | 2 | – |
+| Kernsammler II | +25 % Datenkerne | 3 | Kernsammler I |
+| Kernsammler III | +50 % Datenkerne | 4 | Kernsammler II |
+| Schwarmköder | +25 % grössere Schwärme | 2 | – |
+| Schwarmgier | +25 % Überladung | 3 | Schwarmköder |
+| Tiefenrausch | +12 % Angriffstempo | 3 | Schwarmgier |
+| Überdruck | +15 % Werkzeugschaden | 3 | – |
+| Endlose Wahl | +1 Karte bei jedem Levelaufstieg | 4 | Überdruck |
+| Abgrundrotor | +1 Kreiselmesser dauerhaft | 4 | Endlose Wahl |
+| Leviathan | +1 Geschoss für alle Schusswerkzeuge | 6 | Kernsammler III, Tiefenrausch, Abgrundrotor |
+
+### Mechanikerin
+
+*Öffnet sich: Die Mechanikerin im Archiv freischalten.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Werkzeugsatz | +1 Reparaturset | 1 | – |
+| Servorotor | +1 Kreiselmesser dauerhaft | 2 | Werkzeugsatz |
+| Meisterzange | +10 % Werkzeugschaden | 3 | Servorotor |
+| Drehmoment | +10 % Werkzeugschaden | 1 | – |
+| Takt der Maschine | +8 % Angriffstempo | 2 | Drehmoment |
+| Werkanzug | +20 maximale Integrität | 1 | – |
+| Notreparatur | −8 % erlittener Schaden | 2 | Werkanzug |
+| Tiefenbohrer | Neue Waffe: Fünf rasende Bohrstösse mit wenig Rückstoss. Zerlegt dichte Schwärme im Sekundentakt. | 4 | Meisterzange, Takt der Maschine, Notreparatur |
+
+### Harpunier
+
+*Öffnet sich: Der Harpunier im Archiv freischalten.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Ruhige Hand | +5 % kritische Trefferchance | 1 | – |
+| Widerhaken | +30 % kritischer Schaden | 2 | Ruhige Hand |
+| Doppelschuss | +1 Geschoss für alle Schusswerkzeuge | 3 | Widerhaken |
+| Schnelles Nachladen | +10 % Angriffstempo | 1 | – |
+| Weitsicht | +30 % Sammelradius | 2 | Schnelles Nachladen |
+| Flossen | +8 % Lauftempo | 1 | – |
+| Hakenschlag | −10 % Abklingzeiten | 2 | Flossen |
+| Sturmharpune | +1 Geschoss für alle Schusswerkzeuge | 4 | Doppelschuss, Weitsicht, Hakenschlag |
+
+### Schweisserin
+
+*Öffnet sich: Die Schweisserin im Archiv freischalten.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Brennstoff | +10 % Brandchance | 1 | – |
+| Weissglut | +15 % Modul- und Explosionsschaden | 2 | Brennstoff |
+| Flammenkegel | +10 % Wirkungsbereich | 3 | Weissglut |
+| Schutzmaske | −6 % erlittener Schaden | 1 | – |
+| Ruhige Naht | +10 % Werkzeugschaden | 2 | Schutzmaske |
+| Hitzekern | +20 maximale Integrität | 1 | – |
+| Aufladung | +30 maximale Energie | 2 | Hitzekern |
+| Plasmawerfer | Neue Waffe: Plasmakugeln, die beim Aufprall explodieren. Der dritte Schuss ist eine grosse Ladung. | 4 | Flammenkegel, Ruhige Naht, Aufladung |
+
+### Koloss
+
+*Öffnet sich: Der Koloss im Archiv freischalten.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Dicke Platten | +30 maximale Integrität | 1 | – |
+| Standfest | −8 % erlittener Schaden | 2 | Dicke Platten |
+| Wucht | +12 % Werkzeugschaden | 3 | Standfest |
+| Stampfer | +12 % Wirkungsbereich | 1 | – |
+| Marschtritt | +6 % Lauftempo | 2 | Stampfer |
+| Eisenwille | +1 Reparaturset | 1 | – |
+| Zorn | +8 % Angriffstempo | 2 | Eisenwille |
+| Tiefseesense | Neue Waffe: Weite Sensenschwünge. Der dritte Schwung mäht rundherum, auch hinter dir. | 4 | Wucht, Marschtritt, Zorn |
+
+### Funkerin
+
+*Öffnet sich: Die Funkerin im Archiv freischalten.*
+
+| Knoten | Wirkung | Punkte | Voraussetzung |
+|---|---|---|---|
+| Zusatzzellen | +30 maximale Energie | 1 | – |
+| Energiefluss | −10 % Abklingzeiten | 2 | Zusatzzellen |
+| Fokus | +20 % Modul- und Explosionsschaden | 3 | Energiefluss |
+| Statik | +4 % kritische Trefferchance | 1 | – |
+| Datenstrom | +15 % Überladung | 2 | Statik |
+| Relais | +1 Karte bei jedem Levelaufstieg | 1 | – |
+| Feldschild | −6 % erlittener Schaden | 2 | Relais |
+| Funkenkrone | +2 Kreiselmesser dauerhaft | 4 | Fokus, Datenstrom, Feldschild |

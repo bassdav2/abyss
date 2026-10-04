@@ -1,6 +1,7 @@
 package ch.zhaw.abyss.infrastructure;
 
 import ch.zhaw.abyss.application.Achievement;
+import ch.zhaw.abyss.application.Career;
 import ch.zhaw.abyss.application.Cosmetics;
 import ch.zhaw.abyss.application.Loadout;
 import ch.zhaw.abyss.application.Profile;
@@ -147,7 +148,8 @@ public final class FileGameRepository implements GameRepository {
                     achievements,
                     cosmetics,
                     loadout,
-                    settings);
+                    settings,
+                    career(p));
         } catch (IllegalArgumentException | IOException e) {
             preserveBeforeReplace.add(path);
             throw new IOException(
@@ -212,9 +214,40 @@ public final class FileGameRepository implements GameRepository {
         }
     }
 
+    /** Liest die Laufbahn; fehlende Werte älterer Profile beginnen bei null. */
+    private static Career career(Properties p) {
+        var divers = new EnumMap<DiverClass, Long>(DiverClass.class);
+        for (var diver : DiverClass.values())
+            divers.put(diver, Math.max(0, longValue(p, "career.diver." + diver.name())));
+        var weapons = new EnumMap<Weapon, Long>(Weapon.class);
+        for (var weapon : Weapon.values())
+            weapons.put(weapon, Math.max(0, longValue(p, "career.weapon." + weapon.name())));
+        return new Career(
+                Math.max(0, longValue(p, "career.xp")),
+                divers,
+                weapons,
+                new java.util.HashSet<>(list(p, "career.nodes")));
+    }
+
+    private static long longValue(Properties p, String key) {
+        try {
+            return Long.parseLong(p.getProperty(key, "0").trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+
     @Override
     public void saveProfile(Profile profile) throws IOException {
         var p = new Properties();
+        var career = profile.career();
+        p.setProperty("career.xp", "" + career.xp());
+        career.diverXp()
+                .forEach((diver, xp) -> p.setProperty("career.diver." + diver.name(), "" + xp));
+        career.weaponXp()
+                .forEach((weapon, xp) -> p.setProperty("career.weapon." + weapon.name(), "" + xp));
+        p.setProperty(
+                "career.nodes", career.nodes().stream().sorted().collect(Collectors.joining(",")));
         p.setProperty("runs", "" + profile.runs());
         p.setProperty("wins", "" + profile.wins());
         p.setProperty("bestRoom", "" + profile.bestRoom());

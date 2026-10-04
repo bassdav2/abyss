@@ -22,7 +22,17 @@ public final class Projectile {
         ENEMY_HARPOON,
         AFTERIMAGE,
         /** Druckklinge der Klingenwelle: fliegt flach und durchschlägt mehrere Gegner. */
-        BLADE
+        BLADE,
+        /** Plasmakugel des Plasmawerfers: explodiert beim Aufprall mit Werkzeugschaden. */
+        PLASMA,
+        /** Prismageschoss: schillerndes Geschoss der Prismaquallen und der Prismenkaiserin. */
+        PRISM,
+        /** Lichtlanze: sehr schnelles, langes Geschoss nach einer Warnlinie. */
+        LANCE,
+        /** Säureklumpen der Säurespucker: fliegt im Bogen und zerplatzt am Boden. */
+        GLOB,
+        /** Minitorpedo des Raketenschwarms: sucht Ziele und explodiert. */
+        MISSILE
     }
 
     final long id;
@@ -34,6 +44,34 @@ public final class Projectile {
     int pierce;
     boolean homing, landed;
     Status status;
+
+    /** Schütze, etwa für Ankerwürfe und Torpedos, die den Boss treffen; sonst 0. */
+    long owner;
+
+    /** Anker: zieht die getroffene Figur zum Schützen. */
+    boolean hook;
+
+    /** Feindlicher Torpedo, der auch Gegner trifft und Bosse betäubt. */
+    boolean wreck;
+
+    /** Geschwindigkeitsfaktor pro Sekunde, 1 für gleichförmige Bewegung. */
+    double accel = 1;
+
+    /** Zielsuche nur zwischen diesen Altern; ausserhalb fliegt das Geschoss geradeaus. */
+    double steerStart, steerEnd = Double.MAX_VALUE;
+
+    /** Farbton 0 bis 1 für Prismageschosse. */
+    double hue;
+
+    /**
+     * Alter, in dem ein schwebendes Geschoss auf die Figur zuschnellt, sonst negativ; danach fliegt
+     * es mit {@link #surgeSpeed} geradeaus.
+     */
+    double surgeAt = -1, surgeSpeed;
+
+    /** Darstellung einer Lichtlanze, sonst {@code null}. */
+    Lance.Style style;
+
     final Set<Long> hitActors = new HashSet<>();
 
     Projectile(
@@ -121,6 +159,27 @@ public final class Projectile {
      */
     public double age() {
         return age;
+    }
+
+    /**
+     * @return Farbton 0 bis 1, für Prismageschosse
+     */
+    public double hue() {
+        return hue;
+    }
+
+    /**
+     * @return Darstellung einer Lichtlanze oder {@code null}
+     */
+    public Lance.Style style() {
+        return style;
+    }
+
+    /**
+     * @return verbleibende Lebenszeit
+     */
+    public double life() {
+        return life;
     }
 
     /**

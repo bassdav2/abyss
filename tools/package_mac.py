@@ -49,8 +49,8 @@ out.mkdir(exist_ok=True)
 app=out/'Abyss.app'
 if app.exists(): shutil.rmtree(app)
 # macOS/jpackage verlangt eine positive erste Versionskomponente. Spielstand 0.2 war Bundle 1.0.1,
-# Spielversion 1.0 war Bundle 1.1.0, Spielversion 1.1 Bundle 1.2.0, Spielversion 1.2 ist Bundle 1.3.0.
-run(JAVA/'bin/jpackage','--type','app-image','--name','Abyss','--app-version','1.3.0',
+# Spielversion 1.0 war Bundle 1.1.0, Spielversion 1.1 Bundle 1.2.0, Spielversion 1.2 Bundle 1.3.0, Spielversion 1.3 Bundle 1.4.0, Spielversion 1.4 ist Bundle 1.5.0.
+run(JAVA/'bin/jpackage','--type','app-image','--name','Abyss','--app-version','1.5.0',
     '--description','Vom Heck bis zur Brücke. Ein Tiefsee-Roguelite.',
     '--vendor','Abyss Project','--input',staging,'--main-jar','abyss.jar',
     '--main-class','ch.zhaw.abyss.Launcher','--runtime-image',runtime,'--dest',out,

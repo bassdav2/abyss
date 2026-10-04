@@ -28,6 +28,24 @@ public final class Enemy extends Actor {
     boolean strikeHit, enraged, fired, escaped;
     double knockVx, eliteShield, regenDelay;
     double homeX, homeY;
+
+    /** Freie Zeitgeber und Schrittzähler für die Bossmechaniken. */
+    double aux, clock;
+
+    int step;
+
+    /** Panzerschwarm: normale Treffer wirken nur gedämpft. */
+    boolean plated;
+
+    /** Entrückt: vorübergehend nicht angreifbar, etwa beim Phasenwechsel der Prismenkaiserin. */
+    boolean veiled;
+
+    /** Rasend nach zu langem Kampf: mehr Schaden und schnellere Muster. */
+    boolean furious;
+
+    /** Darstellungsgrösse, etwa für Kolosse. */
+    double size = 1;
+
     Telegraph telegraph;
     final List<Long> children = new ArrayList<>();
 
@@ -47,7 +65,7 @@ public final class Enemy extends Actor {
         this.behavior = kind.behavior();
         this.actionCooldown = delay;
         this.facing = -1;
-        this.stateTime = kind.boss() ? 2.2 : kind.swarm() ? .3 : .55;
+        this.stateTime = kind.boss() ? 2.2 : kind.swarm() ? .3 : kind == EnemyKind.EGG ? 3.2 : .55;
         this.homeX = x;
         this.homeY = y;
         if (affix == Affix.SHIELDED) eliteShield = maxHealth * .35;
@@ -129,6 +147,35 @@ public final class Enemy extends Actor {
     }
 
     /**
+     * @return {@code true} in einem Panzerschwarm: nur kritische Treffer, Brand und Explosionen
+     *     wirken voll
+     */
+    public boolean plated() {
+        return plated;
+    }
+
+    /**
+     * @return Darstellungsgrösse, 1 für normale Gegner
+     */
+    public double size() {
+        return size;
+    }
+
+    /**
+     * @return Schrittzähler der laufenden Bossmechanik
+     */
+    public int step() {
+        return step;
+    }
+
+    /**
+     * @return freier Zeitgeber der laufenden Mechanik
+     */
+    public double clock() {
+        return clock;
+    }
+
+    /**
      * @return verbleibender Eliteschild
      */
     public double eliteShield() {
@@ -146,7 +193,14 @@ public final class Enemy extends Actor {
      * @return {@code true}, solange der Gegner nicht getroffen werden kann
      */
     public boolean untargetable() {
-        return state == State.HIDDEN || state == State.SPAWNING && kind.boss();
+        return veiled || state == State.HIDDEN || state == State.SPAWNING && kind.boss();
+    }
+
+    /**
+     * @return {@code true}, wenn der Gegner nach zu langem Kampf rast
+     */
+    public boolean furious() {
+        return furious;
     }
 
     /**

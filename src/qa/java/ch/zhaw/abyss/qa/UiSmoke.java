@@ -2,9 +2,17 @@ package ch.zhaw.abyss.qa;
 
 import ch.zhaw.abyss.application.GameService;
 import ch.zhaw.abyss.application.Loadout;
+import ch.zhaw.abyss.domain.ActiveModule;
+import ch.zhaw.abyss.domain.DiverClass;
+import ch.zhaw.abyss.domain.EnemyKind;
 import ch.zhaw.abyss.domain.GameRun;
+import ch.zhaw.abyss.domain.Item;
 import ch.zhaw.abyss.domain.RoomCondition;
 import ch.zhaw.abyss.domain.RoomPlan;
+import ch.zhaw.abyss.domain.RunCheckpoint;
+import ch.zhaw.abyss.domain.StatSheet;
+import ch.zhaw.abyss.domain.Threat;
+import ch.zhaw.abyss.domain.Weapon;
 import ch.zhaw.abyss.infrastructure.FileGameRepository;
 import ch.zhaw.abyss.ui.GameWindow;
 
@@ -43,14 +51,18 @@ public final class UiSmoke extends Application {
     private GameWindow window;
     private GameService service;
     private Path capture;
+    private Stage stage;
 
     @Override
     public void start(Stage stage) throws Exception {
+        this.stage = stage;
         var directory = Files.createTempDirectory("abyss-ui-smoke");
         String target = getParameters().getNamed().get("capture");
         capture = target == null ? null : Path.of(target);
         service = new GameService(new FileGameRepository(directory));
-        window = new GameWindow(stage, service, Map.of());
+        // Automatischer Lauf: kein Pausieren, wenn das Betriebssystem den Fokus wegnimmt. Das
+        // dabei entstehende Startbild landet im temporären Ordner.
+        window = new GameWindow(stage, service, auto(directory));
         window.show();
         plan();
         next();
@@ -238,7 +250,169 @@ public final class UiSmoke extends Application {
                     window.outcome();
                     expect("Niederlage ohne Siegesszene", !window.endingPlaying());
                 });
+        add(
+                "career",
+                "CAREER",
+                () -> {
+                    window.career();
+                    expect("Laufbahn-Erfahrung verbucht", service.profile().career().xp() > 0);
+                });
+        add("career-depth", "CAREER", () -> window.career(0));
+        add("career-weapons", "CAREER", () -> window.career(8));
         add("title-again", "TITLE", () -> window.title());
+        add(
+                "endgame-swarm",
+                "PLAY",
+                () -> {
+                    endgame(
+                            1,
+                            9,
+                            Map.of(
+                                    Item.SERVO,
+                                    6,
+                                    Item.PLATING,
+                                    6,
+                                    Item.ORBITAL,
+                                    6,
+                                    Item.AREA,
+                                    4,
+                                    Item.NANITES,
+                                    4,
+                                    Item.MEDICAL,
+                                    6),
+                            0);
+                    expect("Eskalation im zweiten Zyklus", run().escalation() > 10);
+                    simulate(7);
+                    expect(
+                            "Schwarm mit über hundert Gegnern",
+                            run().enemies().stream().filter(e -> e.alive()).count() >= 100);
+                });
+        add(
+                "route-threat",
+                "ROUTE",
+                () -> {
+                    // Werkstätten sind sofort gesichert; davor liegt eine Wahl mit Bedrohung.
+                    var generator = new ch.zhaw.abyss.domain.RoomGenerator(4242, 1, 0);
+                    int workshop = 5;
+                    for (int depth : new int[] {5, 11, 17})
+                        if (generator.choices(depth + 1).stream()
+                                .anyMatch(r -> r.threat() != Threat.NONE)) {
+                            workshop = depth;
+                            break;
+                        }
+                    endgame(1, workshop, Map.of(Item.SERVO, 4, Item.LENS, 6, Item.MEDICAL, 4), 0);
+                    expect(
+                            "Bedrohung in der Routenwahl",
+                            run().nextRooms().stream().anyMatch(r -> r.threat() != Threat.NONE));
+                    window.route();
+                });
+        add(
+                "evolution",
+                "LEVEL_UP",
+                () -> {
+                    endgame(
+                            1,
+                            2,
+                            Map.of(Item.ORBITAL, 6, Item.AREA, 2, Item.SERVO, 4, Item.MEDICAL, 4),
+                            1);
+                    expect(
+                            "Entfesselung obenauf",
+                            !run().levelOffers().isEmpty()
+                                    && run().levelOffers().getFirst().item() == Item.STORM_BLADES);
+                    window.levelUp();
+                });
+        add(
+                "evolution-taken",
+                "PLAY",
+                () -> {
+                    window.chooseLevel(0);
+                    expect(
+                            "Klingensturm installiert",
+                            run().player().stacks(Item.STORM_BLADES) == 1);
+                    simulate(2);
+                });
+        add(
+                "empress",
+                "PLAY",
+                () -> {
+                    endgame(
+                            1,
+                            23,
+                            Map.of(
+                                    Item.SERVO,
+                                    8,
+                                    Item.PLATING,
+                                    8,
+                                    Item.MEDICAL,
+                                    8,
+                                    Item.NANITES,
+                                    5,
+                                    Item.SHIELD_CELL,
+                                    5,
+                                    Item.LENS,
+                                    6),
+                            0);
+                    expect(
+                            "Prismenkaiserin auf der Brücke",
+                            run().boss() != null && run().boss().kind() == EnemyKind.EMPRESS);
+                    simulate(9);
+                },
+                1.2);
+        add("title-final", "TITLE", () -> window.title());
+    }
+
+    /**
+     * Setzt einen vorbereiteten Raumeingang im Endgame in einem frischen Fenster fort. Der
+     * Spielstand liegt in einem eigenen temporären Ordner.
+     */
+    private void endgame(int cycle, int depth, Map<Item, Integer> items, int pendingLevels)
+            throws Exception {
+        var directory = Files.createTempDirectory("abyss-ui-endgame");
+        var repository = new FileGameRepository(directory);
+        var route = new ArrayList<Integer>();
+        for (int i = 0; i <= depth; i++) route.add(0);
+        int level = Math.min(Weapon.MAX_LEVEL, 2 + cycle * 2);
+        double bonus = 150 + 150 * cycle;
+        double health =
+                StatSheet.compute(DiverClass.MECHANIC, Weapon.WRENCH, level, items, bonus)
+                        .maxHealth();
+        repository.saveCheckpoint(
+                new RunCheckpoint(
+                        4242,
+                        cycle,
+                        0,
+                        depth,
+                        0,
+                        DiverClass.MECHANIC,
+                        Weapon.WRENCH,
+                        level,
+                        ActiveModule.PULSE,
+                        false,
+                        health,
+                        60,
+                        120,
+                        2,
+                        items,
+                        0,
+                        0,
+                        route,
+                        0,
+                        false,
+                        0,
+                        0,
+                        bonus,
+                        20 + pendingLevels,
+                        0,
+                        pendingLevels));
+        window.close();
+        service = new GameService(repository);
+        window = new GameWindow(stage, service, auto(directory));
+        window.show();
+        window.resume();
+    }
+
+    private static Map<String, String> auto(Path directory) {
+        return Map.of("capture", directory.resolve("auto-capture.png").toString());
     }
 
     private void add(String name, String expected, Action action) {
@@ -302,9 +476,13 @@ public final class UiSmoke extends Application {
         }
         try {
             step.action().run();
+            boolean match = step.expected().equals(window.screenName());
             expect(
-                    step.name() + " → " + step.expected(),
-                    step.expected().equals(window.screenName()));
+                    step.name()
+                            + " → "
+                            + step.expected()
+                            + (match ? "" : " (war " + window.screenName() + ")"),
+                    match);
         } catch (Exception | AssertionError error) {
             failures++;
             results.add("FEHLER " + step.name() + ": " + error);

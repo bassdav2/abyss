@@ -9,6 +9,7 @@ import ch.zhaw.abyss.domain.GameEvent;
 import ch.zhaw.abyss.domain.GameRun;
 import ch.zhaw.abyss.domain.Hazard;
 import ch.zhaw.abyss.domain.Interaction;
+import ch.zhaw.abyss.domain.Lance;
 import ch.zhaw.abyss.domain.Pickup;
 import ch.zhaw.abyss.domain.Projectile;
 import ch.zhaw.abyss.domain.RoomCondition;
@@ -477,9 +478,13 @@ public final class WorldRenderer {
                         .8);
         }
         for (var e : run.enemies()) if (e.alive()) drawTelegraph(e, run, camX, camY);
+        drawLances(run, camX, camY);
+        for (var e : run.enemies())
+            if (e.alive() && e.kind() == EnemyKind.EMPRESS) drawEmpressAura(e, camX, camY);
         for (var e : run.enemies()) if (e.alive()) actors.drawEnemy(e, camX, camY);
         actors.drawPlayer(run, camX, camY);
         drawOrbitals(run, camX, camY);
+        drawBeams(run, camX, camY);
         for (var q : run.projectiles()) drawProjectile(q, run, camX, camY);
         for (var pickup : run.pickups()) drawPickup(pickup, camX, camY);
         actors.drawSmear(run.player(), camX, camY);
@@ -493,12 +498,18 @@ public final class WorldRenderer {
         post.bloom(frame, emissive, .85);
         int sector = run.room().sector();
         int[] grade = grade(sector);
+        // Eskalation: das Licht kippt mit jedem Raum weiter ins Violette des Abgrunds.
+        double abyss = Math.min(.55, run.escalation() * .02);
+        if (abyss > 0) {
+            grade[0] = Pal.mix(grade[0], 0xFF2A0A30, abyss);
+            grade[1] = Pal.mix(grade[1], 0xFFFFB8F0, abyss * .6);
+        }
         post.grade(frame, grade[0], grade[1], .8, 0);
         double lowHealth =
                 run.player().health() < run.player().maxHealth() * .3
                         ? .35 + .2 * Math.sin(lowHealthPulse)
                         : 0;
-        post.vignette(frame, .55, Pal.INK);
+        post.vignette(frame, .55 + .35 * run.ink(), Pal.INK);
         if (lowHealth > 0) post.vignette(frame, lowHealth, Pal.RED_1);
         if (feel.aberration > 0 && !calm) post.aberration(frame, feel.aberration > .12 ? 2 : 1);
         if (feel.flash > 0) post.flash(frame, feel.flashColor, Math.min(.6, feel.flash));
@@ -864,6 +875,51 @@ public final class WorldRenderer {
                 frame.line(x - (right ? 3 : -3), y, x, y, Pal.TEAL_5);
                 emissive.glow(x, y, 3, Pal.TEAL_5, .9);
             }
+            case PRISM -> {
+                // Prismageschoss: schillernder Kern mit weissem Herz und kurzem Schweif
+                int color = Pal.prism(q.hue() + time * .15);
+                int tx = x - (int) Math.round(q.vx() * .012),
+                        ty = y - (int) Math.round(q.vy() * .012);
+                frame.line(tx, ty, x, y, Frame.alpha(color, .5));
+                frame.disc(x, y, q.radius() > 10 ? 3 : 2, color);
+                frame.pixel(x, y, Pal.WHITE);
+                emissive.glow(x, y, 5, color, .9);
+            }
+            case LANCE -> {
+                int color = lanceColor(q.style(), q.hue());
+                double speed = Math.max(1, Math.hypot(q.vx(), q.vy()));
+                int len = 16;
+                int tx = x - (int) Math.round(q.vx() / speed * len),
+                        ty = y - (int) Math.round(q.vy() / speed * len);
+                frame.line(tx, ty, x, y, color);
+                frame.line(tx, ty + 1, x, y + 1, Frame.alpha(color, .5));
+                frame.pixel(x, y, Pal.WHITE);
+                emissive.lineAdd(tx, ty, x, y, color, 1);
+                emissive.glow(x, y, 6, color, .8);
+            }
+            case GLOB -> {
+                frame.disc(x, y, 1, Pal.GREEN_4);
+                frame.pixel(x, y - 1, Pal.GREEN_5);
+                emissive.glow(x, y, 3, Pal.GREEN_4, .6);
+            }
+            case MISSILE -> {
+                double speed = Math.max(1, Math.hypot(q.vx(), q.vy()));
+                int tx = x - (int) Math.round(q.vx() / speed * 4),
+                        ty = y - (int) Math.round(q.vy() / speed * 4);
+                frame.line(tx, ty, x, y, Pal.STEEL_6);
+                frame.pixel(x, y, Pal.RUST_6);
+                emissive.glow(tx, ty, 3, Pal.RUST_5, .9);
+            }
+            case PLASMA -> {
+                // Plasmakugel: helles Zentrum, pulsierender Halo und kurzer Schweif
+                int r = q.radius() > 14 ? 3 : 2;
+                int tx = x - (int) Math.round(q.vx() * .01),
+                        ty = y - (int) Math.round(q.vy() * .01);
+                frame.line(tx, ty, x, y, Pal.VIOLET_3);
+                frame.disc(x, y, r, Pal.VIOLET_4);
+                frame.pixel(x, y, Pal.WHITE);
+                emissive.glow(x, y, 6 + r * 2, Pal.VIOLET_4, .9 + .1 * Math.sin(time * 30));
+            }
             case BLADE -> {
                 // Druckklinge: sichelförmiger Bogen, der mit dem Alter verblasst
                 int dir = right ? 1 : -1;
@@ -889,7 +945,8 @@ public final class WorldRenderer {
             }
             case SHOCKWAVE -> {
                 int color = q.friendly() ? Pal.TEAL_5 : Pal.RUST_5;
-                int floor = RoomArt.FLOOR + camY;
+                // Druckwellen in Sprunghöhe laufen über dem Boden.
+                int floor = q.y() < GameRun.FLOOR - 80 ? y + 4 : RoomArt.FLOOR + camY;
                 for (int k = 0; k < 7; k++) {
                     int h = 8 - Math.abs(k - 3) * 2;
                     int xx = x + (right ? -k : k);
@@ -964,6 +1021,121 @@ public final class WorldRenderer {
         }
     }
 
+    private static int lanceColor(Lance.Style style, double hue) {
+        if (style == null) return Pal.prism(hue);
+        return switch (style) {
+            case PRISM -> Pal.prism(hue);
+            case STEEL -> Pal.RED_4;
+            case FISH -> Pal.TEAL_5;
+            case CORE -> Pal.GREEN_4;
+        };
+    }
+
+    /** Warnlinien der Lichtlanzen: werden dichter und heller, kurz vor dem Schuss blinken sie. */
+    private void drawLances(GameRun run, int camX, int camY) {
+        double width = run.layout().width();
+        boolean blink = ((int) (time * 18)) % 2 == 0;
+        for (var lance : run.lances()) {
+            double progress = lance.progress();
+            int color = lanceColor(lance.style(), lance.hue() + time * .1);
+            double alpha = .38 + .5 * progress;
+            if (progress > .8 && blink) alpha = 1;
+            double cos = Math.cos(lance.angle()), sin = Math.sin(lance.angle());
+            double reach = Math.max(width, GameRun.HEIGHT) + 200;
+            int x0 = px(lance.x()) - camX, y0 = px(lance.y()) + camY;
+            int steps = (int) (reach * PX);
+            int stride = progress > .3 ? 1 : 2;
+            for (int i = 0; i < steps; i += stride) {
+                int x = (int) Math.round(x0 + cos * i), y = (int) Math.round(y0 + sin * i);
+                if (x < 0 || x >= W) {
+                    if ((cos > 0 && x >= W) || (cos < 0 && x < 0)) break;
+                    continue;
+                }
+                if (y < 0 || y >= H) {
+                    if ((sin > 0 && y >= H) || (sin < 0 && y < 0)) break;
+                    continue;
+                }
+                frame.pixel(x, y, Frame.alpha(color, alpha));
+                emissive.add(x, y, color, .12 + .3 * progress);
+            }
+            // Mündung der Lanze: ein pulsierender Lichtpunkt am Rand
+            int mx = (int) Math.round(x0 + cos * 6), my = (int) Math.round(y0 + sin * 6);
+            emissive.glow(
+                    Math.max(2, Math.min(W - 3, mx)),
+                    Math.max(2, Math.min(H - 3, my)),
+                    3 + (int) (progress * 4),
+                    color,
+                    .6 + .4 * progress);
+        }
+    }
+
+    /** Lichtstrahlen: dünne Vorwarnlinien, im Einsatz ein gleissender Strahl mit Farbsaum. */
+    private void drawBeams(GameRun run, int camX, int camY) {
+        for (var beam : run.beams()) {
+            int x0 = px(beam.x1()) - camX, y0 = px(beam.y1()) + camY;
+            int x1 = px(beam.x2()) - camX, y1 = px(beam.y2()) + camY;
+            double length = Math.hypot(x1 - x0, y1 - y0);
+            if (length < 1) continue;
+            double nx = -(y1 - y0) / length, ny = (x1 - x0) / length;
+            int color = Pal.prism(beam.hue() + time * .2);
+            int half = beam.live() ? Math.max(1, (int) Math.round(beam.width() * PX / 2)) : 0;
+            for (int i = 0; i < length; i++) {
+                double t = i / length;
+                double cx = x0 + (x1 - x0) * t, cy = y0 + (y1 - y0) * t;
+                if (cx < -8 || cx > W + 8 || cy < -8 || cy > H + 8) continue;
+                if (!beam.live()) {
+                    if (i % 3 == 0)
+                        frame.pixel(
+                                (int) cx,
+                                (int) cy,
+                                Frame.alpha(color, .35 + .2 * Math.sin(time * 20)));
+                    continue;
+                }
+                for (int k = -half; k <= half; k++) {
+                    int x = (int) Math.round(cx + nx * k), y = (int) Math.round(cy + ny * k);
+                    int c = Math.abs(k) <= half / 3 ? Pal.WHITE : Pal.mix(color, Pal.WHITE, .25);
+                    frame.pixel(x, y, Math.abs(k) == half ? Frame.alpha(color, .6) : c);
+                    emissive.add(x, y, color, Math.abs(k) <= 1 ? 1 : .6);
+                }
+            }
+        }
+    }
+
+    /**
+     * Aura der Prismenkaiserin: vier schillernde Flügel aus Lichtfächern und ein Halo, die sich mit
+     * der Zeit durch den Regenbogen drehen.
+     */
+    private void drawEmpressAura(Enemy e, int camX, int camY) {
+        int cx = px(e.x()) - camX, cy = px(e.y() - e.height() * .6) + camY;
+        double beat = Math.sin(time * 3) * .12;
+        double alpha = e.untargetable() ? .45 : 1;
+        for (int wing = 0; wing < 4; wing++) {
+            int side = wing % 2 == 0 ? -1 : 1;
+            boolean upper = wing < 2;
+            double base = upper ? -.55 : .35;
+            for (int ray = 0; ray < 9; ray++) {
+                double angle = base + ray * .09 + (upper ? -beat : beat);
+                double dir = side < 0 ? Math.PI - angle : angle;
+                int len = (upper ? 46 : 32) - Math.abs(ray - 4) * 2;
+                int color = Pal.prism(time * .25 + ray / 9.0 + wing * .25);
+                for (int i = 8; i < len; i++) {
+                    int x = (int) Math.round(cx + Math.cos(dir) * i);
+                    int y = (int) Math.round(cy + Math.sin(dir) * i * .8);
+                    double fade = (1 - i / (double) len) * alpha;
+                    if (i % 2 == 0) frame.pixel(x, y, Frame.alpha(color, .55 * fade));
+                    emissive.add(x, y, color, .5 * fade);
+                }
+            }
+        }
+        for (int i = 0; i < 40; i++) {
+            double a = i * Math.PI / 20 + time;
+            int x = (int) Math.round(cx + Math.cos(a) * 26),
+                    y = (int) Math.round(cy - 18 + Math.sin(a) * 6);
+            emissive.add(x, y, Pal.prism(i / 40.0 + time * .3), .8 * alpha);
+        }
+        emissive.glow(cx, cy, 30, Pal.prism(time * .2), .5 * alpha);
+    }
+
     private void drawPickup(Pickup pickup, int camX, int camY) {
         int x = px(pickup.x()) - camX, y = px(pickup.y()) + camY - 2;
         if (pickup.kind() == Pickup.Kind.SHARD) {
@@ -1028,6 +1200,10 @@ public final class WorldRenderer {
         // Beim Wiederherstellen flackert das Licht, bevor es ruhig brennt.
         double lit = power < 1 && power > 0 && !calm && Math.sin(t * 31) < -.3 ? power * .3 : power;
         ambient *= .3 + .7 * lit;
+        // Tintenwolke: fast alles Licht erlischt, nur Köder und Stirnlampe bleiben.
+        double ink = run.ink();
+        ambient *= 1 - .85 * ink;
+        lit *= 1 - .9 * ink;
         int ambientColor = room.ambient();
         if (alarm) ambientColor = Pal.mix(ambientColor, 0xFFFF2A1A, .3 + .15 * Math.sin(t * 5));
         lights.ambient(ambientColor, ambient);
@@ -1102,17 +1278,29 @@ public final class WorldRenderer {
             if (e.kind().swarm()) {
                 // Schwärme: kleine Augenlichter, bei grossen Horden nur ein Teil davon
                 if (ex < -20 || ex > W + 20 || ++swarmLights > 90) continue;
-                int glow = e.kind() == EnemyKind.GLOWFISH ? Pal.TEAL_5 : Pal.RED_4;
+                int glow =
+                        switch (e.kind()) {
+                            case GLOWFISH, LANCER -> Pal.TEAL_5;
+                            case PRISM -> Pal.prism(time * .2 + e.id() * .13);
+                            case SPITTER -> Pal.GREEN_4;
+                            case FUSE -> Pal.RUST_6;
+                            default -> Pal.RED_4;
+                        };
                 lights.point(ex, ey, 11, glow, e.state() == Enemy.State.WINDUP ? .7 : .3);
                 continue;
             }
             int color =
-                    e.kind() == EnemyKind.JELLY
-                            ? Pal.VIOLET_4
-                            : e.kind() == EnemyKind.REACTOR
-                                    ? Pal.GREEN_4
-                                    : e.kind() == EnemyKind.BROOD ? Pal.TEAL_5 : Pal.RED_4;
-            double radius = e.kind().boss() ? 70 : e.kind() == EnemyKind.JELLY ? 40 : 22;
+                    switch (e.kind()) {
+                        case JELLY -> Pal.VIOLET_4;
+                        case REACTOR -> Pal.GREEN_4;
+                        case BROOD, HIVE -> Pal.TEAL_5;
+                        case EMPRESS -> Pal.prism(time * .2);
+                        default -> Pal.RED_4;
+                    };
+            double radius =
+                    e.kind() == EnemyKind.EMPRESS
+                            ? 130
+                            : e.kind().boss() ? 70 : e.kind() == EnemyKind.JELLY ? 40 : 22;
             lights.point(ex, ey, radius, color, e.state() == Enemy.State.WINDUP ? .8 : .4);
             if (e.kind() == EnemyKind.SEEKER) {
                 // Suchlicht: folgt der Figur, beim Zielen heller und enger
@@ -1129,12 +1317,17 @@ public final class WorldRenderer {
             }
         }
         machines.light(run, lights, camX);
+        int shotLights = 0;
         for (var q : run.projectiles()) {
+            int sx = px(q.x()) - camX;
+            if (sx < -30 || sx > W + 30 || ++shotLights > 160) continue;
             int color =
                     switch (q.kind()) {
                         case ARC, DRONE_SHOT, CRYO, BLADE -> Pal.TEAL_5;
-                        case ACID -> Pal.GREEN_4;
-                        case AFTERIMAGE -> Pal.VIOLET_4;
+                        case ACID, GLOB -> Pal.GREEN_4;
+                        case AFTERIMAGE, PLASMA -> Pal.VIOLET_4;
+                        case PRISM -> Pal.prism(q.hue() + time * .15);
+                        case LANCE -> lanceColor(q.style(), q.hue());
                         case SHOCKWAVE -> q.friendly() ? Pal.TEAL_5 : Pal.RUST_5;
                         default -> Pal.RUST_6;
                     };
@@ -1161,6 +1354,17 @@ public final class WorldRenderer {
                         h.kind() == Hazard.Kind.FIRE ? Pal.RUST_5 : Pal.GREEN_4,
                         .5);
         }
+        for (var beam : run.beams())
+            if (beam.live())
+                for (int i = 1; i <= 4; i++) {
+                    double along = i / 5.0;
+                    lights.point(
+                            px(beam.x1() + (beam.x2() - beam.x1()) * along) - camX,
+                            px(beam.y1() + (beam.y2() - beam.y1()) * along),
+                            40,
+                            Pal.prism(beam.hue()),
+                            .5);
+                }
         if (run.phase() == GameRun.Phase.ROOM_CLEARED && run.rewardAvailable())
             lights.point(px(run.layout().rewardX()) - camX, RoomArt.FLOOR - 16, 40, Pal.TEAL_5, .5);
         fx.light(lights, camX);

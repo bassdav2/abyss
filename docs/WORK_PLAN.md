@@ -85,3 +85,24 @@ Auftrag am Morgen: Effekte von Upgrades und Bäumen viel stärker skalieren, sch
 - Balance: Gegner exponentiell mit Raumtiefe und Zyklus; Testspieler gewinnt Zyklus 0 in 150/150 Läufen, stirbt auf Druckstufe 5 im zweiten Zyklus.
 - Prüfung: 118 Tests, 42/42 UI-Schritte, Render-Probelauf, Schwarm-Lastprobe, Szenenbilder.
 
+## Version 1.3 · Laufbahn (29.09.2026)
+
+Auftrag: dauerhafte Figuren- und Skill-Baum-Progression, die weitere Bäume, Waffen und mehr freischaltet, damit sich das Weiterspielen lohnt.
+
+- Anwendung: `Career` (Laufbahn- und Klassenränge, Waffenmeisterschaft, gekaufte Knoten), `SkillTree` mit acht Bäumen und 95 Knoten, Öffnungsbedingungen, Punkte je Rang, Erfahrung pro Tauchgang, Speicherung im Profil.
+- Domäne: `MetaBonus` erweitert (Integrität, Panzerung, Tempo, Energie, Abklingzeit, Geschosse, Kreiselmesser, Startvorteile, Schwarmgrösse, Meisterschaft); drei Laufbahnwaffen (Tiefenbohrer, Plasmawerfer, Tiefseesense); Abschüsse je Waffe.
+- Oberfläche: Laufbahn-Seite mit Baumansicht und Waffenmeisterschaft, Eintrag im Hauptmenü, Laufbahn-Zeile in der Auswertung, Waffengrafiken.
+- Prüfung: 131 Tests, 46/46 UI-Schritte, Bildschirmfotos der Laufbahn.
+
+## Version 1.4 · Entfesselt (03.10.2026)
+
+Auftrag: Das Skalieren zum Endgame (ab Raum 20 bis nach Raum 24) viel stärker machen: mehr Gegner, grössere Räume, verrücktere Upgrades. Am Schluss soll es aussehen wie ein Terraria-Bosskampf. Bosse brauchen Mechaniken mit Lernfaktor, Räume sollen einen Build verlangen, und im Endgame sollen tausend Gegner mit vielen verschiedenen Angriffen gleichzeitig kämpfen.
+
+- Eskalation: `RoomGenerator.escalation`, quadratischer Schwarmfaktor, Räume bis drei Bildschirme breiter mit Oberdeck, bis vier Wellen, mehr Kerngegner und Eliten, Decks gemischt, bis 1600 gleichzeitig lebende Gegner, Grenze für feindliche Geschosse.
+- Inhalt: Säurespucker, Zündmilbe, Prismaqualle, Speerfisch, Panzerkrabbe, Brutnest, Brutei; sieben Bedrohungen mit Bereitschaftsanzeige in der Routenwahl und Prüfungsbelohnung.
+- Upgrades: elf Entfesselungen, Grenzbrecher, Überkritik bis Stufe 3, Obergrenzen für Fläche und Tempo.
+- Bosse: neue Muster für alle vier Wächter, entfesselte Varianten ab Zyklus 2, Prismenkaiserin mit Lanzen, Strahlen, Bolzen, Entrückung und Raserei; `Lance` und `Beam` als Domänenobjekte.
+- Darstellung: Sprites für alle neuen Gegner und die Kaiserin samt Aura, Regenbogenfarben, Warnlinien, Strahlen, Tinte, Eskalationsfarbe, Bedrohungs- und Entfesselungsbanner, Symbole, gedrosselte Schadenszahlen.
+- Laufbahn: abnehmender Ertrag für Abschüsse über 500 pro Tauchgang.
+- Prüfung: 170 Tests, 58/58 UI-Schritte, Lastprobe, Endgame-Bildproben, Balanceläufe.
+

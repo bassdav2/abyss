@@ -151,6 +151,10 @@ final class Machinery {
         var m = console();
         if (m == null || !m.active() || run.phase() != GameRun.Phase.RUNNING) return false;
         m.cooldown = Fixture.CONSOLE_COOLDOWN;
+        if (ReactorBrain.vent(run)) {
+            run.emit(new GameEvent(GameEvent.Type.MACHINE, m.x(), GameRun.FLOOR, 1, "CONSOLE"));
+            return true;
+        }
         switch (m.sector()) {
             case 0 -> torpedo(m);
             case 1 -> steam(m);

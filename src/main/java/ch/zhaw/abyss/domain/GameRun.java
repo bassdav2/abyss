@@ -58,9 +58,25 @@ public final class GameRun {
     private final EnumMap<EnemyKind, Integer> hordeLeft = new EnumMap<>(EnemyKind.class);
     private double hordeTimer;
     private List<Offer> levelOffers = List.of();
+    final EnumMap<Weapon, Integer> weaponKills = new EnumMap<>(Weapon.class);
+    final List<Lance> lances = new ArrayList<>();
+    final List<Beam> beams = new ArrayList<>();
+
+    /** Tintenwolke der Brutmutter: verbleibende Sekunden Dunkelheit. */
+    double ink;
+
+    /** Sog: Zielpunkt, Stärke und verbleibende Dauer eines Zugs auf die Figur. */
+    double pullX, pullSpeed, pullTime;
+
+    /** Feindliche Geschosse in der Liste; begrenzt Sperrfeuer in riesigen Schwärmen. */
+    int hostileShots;
+
+    private double barrageTimer;
+    private boolean threatAnnounced;
     Random rng = new Random(1);
     private final List<Integer> route = new ArrayList<>();
     private final Set<RoomCondition> clearedConditions = EnumSet.noneOf(RoomCondition.class);
+    private final Set<Threat> clearedThreats = EnumSet.noneOf(Threat.class);
     private final Set<Synergy> resonances = EnumSet.noneOf(Synergy.class);
     private RoomGenerator generator;
     private RoomPlan room;
@@ -98,6 +114,25 @@ public final class GameRun {
         player.salvage = setup.startSalvage();
         generator = new RoomGenerator(setup.seed(), 0, setup.pressure());
         enterRoom(generator.room(0, 0));
+        applyCareer(setup.meta());
+    }
+
+    /** Startvorteile aus der Laufbahn: Werkstattstufe, seltene Module, Sets und Levelaufstiege. */
+    private void applyCareer(MetaBonus meta) {
+        var p = player;
+        if (meta.startWeaponLevel() > 0) {
+            p.weaponLevel = Math.min(Weapon.MAX_LEVEL, meta.startWeaponLevel());
+            p.recompute();
+        }
+        for (var item : rewards.rollItems(meta.startRare(), Rarity.RARE))
+            if (p.stacks(item) < p.maxStacks(item)) p.install(item);
+        p.repairKits = Math.min(p.stats.maxRepairKits(), p.repairKits + meta.kits());
+        if (meta.startLevel() > 0) {
+            p.level += meta.startLevel();
+            p.pendingLevelUps += meta.startLevel();
+            levelOffers = rollLevelOffers();
+        }
+        checkpoint = snapshot();
     }
 
     /**
@@ -175,10 +210,11 @@ public final class GameRun {
         var run = new GameRun(setup);
         var p = run.player;
         p.items.clear();
+        int breaks = saved.items().getOrDefault(Item.LIMIT_BREAK, 0);
         for (var entry : saved.items().entrySet()) {
             if (entry.getKey() == null
                     || entry.getValue() < 0
-                    || entry.getValue() > entry.getKey().maxStacks())
+                    || entry.getValue() > Player.maxStacks(entry.getKey(), breaks))
                 throw new IllegalArgumentException("Ungültige Modulstufe");
             if (entry.getValue() > 0) p.items.put(entry.getKey(), entry.getValue());
         }
@@ -217,7 +253,7 @@ public final class GameRun {
         run.route.clear();
         run.route.addAll(saved.route().subList(0, saved.depth()));
         run.enterRoom(run.generator.room(saved.depth(), saved.branch()));
-        if (p.pendingLevelUps > 0) run.levelOffers = run.rollLevelOffers();
+        run.levelOffers = p.pendingLevelUps > 0 ? run.rollLevelOffers() : List.of();
         run.events.clear();
         return run;
     }
@@ -244,8 +280,13 @@ public final class GameRun {
         updatePlayer(seconds, input);
         machinery.update(seconds);
         if (phase == Phase.RUNNING && room.condition() == RoomCondition.LIST) updateList(seconds);
+        ink = Math.max(0, ink - seconds);
+        pullTime = Math.max(0, pullTime - seconds);
         if (phase == Phase.RUNNING) {
+            beams.clear();
             updateHazards(seconds);
+            updateLances(seconds);
+            updateThreat(seconds);
             updateEnemies(seconds);
             grid().separate(seconds);
             ballistics.update(seconds);
@@ -253,7 +294,11 @@ public final class GameRun {
             enemies.removeIf(e -> !e.alive());
             updateHordes(seconds);
             updateWaves(seconds);
-        } else ballistics.update(seconds);
+        } else {
+            beams.clear();
+            lances.clear();
+            ballistics.update(seconds);
+        }
         loot.update(seconds);
         for (var crate : crates) crate.hitTime = Math.max(0, crate.hitTime - seconds);
         gridDirty = true;
@@ -299,6 +344,12 @@ public final class GameRun {
             e.regenDelay -= dt;
             if (e.affix == Affix.REGENERATING && e.regenDelay <= 0)
                 e.health = Math.min(e.maxHealth, e.health + e.maxHealth * .05 * dt);
+            if (room.threat() == Threat.REGEN
+                    && e.regenDelay <= 2.8
+                    && !e.statuses.active(Status.BURN)
+                    && !e.statuses.active(Status.CHILL)
+                    && !e.statuses.active(Status.FREEZE))
+                e.health = Math.min(e.maxHealth, e.health + e.maxHealth * .09 * dt);
             if (e.affix == Affix.SHIELDED && e.regenDelay <= 0)
                 e.eliteShield = Math.min(e.maxHealth * .35, e.eliteShield + e.maxHealth * .1 * dt);
             if (e.statuses.active(Status.FREEZE)) {
@@ -355,6 +406,7 @@ public final class GameRun {
         clearTime = 0;
         enemies.clear();
         projectiles.clear();
+        hostileShots = 0;
         hazards.clear();
         pickups.clear();
         crates.clear();
@@ -367,6 +419,12 @@ public final class GameRun {
         waveDelay = -1;
         hordeLeft.clear();
         hordeTimer = 0;
+        lances.clear();
+        beams.clear();
+        ink = 0;
+        pullTime = 0;
+        barrageTimer = 3;
+        threatAnnounced = false;
         rewards.reset();
         rng =
                 new Random(
@@ -407,39 +465,49 @@ public final class GameRun {
                     new Fixture(
                             slot.kind(), slot.x(), slot.direction(), next.sector(), slot.start()));
         phase = Phase.RUNNING;
-        checkpoint =
-                new RunCheckpoint(
-                        setup.seed(),
-                        cycle,
-                        setup.pressure(),
-                        next.depth(),
-                        next.branch(),
-                        p.diver,
-                        p.weapon,
-                        p.weaponLevel,
-                        p.module,
-                        p.explorer,
-                        p.health,
-                        p.energy,
-                        p.salvage,
-                        p.repairKits,
-                        p.items,
-                        kills,
-                        elapsed,
-                        route,
-                        p.cores,
-                        p.reviveUsed,
-                        p.rushStacks,
-                        p.healthPenalty,
-                        setup.bonusHealth(),
-                        p.level,
-                        p.xp,
-                        p.pendingLevelUps);
+        checkpoint = snapshot();
         emit(new GameEvent(GameEvent.Type.DOOR, 90, FLOOR, next.depth(), next.title()));
         if (next.condition() != RoomCondition.NONE)
             emit(new GameEvent(GameEvent.Type.CONDITION, 90, FLOOR, 0, next.condition().name()));
+        if (next.threat() != Threat.NONE)
+            emit(new GameEvent(GameEvent.Type.THREAT, 90, FLOOR, 0, next.threat().name()));
+        if (escalation() == 1 && next.hostile())
+            emit(new GameEvent(GameEvent.Type.ESCALATION, 90, FLOOR, 1, "Der Abgrund erwacht"));
         if (next.hostile()) spawnWave();
         else clearRoom();
+    }
+
+    /** Raum-Sicherung des aktuellen Stands am Raumeingang. */
+    private RunCheckpoint snapshot() {
+        var p = player;
+        var next = room;
+        return new RunCheckpoint(
+                setup.seed(),
+                cycle,
+                setup.pressure(),
+                next.depth(),
+                next.branch(),
+                p.diver,
+                p.weapon,
+                p.weaponLevel,
+                p.module,
+                p.explorer,
+                p.health,
+                p.energy,
+                p.salvage,
+                p.repairKits,
+                p.items,
+                kills,
+                elapsed,
+                route,
+                p.cores,
+                p.reviveUsed,
+                p.rushStacks,
+                p.healthPenalty,
+                setup.bonusHealth(),
+                p.level,
+                p.xp,
+                p.pendingLevelUps);
     }
 
     /** Hüllenbruch: Gegner strömen im Takt nach, bis das Leck nach 40 Sekunden dicht ist. */
@@ -531,11 +599,11 @@ public final class GameRun {
 
     private void spawnWave() {
         var spawns = room.waves().get(wave);
-        double strength = enemyHealth();
         for (int i = 0; i < spawns.size(); i++) {
             var spawn = spawns.get(i);
             double x = spawn.x(), y = spawn.y();
-            if (wave > 0 && !spawn.kind().boss() && spawn.kind() != EnemyKind.TURRET) {
+            double strength = spawn.kind().boss() ? bossHealth() : coreHealth();
+            if (wave > 0 && !spawn.kind().boss() && !spawn.kind().stationary()) {
                 int side = i % 2 == 0 ? 1 : -1;
                 if (player.x + side * 400 > layout().width() - 150 || player.x + side * 400 < 150)
                     side = -side;
@@ -544,6 +612,15 @@ public final class GameRun {
             }
             var enemy =
                     new Enemy(nextId++, spawn.kind(), spawn.affix(), x, y, strength, 1.1 + i * .35);
+            fortify(enemy);
+            if (room.threat() == Threat.COLOSSUS && !spawn.kind().boss()) {
+                enemy.maxHealth *= 4;
+                enemy.health = enemy.maxHealth;
+                enemy.eliteShield *= 4;
+                enemy.size = 1.45;
+                enemy.width *= 1.45;
+                enemy.height *= 1.45;
+            }
             enemies.add(enemy);
             emit(new GameEvent(GameEvent.Type.SPAWN, x, y, spawn.kind().ordinal(), ""));
             if (spawn.kind().boss())
@@ -563,8 +640,11 @@ public final class GameRun {
     // ---------------------------------------------------------------------------------------------
 
     private void queueHordes(List<RoomPlan.Horde> hordes) {
-        for (var horde : hordes)
-            if (horde.count() > 0) hordeLeft.merge(horde.kind(), horde.count(), Integer::sum);
+        double factor = setup.meta().hordes();
+        for (var horde : hordes) {
+            int count = (int) Math.round(horde.count() * factor);
+            if (count > 0) hordeLeft.merge(horde.kind(), count, Integer::sum);
+        }
         if (!hordes.isEmpty()) hordeTimer = Math.max(hordeTimer, .6);
     }
 
@@ -612,9 +692,15 @@ public final class GameRun {
      * @return Höchstzahl gleichzeitig lebender Gegner, bis zu der Schwärme nachströmen
      */
     public int hordeCap() {
-        return Math.min(
-                420, 30 + 25 * room.sector() + 60 * Math.min(cycle, 6) + 20 * setup.pressure());
+        int e = escalation();
+        return (int)
+                Math.min(
+                        MAX_ALIVE,
+                        30 + 4.4 * globalDepth() + 14 * e + .35 * e * e + 20 * setup.pressure());
     }
+
+    /** Absolute Obergrenze gleichzeitig lebender Gegner. */
+    public static final int MAX_ALIVE = 1600;
 
     /** Lässt Schwarmgegner im Takt aus Schotts und Lüftungen nachströmen. */
     private void updateHordes(double dt) {
@@ -624,7 +710,8 @@ public final class GameRun {
         for (var e : enemies) if (e.alive()) alive++;
         int cap = hordeCap();
         // Schübe: jede Lüftung speit gleich einen Pulk aus, grosse Horden kommen als Flut.
-        double rate = Math.min(14, 1.2 + remaining / 40.0);
+        int e = escalation();
+        double rate = Math.min(14 + Math.min(16, e * .5), 1.2 + remaining / 40.0);
         hordeTimer -= dt;
         int guard = 0;
         while (hordeTimer <= 0 && alive < cap && remaining > 0 && guard++ < 4) {
@@ -640,7 +727,7 @@ public final class GameRun {
             int pack =
                     Math.min(
                             Math.min(hordeLeft.get(kind), cap - alive),
-                            2 + (int) Math.min(22, remaining / 15.0));
+                            2 + (int) Math.min(22 + Math.min(40, e), remaining / 15.0));
             spawnPack(kind, pack);
             if (hordeLeft.merge(kind, -pack, Integer::sum) <= 0) hordeLeft.remove(kind);
             remaining -= pack;
@@ -682,10 +769,23 @@ public final class GameRun {
                             Affix.NONE,
                             ex,
                             ey,
-                            enemyHealth(),
+                            swarmHealth(),
                             .2 + rng.nextDouble() * .6);
+            fortify(enemy);
             enemies.add(enemy);
         }
+    }
+
+    /** Wendet die Bedrohung des Raums auf einen neuen Gegner an. */
+    private void fortify(Enemy enemy) {
+        if (room.threat() == Threat.ARMORED && !enemy.kind.boss()) enemy.plated = true;
+    }
+
+    /**
+     * @return Höchstzahl lebender Milben je Brutnest
+     */
+    int hiveBrood() {
+        return Math.min(14, 4 + escalation() / 6);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -724,15 +824,34 @@ public final class GameRun {
         int count = 3 + p.meta.choices() + p.stacks(Item.COMPASS);
         var minimum = (p.level - p.pendingLevelUps + 1) % 5 == 0 ? Rarity.RARE : Rarity.COMMON;
         var result = new ArrayList<Offer>();
-        for (var item : rewards.rollItems(count, minimum)) result.add(Offer.item(item, 0));
+        // Eine mögliche Entfesselung liegt immer obenauf.
+        var evolution = rewards.evolution();
+        if (evolution != null) result.add(Offer.item(evolution, 0));
+        for (var item : rewards.rollItems(count - result.size(), minimum))
+            result.add(Offer.item(item, 0));
+        if (rewards.limitBreakDue() && result.size() >= 2) {
+            result.removeLast();
+            result.add(Offer.item(Item.LIMIT_BREAK, 0));
+        }
         if (p.weaponLevel < Weapon.MAX_LEVEL && rng.nextInt(4) == 0) {
             if (result.size() >= count) result.removeLast();
             result.add(Offer.service(Offer.Type.WEAPON_UPGRADE, 0));
         }
-        // Ist der Build ausgereizt, bleibt der unbegrenzt stapelbare Überladungskern.
+        // Ist der Build ausgereizt, bleiben Grenzbrecher und der unbegrenzte Überladungskern.
+        if (result.size() < Math.min(3, count)
+                && result.stream().noneMatch(o -> o.item() == Item.LIMIT_BREAK)
+                && p.stacks(Item.LIMIT_BREAK) < Item.LIMIT_BREAK.maxStacks())
+            result.add(Offer.item(Item.LIMIT_BREAK, 0));
         if (result.size() < Math.min(3, count)) result.add(Offer.item(Item.OVERCHARGE, 0));
         if (result.isEmpty()) result.add(Offer.service(Offer.Type.HEAL, 0));
         return List.copyOf(result);
+    }
+
+    /**
+     * @return Abschüsse je Waffe in diesem Tauchgang (seit Beginn oder Fortsetzen)
+     */
+    public java.util.Map<Weapon, Integer> weaponKills() {
+        return java.util.Map.copyOf(weaponKills);
     }
 
     /**
@@ -791,8 +910,9 @@ public final class GameRun {
                         Affix.NONE,
                         clamp(x, 120, layout().width() - 120),
                         y,
-                        enemyHealth() * .8,
+                        (kind.swarm() ? swarmHealth() : enemyHealth()) * .8,
                         .9);
+        fortify(enemy);
         enemy.parentId = parent.id;
         enemies.add(enemy);
         parent.children.add(enemy.id);
@@ -802,6 +922,8 @@ public final class GameRun {
 
     private void clearRoom() {
         projectiles.removeIf(q -> !q.friendly);
+        hostileShots = 0;
+        lances.clear();
         hazards.removeIf(h -> h.life() != Double.POSITIVE_INFINITY);
         player.heal(8 * player.stacks(Item.REGEN));
         if (room.kind() == RoomPlan.Kind.BRIDGE) {
@@ -817,6 +939,17 @@ public final class GameRun {
         phase = Phase.ROOM_CLEARED;
         clearTime = 0;
         clearedConditions.add(room.condition());
+        if (room.threat() != Threat.NONE) {
+            clearedThreats.add(room.threat());
+            drop(Pickup.Kind.CORE, 1, layout().rewardX(), FLOOR - 80);
+            emit(
+                    new GameEvent(
+                            GameEvent.Type.MACHINE,
+                            player.x,
+                            player.y,
+                            0,
+                            "TRIAL:" + room.threat().title()));
+        }
         if (room.salvageReward() > 0)
             dropScrap(layout().rewardX(), FLOOR - 60, room.salvageReward());
         rewards.open(room);
@@ -964,8 +1097,87 @@ public final class GameRun {
             double life) {
         var projectile =
                 new Projectile(nextId++, kind, friendly, x, y, vx, vy, damage, radius, life);
+        // Riesige Schwärme dürfen den Raum nicht unbegrenzt mit Geschossen fluten.
+        if (!friendly && hostileShots >= MAX_HOSTILE_SHOTS) return projectile;
+        if (friendly && projectiles.size() >= MAX_SHOTS) return projectile;
+        if (!friendly) hostileShots++;
         projectiles.add(projectile);
         return projectile;
+    }
+
+    /** Höchstzahl feindlicher Geschosse gleichzeitig. */
+    static final int MAX_HOSTILE_SHOTS = 650;
+
+    /** Höchstzahl aller Geschosse gleichzeitig. */
+    static final int MAX_SHOTS = 2400;
+
+    /**
+     * Setzt eine Lichtlanze mit Warnlinie.
+     *
+     * @param lance Lanze
+     */
+    void lance(Lance lance) {
+        if (lances.size() < 400) lances.add(lance);
+    }
+
+    /** Lässt Warnlinien ablaufen und feuert fällige Lanzen ab. */
+    private void updateLances(double dt) {
+        for (int i = 0; i < lances.size(); i++) {
+            var l = lances.get(i);
+            l.delay -= dt;
+            if (l.delay > 0) continue;
+            double vx = Math.cos(l.angle) * l.speed, vy = Math.sin(l.angle) * l.speed;
+            var shot = shoot(Projectile.Kind.LANCE, false, l.x, l.y, vx, vy, l.damage, 11, 2.6);
+            shot.style = l.style;
+            shot.hue = l.hue;
+        }
+        if (lances.removeIf(l -> l.delay <= 0))
+            emit(GameEvent.at(GameEvent.Type.SHOT, player.x, player.centerY()));
+    }
+
+    /** Bedrohungen mit eigenem Takt: Sperrfeuer lässt Einschläge um die Figur niedergehen. */
+    private void updateThreat(double dt) {
+        if (room.threat() == Threat.NONE) return;
+        // Erst nach der Raumkarte, damit sich Banner und Titel nicht überlagern.
+        if (!threatAnnounced && roomTime > 3) {
+            threatAnnounced = true;
+            emit(new GameEvent(GameEvent.Type.THREAT, player.x, FLOOR, 1, room.threat().name()));
+        }
+        if (room.threat() != Threat.BARRAGE) return;
+        barrageTimer -= dt;
+        if (barrageTimer > 0) return;
+        barrageTimer = Math.max(3.2, 6 - escalation() * .05);
+        int count = 3 + Math.min(4, escalation() / 10);
+        for (int i = 0; i < count; i++) {
+            double x =
+                    clamp(
+                            player.x + (i - (count - 1) / 2.0) * 210 + (rng.nextDouble() - .5) * 60,
+                            90,
+                            layout().width() - 90);
+            hazards.add(new Hazard(x, 110, Hazard.Kind.BARRAGE, -1.1 - i * .07, 1.5));
+        }
+    }
+
+    /**
+     * Zieht die Figur zu einem Punkt, etwa der Sog der Brutmutter.
+     *
+     * @param x Zielpunkt
+     * @param speed Zuggeschwindigkeit
+     * @param seconds Dauer
+     */
+    void pull(double x, double speed, double seconds) {
+        pullX = x;
+        pullSpeed = speed;
+        pullTime = seconds;
+    }
+
+    /**
+     * @param p Figur
+     * @return zusätzliche horizontale Geschwindigkeit durch einen Sog
+     */
+    double pullOn(Player p) {
+        if (pullTime <= 0 || Math.abs(pullX - p.x) < 30) return 0;
+        return Math.signum(pullX - p.x) * pullSpeed;
     }
 
     void shockwaves(double x, double damage, double speed) {
@@ -1017,9 +1229,35 @@ public final class GameRun {
                 * (1 + setup.pressure() * .15);
     }
 
+    /**
+     * @return Stärke fest platzierter Gegner: im Endgame deutlich zäher als der Schwarm
+     */
+    double coreHealth() {
+        return enemyHealth() * (1 + .05 * escalation());
+    }
+
+    /**
+     * @return Stärke der Schwarmgegner; die Flutwelle halbiert sie
+     */
+    double swarmHealth() {
+        return enemyHealth() * (1 + .015 * escalation()) * (room.threat() == Threat.FLOOD ? .5 : 1);
+    }
+
+    /**
+     * @return Stärke der Wächter; im Endgame deutlich zäher als der Rest
+     */
+    double bossHealth() {
+        // Wächter halten lange genug, damit jede Phase und Mechanik zu sehen ist.
+        int e = escalation();
+        // Ganz tief wachsen perfekte Builds schneller als quadratisch: dort legen Wächter zu.
+        double deep = 1 + .002 * Math.pow(Math.max(0, e - 40), 2);
+        return enemyHealth() * (1.35 + .1 * e + .006 * e * e) * deep;
+    }
+
     double enemyDamage() {
         return Math.pow(1.045, room.depth())
-                * Math.min(8, 1 + cycle * .5)
+                * Math.min(10, 1 + cycle * .7 + cycle * cycle * .1)
+                * (1 + .02 * escalation())
                 * (1 + setup.pressure() * .1)
                 * (player.stacks(Item.GREED) > 0 ? 1.15 : 1)
                 * (player.explorer ? .75 : 1);
@@ -1125,6 +1363,41 @@ public final class GameRun {
     }
 
     /**
+     * @return Raumnummer über alle Zyklen ab 0
+     */
+    public int globalDepth() {
+        return cycle * RoomGenerator.ROOM_COUNT + room.depth();
+    }
+
+    /**
+     * @return Eskalationsstufe: 0 bis Raum 19 des ersten Zyklus, danach +1 je Raum
+     */
+    public int escalation() {
+        return RoomGenerator.escalation(cycle, room.depth());
+    }
+
+    /**
+     * @return wartende Lichtlanzen mit Warnlinie (nur lesend)
+     */
+    public List<Lance> lances() {
+        return Collections.unmodifiableList(lances);
+    }
+
+    /**
+     * @return aktuelle Lichtstrahlen (nur lesend)
+     */
+    public List<Beam> beams() {
+        return Collections.unmodifiableList(beams);
+    }
+
+    /**
+     * @return Stärke der Tintenwolke 0 bis 1
+     */
+    public double ink() {
+        return Math.min(1, ink / .6);
+    }
+
+    /**
      * Bedient den Notschalter in Reichweite der Figur.
      *
      * @return {@code true}, wenn ein Effekt ausgelöst wurde
@@ -1145,6 +1418,13 @@ public final class GameRun {
      */
     public Set<RoomCondition> clearedConditions() {
         return Collections.unmodifiableSet(clearedConditions);
+    }
+
+    /**
+     * @return Bedrohungen, unter denen seit Beginn oder Fortsetzen ein Raum gesichert wurde
+     */
+    public Set<Threat> clearedThreats() {
+        return Collections.unmodifiableSet(clearedThreats);
     }
 
     /**

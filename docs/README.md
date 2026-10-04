@@ -1,6 +1,6 @@
 # Dokumentation ABYSS · Wegweiser
 
-Stand 25.09.2026, Version 1.1. Die Dokumentation folgt den Abgaben im Modul **PM3 Software-Projekt 3 (HS26)**: Projektskizze (M1), Technischer Bericht I zur Lösungsarchitektur (M2) und Technischer Bericht II zum Prototyp (M3), dazu die Präsentationen und die KI-Dokumentation. Die Originalunterlagen aus Moodle (Aufträge, Vorlagen, Folien der Dozierenden) liegen aus urheberrechtlichen Gründen **nicht** im Repository. Die Berichte nennen nur, welche Vorgabe sie umsetzen.
+Stand 03.10.2026, Spielversion 1.4 (Entfesselt). Die Dokumentation folgt den Abgaben im Modul **PM3 Software-Projekt 3 (HS26)**: Projektskizze (M1), Technischer Bericht I zur Lösungsarchitektur (M2) und Technischer Bericht II zum Prototyp (M3), dazu die Präsentationen und die KI-Dokumentation. Die Originalunterlagen aus Moodle (Aufträge, Vorlagen, Folien der Dozierenden) liegen aus urheberrechtlichen Gründen **nicht** im Repository. Die Berichte nennen nur, welche Vorgabe sie umsetzen.
 
 Stellen mit `[TEAM]` ergänzt oder bestätigt das Projektteam: Namen, Rollen, Stunden, eigene Begründungen. Die finalen Abgaben entstehen in der SoE-Vorlage. Die Markdown-Fassungen hier liefern den Inhalt dafür.
 
@@ -57,6 +57,7 @@ Alle Foliensätze und Sprechtexte: [praesentationen/README.md](praesentationen/R
 - [qa/render-soak.json](qa/render-soak.json): 60-Sekunden-Dauertest, 30 733 Bilder, Ø 1,9 ms pro Bild
 - [qa/ui-smoke.txt](qa/ui-smoke.txt): 37 Schritte durch alle Bildschirme im echten JavaFX-Fenster
 - [qa/screens](qa/screens): Bildschirmfotos aller Menüs und Spielsituationen
+- [qa/endgame](qa/endgame): Endgame-Bildproben (Schwarm mit über 1100 Gegnern, Bedrohungen, Bossmuster, Prismenkaiserin)
 
 ## Planung und Geschichte
 

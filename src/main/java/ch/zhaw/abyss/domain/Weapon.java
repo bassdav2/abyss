@@ -86,7 +86,46 @@ public enum Weapon {
             new Swing(Style.THRUST, .06, .12, .14, 240, 130, 14, 110, 0),
             .03,
             0,
-            false);
+            false),
+    DRILL(
+            "Tiefenbohrer",
+            "Fünf rasende Bohrstösse mit wenig Rückstoss. Zerlegt dichte Schwärme im Sekundentakt.",
+            List.of(
+                    new Swing(Style.THRUST, .02, .06, .08, 195, 115, 8, 40, 30),
+                    new Swing(Style.THRUST, .02, .06, .08, 195, 115, 8, 40, 30),
+                    new Swing(Style.THRUST, .02, .06, .08, 195, 115, 8, 40, 30),
+                    new Swing(Style.THRUST, .02, .06, .08, 195, 115, 9, 40, 30),
+                    new Swing(Style.THRUST, .05, .08, .15, 225, 125, 16, 200, 80)),
+            new Swing(Style.THRUST, .03, .08, .10, 185, 125, 8, 40, 0),
+            .05,
+            0,
+            false,
+            true),
+    PLASMA(
+            "Plasmawerfer",
+            "Plasmakugeln, die beim Aufprall explodieren. Der dritte Schuss ist eine grosse"
+                    + " Ladung.",
+            List.of(
+                    new Swing(Style.SHOOT, .10, .04, .26, 0, 0, 20, 120, -40),
+                    new Swing(Style.SHOOT, .10, .04, .26, 0, 0, 20, 120, -40),
+                    new Swing(Style.SHOOT, .18, .04, .36, 0, 0, 34, 260, -90)),
+            new Swing(Style.SHOOT, .08, .04, .22, 0, 0, 18, 100, 0),
+            0,
+            .15,
+            false,
+            true),
+    SCYTHE(
+            "Tiefseesense",
+            "Weite Sensenschwünge. Der dritte Schwung mäht rundherum, auch hinter dir.",
+            List.of(
+                    new Swing(Style.SLASH, .09, .12, .20, 235, 185, 24, 200, 60),
+                    new Swing(Style.SLASH, .09, .12, .20, 235, 185, 24, 200, 60),
+                    new Swing(Style.OVERHEAD, .15, .14, .28, 250, 205, 36, 380, 40)),
+            new Swing(Style.AIR_SLASH, .06, .15, .16, 220, 190, 22, 180, 0),
+            .08,
+            0,
+            false,
+            true);
 
     /** Höchste Werkstattstufe einer Waffe. */
     public static final int MAX_LEVEL = 8;
@@ -95,7 +134,7 @@ public enum Weapon {
     private final List<Swing> combo;
     private final Swing air;
     private final double critBonus, burnChance;
-    private final boolean startsUnlocked;
+    private final boolean startsUnlocked, career;
 
     Weapon(
             String title,
@@ -105,6 +144,19 @@ public enum Weapon {
             double critBonus,
             double burnChance,
             boolean startsUnlocked) {
+        this(title, description, combo, air, critBonus, burnChance, startsUnlocked, false);
+    }
+
+    Weapon(
+            String title,
+            String description,
+            List<Swing> combo,
+            Swing air,
+            double critBonus,
+            double burnChance,
+            boolean startsUnlocked,
+            boolean career) {
+        this.career = career;
         this.title = title;
         this.description = description;
         this.combo = List.copyOf(combo);
@@ -168,6 +220,13 @@ public enum Weapon {
      */
     public boolean chains() {
         return this == TESLA;
+    }
+
+    /**
+     * @return {@code true}, wenn die Waffe nur über einen Skill-Baum der Laufbahn erhältlich ist
+     */
+    public boolean career() {
+        return career;
     }
 
     /**

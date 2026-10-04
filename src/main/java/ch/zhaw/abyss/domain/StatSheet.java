@@ -16,7 +16,7 @@ import java.util.Map;
  * @param cooldown Faktor für Abklingzeiten; kleiner ist besser
  * @param moduleCooldown zusätzlicher Faktor nur für das aktive Modul
  * @param damageTaken Faktor für erlittenen Schaden
- * @param critChance kritische Trefferchance 0 bis 1
+ * @param critChance kritische Trefferchance; über 1 bedeutet Überkritik
  * @param critDamage kritischer Schadensfaktor
  * @param knockback Rückstossfaktor
  * @param lifesteal Anteil des Schadens, der heilt
@@ -99,39 +99,54 @@ public record StatSheet(
         var s = new Stacks(items);
         var resonance = Synergy.activeIn(items);
         double health =
-                (diver.health() + bonusHealth + 20 * s.of(Item.MEDICAL) + 6 * s.of(Item.OVERCHARGE))
+                (diver.health()
+                                + bonusHealth
+                                + meta.health()
+                                + 20 * s.of(Item.MEDICAL)
+                                + 6 * s.of(Item.OVERCHARGE))
                         * (s.has(Item.GLASS_HULL) ? .7 : 1);
-        double energy = 100 + 20 * s.of(Item.CAPACITOR) + (diver == DiverClass.SPARK ? 40 : 0);
+        double energy =
+                100
+                        + meta.energy()
+                        + 20 * s.of(Item.CAPACITOR)
+                        + (diver == DiverClass.SPARK ? 40 : 0);
         double damage =
                 Math.pow(1.15, s.of(Item.SERVO))
                         * (s.has(Item.GLASS_HULL) ? 1.4 : 1)
                         * Weapon.levelMultiplier(weaponLevel)
                         * meta.damage()
+                        * meta.masteryDamage(weapon)
                         * Math.pow(1.06, s.of(Item.OVERCHARGE));
         double ability =
                 Math.pow(1.15, s.of(Item.CAPACITOR))
                         * (s.has(Item.SINGULARITY) ? 1 + .25 * s.of(Item.SINGULARITY) : 1)
                         * Weapon.levelMultiplier(weaponLevel / 2)
-                        * meta.damage();
+                        * meta.damage()
+                        * meta.abilityDamage();
         double attackSpeed =
                 Math.pow(1.1, s.of(Item.OVERCLOCK))
                         * (s.has(Item.FEVER) ? 1.25 : 1)
                         * meta.attackSpeed()
                         * Math.pow(1.06, s.of(Item.OVERCHARGE));
         double reach = 1 + .15 * s.of(Item.LANCE);
-        double move = diver.speed() * (1 + .10 * s.of(Item.THRUSTER));
-        double cooldown = Math.pow(.88, s.of(Item.COOLANT));
+        double move = diver.speed() * (1 + .10 * s.of(Item.THRUSTER)) * meta.move();
+        double cooldown = Math.pow(.88, s.of(Item.COOLANT)) * meta.cooldown();
         double moduleCooldown = Math.pow(.5, s.of(Item.SINGULARITY));
-        double taken = Math.pow(.9, s.of(Item.PLATING)) * (diver == DiverClass.TITAN ? .8 : 1);
+        double taken =
+                Math.pow(.9, s.of(Item.PLATING))
+                        * (diver == DiverClass.TITAN ? .8 : 1)
+                        * meta.armor();
         double crit =
                 .05
                         + .07 * s.of(Item.LENS)
                         + weapon.critBonus()
                         + (diver == DiverClass.HARPOONER ? .10 : 0)
-                        + meta.crit();
-        double critDamage = 2 + .4 * s.of(Item.CRIT_DAMAGE);
+                        + meta.crit()
+                        + meta.masteryCrit(weapon);
+        if (s.has(Item.DEATH_EYE)) crit += .25;
+        double critDamage = 2 + .4 * s.of(Item.CRIT_DAMAGE) + meta.critDamage();
         double knockback = 1 + .35 * s.of(Item.BALLAST);
-        double lifesteal = .04 * s.of(Item.NANITES);
+        double lifesteal = .04 * s.of(Item.NANITES) + (s.has(Item.BLOOD_PACT) ? .08 : 0);
         double regen =
                 (5.5 + s.of(Item.SIPHON)) * (diver == DiverClass.SPARK ? 2 : 1)
                         - (s.has(Item.FEVER) ? 1 : 0);
@@ -139,11 +154,13 @@ public record StatSheet(
         double burn =
                 weapon.burnChance()
                         + .15 * s.of(Item.IGNITER)
-                        + (diver == DiverClass.WELDER ? .20 : 0);
+                        + (diver == DiverClass.WELDER ? .20 : 0)
+                        + meta.burn();
         double chill = .15 * s.of(Item.CRYO_COIL);
-        double burnPower = diver == DiverClass.WELDER ? 2 : 1;
-        int kits = 3 + s.of(Item.TOOLBELT) + (diver == DiverClass.MECHANIC ? 1 : 0);
-        double shield = 20 * s.of(Item.SHIELD_CELL);
+        if (s.has(Item.INFERNO)) burn += .4;
+        double burnPower = (diver == DiverClass.WELDER ? 2 : 1) * (s.has(Item.INFERNO) ? 3 : 1);
+        int kits = 3 + s.of(Item.TOOLBELT) + (diver == DiverClass.MECHANIC ? 1 : 0) + meta.kits();
+        double shield = 20 * s.of(Item.SHIELD_CELL) + (s.has(Item.BASTION) ? 120 : 0);
         for (var synergy : resonance)
             switch (synergy) {
                 case FIRESTORM -> burnPower *= 1.5;
@@ -170,16 +187,17 @@ public record StatSheet(
                 energy,
                 damage,
                 ability,
-                attackSpeed,
+                Math.min(MAX_ATTACK_SPEED, attackSpeed),
                 reach,
                 move,
                 cooldown,
                 moduleCooldown,
                 taken,
-                Math.min(1, crit),
-                critDamage + Math.max(0, crit - 1) * 2,
+                // Über 100 % hinaus wird Kritik zur Überkritik mit bis zu drei Stufen.
+                Math.min(MAX_CRIT, crit),
+                critDamage,
                 knockback,
-                Math.min(.25, lifesteal),
+                Math.min(s.has(Item.BLOOD_PACT) ? .4 : .25, lifesteal),
                 s.of(Item.JETPACK),
                 Math.max(0, regen),
                 scrap,
@@ -189,9 +207,32 @@ public record StatSheet(
                 shield,
                 kits,
                 (180 + 90 * s.of(Item.MAGNET)) * meta.pickup(),
-                Math.pow(1.12, s.of(Item.AREA)) * meta.area(),
+                Math.min(MAX_AREA, Math.pow(1.12, s.of(Item.AREA)) * meta.area()),
                 (1 + .15 * s.of(Item.CHARGER)) * meta.xpGain(),
-                s.of(Item.MULTISHOT));
+                s.of(Item.MULTISHOT) + meta.projectiles());
+    }
+
+    /** Höchste kritische Chance: drei volle Stufen Überkritik und ein halber Schritt darüber. */
+    public static final double MAX_CRIT = 3.5;
+
+    /** Obergrenze des Wirkungsbereichs, damit Novae nicht über mehrere Räume reichen. */
+    public static final double MAX_AREA = 6;
+
+    /** Obergrenze des Angriffstempos; schneller werden Schläge nicht mehr lesbar. */
+    public static final double MAX_ATTACK_SPEED = 4;
+
+    /**
+     * Würfelt die Stufe eines kritischen Treffers. Jede volle 100 % garantieren eine Stufe, der
+     * Rest ist die Chance auf die nächste.
+     *
+     * @param chance kritische Chance, auch über 1
+     * @param roll Zufallszahl 0 bis 1
+     * @return Stufe 0 (kein Kritischer) bis 3
+     */
+    public static int critTier(double chance, double roll) {
+        int tier = (int) Math.floor(chance);
+        if (roll < chance - tier) tier++;
+        return Math.max(0, Math.min(3, tier));
     }
 
     private record Stacks(Map<Item, Integer> items) {

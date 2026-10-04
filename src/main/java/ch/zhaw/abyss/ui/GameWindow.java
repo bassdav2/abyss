@@ -49,6 +49,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
         LOADOUT,
         WARDROBE,
         ARCHIVE,
+        CAREER,
         SETTINGS,
         HELP,
         PLAY,
@@ -232,6 +233,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
             case LOADOUT -> menus.loadout(gui);
             case WARDROBE -> menus.wardrobe(gui);
             case ARCHIVE -> menus.archive(gui);
+            case CAREER -> menus.career(gui);
             case SETTINGS -> menus.settings(gui, inGameModal);
             case HELP -> menus.help(gui, inGameModal);
             case PAUSE -> runScreens.pause(gui);
@@ -505,6 +507,26 @@ public final class GameWindow implements AutoCloseable, Navigator {
     @Override
     public void shrine() {
         setScreen(Screen.SHRINE);
+    }
+
+    @Override
+    public void career() {
+        int tab = 0;
+        if (run != null && screen == Screen.OUTCOME)
+            for (var tree : ch.zhaw.abyss.application.SkillTree.values())
+                if (tree.diver() == run.player().diver()) tab = tree.ordinal();
+        menus.openCareer(tab);
+        setScreen(Screen.CAREER);
+    }
+
+    /**
+     * Öffnet die Laufbahn auf einem bestimmten Reiter, etwa für die Oberflächenprüfung.
+     *
+     * @param tab Reiter: Bäume in Aufzählungsreihenfolge, danach die Waffenmeisterschaft
+     */
+    public void career(int tab) {
+        menus.openCareer(tab);
+        setScreen(Screen.CAREER);
     }
 
     /** Öffnet die Auswahl eines offenen Levelaufstiegs, etwa für die Oberflächenprüfung. */

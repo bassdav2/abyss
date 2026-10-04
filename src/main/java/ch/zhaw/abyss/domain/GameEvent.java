@@ -69,7 +69,13 @@ public record GameEvent(
         PICKUP,
         CORE,
         REINFORCEMENTS,
-        DOOR
+        DOOR,
+        /** Bedrohung des Raums, Text ist der Name der {@link Threat}. */
+        THREAT,
+        /** Eskalation des Endgames, Betrag ist die Stufe. */
+        ESCALATION,
+        /** Entfesselung eines Moduls, Text ist der Name. */
+        EVOLUTION
     }
 
     /**

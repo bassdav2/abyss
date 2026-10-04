@@ -25,6 +25,9 @@ interface Navigator {
 
     void archive(int tab);
 
+    /** Öffnet die Laufbahn mit Rängen, Skill-Bäumen und Waffenmeisterschaft. */
+    void career();
+
     void settings(boolean inGame);
 
     void help(boolean inGame);
