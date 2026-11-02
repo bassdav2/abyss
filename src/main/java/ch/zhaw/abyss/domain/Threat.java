@@ -13,17 +13,17 @@ public enum Threat {
     ARMORED(
             "Panzerschwarm",
             "Alle Gegner tragen Panzer. Normale Treffer wirken nur zu 35 %.",
-            "Kritische Treffer, Brand, Explosionen, Blitze"),
+            "Krits, Brand, Explosionen, Blitze"),
     /** Flutwelle: dreimal so viele, halb so zähe Schwarmgegner. */
     FLOOD(
             "Flutwelle",
-            "Dreimal so viele Schwarmgegner mit halber Integrität.",
+            "Dreimal so viele Schwarmgegner mit halbem Leben.",
             "Flächenschaden, Kreiselmesser, Teslafeld, Kettenreaktion"),
     /** Kolosse: wenige Elitegegner mit vierfacher Integrität. */
     COLOSSUS(
             "Kolosse",
             "Wenige Elitegegner, riesig und vierfach so zäh.",
-            "Einzelschaden, Kritik, Werkstattstufe"),
+            "Einzelschaden, Krit, Waffenstufe"),
     /** Luftschlag: ausschliesslich fliegende Gegner. */
     SKY(
             "Luftschlag",

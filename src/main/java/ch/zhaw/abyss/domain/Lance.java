@@ -89,6 +89,13 @@ public final class Lance {
     }
 
     /**
+     * @return Sekunden bis zum Abschuss
+     */
+    public double remaining() {
+        return Math.max(0, delay);
+    }
+
+    /**
      * @return Anteil 0 bis 1 der abgelaufenen Vorwarnzeit
      */
     public double progress() {

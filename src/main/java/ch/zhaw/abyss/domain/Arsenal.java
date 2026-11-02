@@ -402,10 +402,7 @@ final class Arsenal {
         for (var e : run.grid().around(p.x, p.centerY(), radius + 100)) {
             if (!e.alive() || Math.hypot(e.x - p.x, e.centerY() - p.centerY()) > radius) continue;
             run.combat.hitEnemy(e, 34, Combat.Source.ABILITY, 380, p.x);
-            if (!e.kind.boss() && e.alive() && e.state != Enemy.State.HIDDEN) {
-                e.state = Enemy.State.STUNNED;
-                e.stateTime = 1.1;
-            }
+            if (e.alive() && e.state != Enemy.State.HIDDEN) e.stun(1.1);
         }
         run.projectiles.removeIf(
                 q -> !q.friendly && Math.hypot(q.x - p.x, q.y - p.centerY()) < 300);

@@ -17,180 +17,116 @@ skinparam packageBorderColor #6E8B91
 skinparam stateBackgroundColor #EAF3F2
 skinparam stateBorderColor #355863
 hide empty members
-title Design-Klassendiagramm der Domänenschicht (Auszug)
-class GameRun {
- - phase: Phase
- - room: RoomPlan
- - cycle: int
- + update(seconds, input)
- + interaction(): Interaction
- + take(offer): boolean
- + acceptDeal(deal): boolean
- + chooseNextRoom(branch): boolean
- + nextCycle(): boolean
- + checkpoint(): RunCheckpoint
- + drainEvents(): List<GameEvent>
- + {static} restore(saved, items, weapons): GameRun
+title Design-Klassendiagramm: Kern der Domänenschicht
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+package "application" {
+ class GameService <<Controller>> {
+  - repository: GameRepository
+  - run: GameRun
+  + start(loadout, seed): GameRun
+  + resume(): Optional<GameRun>
+  + step(seconds, input)
+  + chooseNextRoom(branch): boolean
+  + take(offer): boolean
+  + acceptDeal(deal): boolean
+  + saveRoom()
+  + recordOutcome()
+ }
+ interface GameRepository <<Port>> {
+  + loadProfile(): Profile
+  + loadCheckpoint(): Optional<RunCheckpoint>
+  + saveCheckpoint(checkpoint)
+  + clearCheckpoint()
+ }
 }
-class Combat {
- ~ hitEnemy(enemy, base, source, knockback, x): double
- ~ hurtPlayer(amount, x, source, melee): boolean
- ~ explode(x, y, radius, damage, ...)
- ~ chain(origin, damage, range)
+package "infrastructure" {
+ class FileGameRepository <<Adapter>>
 }
-class Physics {
- ~ {static} move(actor, layout, dt)
+package "domain" {
+ class GameRun <<Aggregat>> {
+  ~ phase: Phase
+  ~ room: RoomPlan
+  + update(seconds, input)
+  + take(offer): boolean
+  + chooseNextRoom(branch): boolean
+  + checkpoint(): RunCheckpoint
+  + drainEvents(): List<GameEvent>
+ }
+ class Combat {
+  ~ hitEnemy(enemy, base, source, knockback, x): double
+  ~ applyStatus(enemy, status, seconds)
+ }
+ abstract class Body {
+  ~ x, y, vx, vy: double
+  ~ fall(gravity, maxFall, dt)
+  ~ advance(dt)
+  + id(): long
+ }
+ abstract class Actor {
+  ~ health, maxHealth: double
+  ~ move(layout, dt)
+  + bounds(): Bounds
+ }
+ class Player
+ class Projectile
+ class Pickup
+ class Enemy {
+  ~ kind: EnemyKind
+  ~ state: State
+  ~ {static} create(id, kind, affix, x, y, strength, delay): Enemy
+  ~ stun(seconds): boolean
+  ~ knockbackFactor(): double
+  ~ limitDamage(damage): double
+  ~ expose(state, seconds): boolean
+  ~ onDefeated(run)
+  + armored(): boolean
+ }
+ class Boss {
+  ~ phaseFloor(): double
+  ~ stun(seconds): boolean
+  ~ knockbackFactor(): double
+  ~ limitDamage(damage): double
+  ~ expose(state, seconds): boolean
+  ~ onDefeated(run)
+  + armored(): boolean
+ }
+ interface EnemyBehavior <<Strategie>> {
+  ~ update(enemy, run, dt)
+ }
+ abstract class Brain <<Schablonenmethode>> {
+  + update(enemy, run, dt) {final}
+  ~ windup(enemy, run, dt)
+  ~ strike(enemy, run, dt)
+ }
+ class "WardenBrain, CaptainBrain, …\n28 Gegnerverhalten" as Brains
+ enum EnemyKind {
+  ~ behavior(): EnemyBehavior
+  + boss(): boolean
+ }
 }
-class PlayerMotor {
- ~ tick(dt)
- ~ move(dt, input)
-}
-class Arsenal {
- ~ update(dt, input)
- ~ slamImpact()
- ~ updateDrone(dt)
-}
-class Ballistics {
- ~ update(dt)
-}
-class Loot {
- ~ update(dt)
- ~ drop(kind, value, x, y)
- ~ breakCrate(crate)
-}
-class Rewards {
- ~ open(room)
- ~ take(offer): boolean
- ~ accept(deal): boolean
- ~ repair(): boolean
-}
-abstract class Actor {
- # x, y, vx, vy
- # health, maxHealth
- + bounds(): Bounds
-}
-class Player {
- - weapon: Weapon
- - items: Map<Item,Integer>
- - stats: StatSheet
- + stacks(item): int
-}
-class Enemy {
- - kind: EnemyKind
- - affix: Affix
- - state: State
- + telegraph(): Telegraph
- + armored(): boolean
-}
-interface EnemyBehavior {
- update(enemy, run, dt)
-}
-abstract class Brain {
- + update(enemy, run, dt) {final}
- # approach(...)
- # ready(...): boolean
- # strikeStart(...)
- # strike(...)
-}
-class WardenBrain
-class ReactorBrain
-class BroodBrain
-class CaptainBrain
-class EmpressBrain
-class "Behaviors.*\n(17 reguläre und Schwarmarten)" as Regular
-class Lance {
- - angle, speed, delay
- + progress(): double
-}
-class Beam <<record>> {
- + touches(x, y, radius): boolean
-}
-enum Threat {
- + prepared(player): boolean
-}
-class Fixture {
- - kind: Kind
- - x, direction, sector
- + active(): boolean
- + warning(): boolean
-}
-class Machinery {
- ~ push(actor): double
- ~ update(dt)
- ~ use(): boolean
-}
-class RoomGenerator {
- + choices(depth): List<RoomPlan>
- + room(depth, branch): RoomPlan
- + {static} escalation(cycle, depth): int
- + {static} surge(escalation): double
-}
-class StatSheet <<record>> {
- + {static} compute(diver, weapon, level, items, bonus)
-}
-class RoomPlan <<record>>
-class RoomLayout <<record>>
-class Platform <<record>>
-class RunSetup <<record>>
-class RunCheckpoint <<record>>
-class Offer <<record>>
-enum Weapon
-enum Item
-enum ActiveModule
-enum DiverClass
-enum RoomCondition
-enum Synergy
-enum EnemyKind {
- ~ behavior(): EnemyBehavior
-}
-GameRun *-- Player
+GameService --> GameRepository
+GameService --> "0..1" GameRun : steuert
+FileGameRepository ..|> GameRepository
+GameRun *-- "1" Player
 GameRun *-- "0..*" Enemy
 GameRun *-- "0..*" Projectile
-GameRun *-- "0..*" Hazard
 GameRun *-- "0..*" Pickup
-GameRun *-- "0..*" SupplyCrate
-GameRun *-- Combat
-GameRun *-- PlayerMotor
-GameRun *-- Arsenal
-GameRun *-- Ballistics
-GameRun *-- Loot
-GameRun *-- Rewards
-GameRun *-- Machinery
-GameRun *-- "0..*" Fixture
-GameRun *-- "0..*" Lance
-GameRun *-- "0..*" Beam
-Machinery ..> Fixture
-PlayerMotor ..> Physics
-StatSheet ..> Synergy
-Synergy ..> Item
-Rewards ..> Offer
-note top of Rewards : Mitarbeiterklassen des Aggregats:\nnur GameRun ist öffentlich
-GameRun --> RoomGenerator
-GameRun --> RoomPlan
-GameRun --> RunSetup
-GameRun ..> RunCheckpoint
-RoomPlan *-- RoomLayout
-RoomPlan --> RoomCondition
-RoomPlan --> Threat
-RoomLayout *-- "0..*" Platform
+GameRun *-- "1" Combat
+Combat ..> Enemy
+Body <|-- Actor
+Body <|-- Projectile
+Body <|-- Pickup
 Actor <|-- Player
 Actor <|-- Enemy
-Player --> StatSheet
-Player --> Weapon
-Player --> ActiveModule
-Player --> DiverClass
-Player ..> Item
-Enemy --> EnemyKind
-Enemy --> EnemyBehavior
+Enemy <|-- Boss
+Enemy --> "1" EnemyKind
+Enemy --> "1" EnemyBehavior
 EnemyKind ..> EnemyBehavior : Fabrikmethode
 EnemyBehavior <|.. Brain
-Brain <|-- WardenBrain
-Brain <|-- ReactorBrain
-Brain <|-- BroodBrain
-Brain <|-- CaptainBrain
-Brain <|-- EmpressBrain
-Brain <|-- Regular
-note right of Brain : Schablonenmethode:\ngemeinsame Zustandsmaschine,\nArten überschreiben Einstiegspunkte
-note bottom of EnemyBehavior : Strategie: austauschbares\nVerhalten pro Gegnerart
+Brain <|-- Brains
+legend bottom
+ + öffentlich   ~ paketintern   - privat. Paketinterne Felder auf private umstellen ist der nächste Schritt.
+endlegend
 
 @enduml

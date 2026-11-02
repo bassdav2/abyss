@@ -157,7 +157,7 @@ public final class UiSmoke extends Application {
                         CampaignPilot.advance(run, 0);
                     }
                     CampaignPilot.autoLevel = true;
-                    expect("Levelaufstieg offen", run.pendingLevelUps() > 0);
+                    expect("Level-Up offen", run.pendingLevelUps() > 0);
                     expect("Auswahl angeboten", !run.levelOffers().isEmpty());
                     window.levelUp();
                 });
@@ -168,7 +168,7 @@ public final class UiSmoke extends Application {
                     var run = run();
                     for (int guard = 0; guard < 20 && run.pendingLevelUps() > 0; guard++)
                         window.chooseLevel(0);
-                    expect("alle Levelaufstiege gewählt", run.pendingLevelUps() == 0);
+                    expect("alle Level-Ups gewählt", run.pendingLevelUps() == 0);
                     window.play();
                 });
         add(
@@ -234,7 +234,7 @@ public final class UiSmoke extends Application {
                 "CAREER",
                 () -> {
                     window.career();
-                    expect("Laufbahn-Erfahrung verbucht", service.profile().career().xp() > 0);
+                    expect("Rang-XP verbucht", service.profile().career().xp() > 0);
                 });
         add("career-depth", "CAREER", () -> window.career(0));
         add("career-weapons", "CAREER", () -> window.career(8));
@@ -260,7 +260,7 @@ public final class UiSmoke extends Application {
                                     Item.MEDICAL,
                                     6),
                             0);
-                    expect("Eskalation im zweiten Zyklus", run().escalation() > 10);
+                    expect("Eskalation im zweiten Durchlauf", run().escalation() > 10);
                     simulate(7);
                     expect(
                             "Schwarm mit über hundert Gegnern",
@@ -295,7 +295,7 @@ public final class UiSmoke extends Application {
                             Map.of(Item.ORBITAL, 6, Item.AREA, 2, Item.SERVO, 4, Item.MEDICAL, 4),
                             1);
                     expect(
-                            "Entfesselung obenauf",
+                            "Evolution obenauf",
                             !run().levelOffers().isEmpty()
                                     && run().levelOffers().getFirst().item() == Item.STORM_BLADES);
                     window.levelUp();

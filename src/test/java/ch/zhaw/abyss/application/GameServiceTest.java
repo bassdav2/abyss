@@ -3,7 +3,6 @@ package ch.zhaw.abyss.application;
 import static org.junit.jupiter.api.Assertions.*;
 
 import ch.zhaw.abyss.domain.*;
-import ch.zhaw.abyss.ports.GameRepository;
 import ch.zhaw.abyss.qa.CampaignPilot;
 
 import org.junit.jupiter.api.Test;

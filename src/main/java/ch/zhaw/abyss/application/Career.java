@@ -33,7 +33,7 @@ public record Career(
 
     /** Prüft und kopiert die Werte; unbekannte Knoten werden verworfen. */
     public Career {
-        if (xp < 0) throw new IllegalArgumentException("Ungültige Laufbahn");
+        if (xp < 0) throw new IllegalArgumentException("Ungültige Talentdaten");
         var divers = new EnumMap<DiverClass, Long>(DiverClass.class);
         if (diverXp != null)
             diverXp.forEach(

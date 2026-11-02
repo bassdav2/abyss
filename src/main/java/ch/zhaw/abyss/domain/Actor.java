@@ -4,9 +4,7 @@ package ch.zhaw.abyss.domain;
  * Gemeinsame Basis aller Figuren. Weltkoordinaten: {@code x} ist die horizontale Mitte, {@code y}
  * die Fusshöhe; kleinere y-Werte liegen weiter oben.
  */
-public abstract class Actor {
-    final long id;
-    double x, y, vx, vy;
+public abstract class Actor extends Body {
     double health, maxHealth;
     int facing = 1;
     double hurtTime, animationTime;
@@ -25,9 +23,7 @@ public abstract class Actor {
      * @param health Start- und Maximalintegrität
      */
     protected Actor(long id, double x, double y, double width, double height, double health) {
-        this.id = id;
-        this.x = x;
-        this.y = y;
+        super(id, x, y, 0, 0);
         this.width = width;
         this.height = height;
         this.health = health;
@@ -41,39 +37,50 @@ public abstract class Actor {
         return false;
     }
 
-    /**
-     * @return eindeutige Kennung
-     */
-    public long id() {
-        return id;
-    }
+    /** Schwerkraft für Figuren in Einheiten pro Sekunde². */
+    static final double GRAVITY = 2100;
+
+    /** Höchste Fallgeschwindigkeit einer Figur. */
+    static final double MAX_FALL = 1500;
 
     /**
-     * @return horizontale Mitte
+     * Bewegt die Figur einen Schritt mit Schwerkraft, Boden und einseitigen Laufstegen. Schwebende
+     * Figuren bewegen sich frei, bleiben aber innerhalb des Raums. Früher eine statische Methode in
+     * {@code Physics}; die Figur bewegt sich jetzt selbst (Information Expert).
+     *
+     * @param layout Raumgeometrie
+     * @param dt Sekunden
      */
-    public double x() {
-        return x;
-    }
-
-    /**
-     * @return Fusshöhe
-     */
-    public double y() {
-        return y;
-    }
-
-    /**
-     * @return horizontale Geschwindigkeit
-     */
-    public double vx() {
-        return vx;
-    }
-
-    /**
-     * @return vertikale Geschwindigkeit; negativ bedeutet aufwärts
-     */
-    public double vy() {
-        return vy;
+    void move(RoomLayout layout, double dt) {
+        double previousY = y;
+        double min = RoomLayout.WALL + width / 2, max = layout.width() - min;
+        x = GameRun.clamp(x + vx * dt, min, max);
+        if (flying()) {
+            y = GameRun.clamp(y + vy * dt, height + 30, GameRun.FLOOR);
+            grounded = y >= GameRun.FLOOR;
+            return;
+        }
+        dropTime = Math.max(0, dropTime - dt);
+        fall(GRAVITY, MAX_FALL, dt);
+        y += vy * dt;
+        grounded = false;
+        platform = null;
+        if (y >= GameRun.FLOOR) {
+            y = GameRun.FLOOR;
+            vy = 0;
+            grounded = true;
+            return;
+        }
+        if (vy < 0 || dropTime > 0) return;
+        for (Platform candidate : layout.platforms()) {
+            if (previousY <= candidate.y() + 1 && y >= candidate.y() && candidate.covers(x)) {
+                y = candidate.y();
+                vy = 0;
+                grounded = true;
+                platform = candidate;
+                return;
+            }
+        }
     }
 
     /**

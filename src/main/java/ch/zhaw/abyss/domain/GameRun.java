@@ -215,7 +215,7 @@ public final class GameRun {
             if (entry.getKey() == null
                     || entry.getValue() < 0
                     || entry.getValue() > Player.maxStacks(entry.getKey(), breaks))
-                throw new IllegalArgumentException("Ungültige Modulstufe");
+                throw new IllegalArgumentException("Ungültige Upgradestufe");
             if (entry.getValue() > 0) p.items.put(entry.getKey(), entry.getValue());
         }
         p.weaponLevel = saved.weaponLevel();
@@ -355,12 +355,12 @@ public final class GameRun {
             if (e.statuses.active(Status.FREEZE)) {
                 e.vx = 0;
                 if (e.flying()) e.vy = 0;
-            } else if (e.statuses.active(Status.SHOCK) && !e.kind.boss()) e.vx = 0;
+            } else if (e.statuses.active(Status.SHOCK) && e.staggerable()) e.vx = 0;
             else e.behavior.update(e, this, dt * e.statuses.slowFactor());
             double own = e.vx;
             if (e.state != Enemy.State.HIDDEN) {
                 e.vx = own + e.knockVx + machinery.push(e);
-                Physics.move(e, layout(), dt);
+                e.move(layout(), dt);
                 e.vx = own;
             }
             e.knockVx *= Math.exp(-9 * dt);
@@ -611,7 +611,8 @@ public final class GameRun {
                 if (!spawn.kind().flying() && spawn.kind() != EnemyKind.EEL) y = FLOOR;
             }
             var enemy =
-                    new Enemy(nextId++, spawn.kind(), spawn.affix(), x, y, strength, 1.1 + i * .35);
+                    Enemy.create(
+                            nextId++, spawn.kind(), spawn.affix(), x, y, strength, 1.1 + i * .35);
             fortify(enemy);
             if (room.threat() == Threat.COLOSSUS && !spawn.kind().boss()) {
                 enemy.maxHealth *= 4;
@@ -763,7 +764,7 @@ public final class GameRun {
             double ex = clamp(x + (rng.nextDouble() - .5) * 90, min, max);
             double ey = kind.flying() ? y + (rng.nextDouble() - .5) * 70 : y;
             var enemy =
-                    new Enemy(
+                    Enemy.create(
                             nextId++,
                             kind,
                             Affix.NONE,
@@ -904,7 +905,7 @@ public final class GameRun {
      */
     Enemy summon(EnemyKind kind, double x, double y, Enemy parent) {
         var enemy =
-                new Enemy(
+                Enemy.create(
                         nextId++,
                         kind,
                         Affix.NONE,
@@ -1002,9 +1003,7 @@ public final class GameRun {
                 || p.health >= p.maxHealth) return false;
         p.repairKits--;
         p.heal(35);
-        emit(
-                new GameEvent(
-                        GameEvent.Type.SUPPLY, p.x, p.y - 65, 35, "Reparaturset · +35 Integrität"));
+        emit(new GameEvent(GameEvent.Type.SUPPLY, p.x, p.y - 65, 35, "Medkit · +35 Leben"));
         return true;
     }
 

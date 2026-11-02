@@ -12,7 +12,8 @@ abstract class Brain implements EnemyBehavior {
     public final void update(Enemy e, GameRun run, double dt) {
         e.actionCooldown = Math.max(0, e.actionCooldown - dt);
         if (!e.flying()) e.vx = 0;
-        if (e.kind.boss() && e.state != State.SPAWNING) checkPhase(e, run);
+        tick(e, run, dt);
+        if (e.hasPhases() && e.state != State.SPAWNING) checkPhase(e, run);
         switch (e.state) {
             case SPAWNING -> {
                 e.stateTime -= dt;
@@ -79,7 +80,7 @@ abstract class Brain implements EnemyBehavior {
         strikeEnd(e, run);
     }
 
-    private static void checkPhase(Enemy e, GameRun run) {
+    private void checkPhase(Enemy e, GameRun run) {
         int next = e.healthRatio() < 1 / 3.0 ? 2 : e.healthRatio() < 2 / 3.0 ? 1 : 0;
         if (next > e.phase) {
             e.phase = next;
@@ -87,6 +88,7 @@ abstract class Brain implements EnemyBehavior {
             run.emit(
                     new GameEvent(
                             GameEvent.Type.BOSS_PHASE, e.x, e.y - e.height, next, e.kind.title()));
+            phaseChanged(e, run);
         }
     }
 
@@ -100,6 +102,12 @@ abstract class Brain implements EnemyBehavior {
     }
 
     void spawned(Enemy e, GameRun run) {}
+
+    /** Wird jeden Schritt vor der Zustandsmaschine aufgerufen, etwa für Deckung und Zeitgeber. */
+    void tick(Enemy e, GameRun run, double dt) {}
+
+    /** Wird beim Wechsel in eine neue Bossphase aufgerufen. */
+    void phaseChanged(Enemy e, GameRun run) {}
 
     abstract void approach(Enemy e, GameRun run, double dt);
 

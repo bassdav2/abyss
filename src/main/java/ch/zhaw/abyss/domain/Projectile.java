@@ -7,7 +7,7 @@ import java.util.Set;
  * Geschosse, Wellen und Minen. Eigenschaften wie Schwerkraft, Durchschlag und Explosion werden bei
  * der Erzeugung gesetzt; die Bewegung übernimmt {@link GameRun}.
  */
-public final class Projectile {
+public final class Projectile extends Body {
     /** Geschossarten. */
     public enum Kind {
         BOLT,
@@ -35,10 +35,9 @@ public final class Projectile {
         MISSILE
     }
 
-    final long id;
     final Kind kind;
     final boolean friendly;
-    double x, y, vx, vy, life, age;
+    double life, age;
     final double damage, radius;
     double gravity, explosionRadius, armTime, knockback;
     int pierce;
@@ -85,24 +84,13 @@ public final class Projectile {
             double damage,
             double radius,
             double life) {
-        this.id = id;
+        super(id, x, y, vx, vy);
         this.kind = kind;
         this.friendly = friendly;
-        this.x = x;
-        this.y = y;
-        this.vx = vx;
-        this.vy = vy;
         this.damage = damage;
         this.radius = radius;
         this.life = life;
         this.pierce = kind == Kind.ARC || kind == Kind.SHOCKWAVE ? Integer.MAX_VALUE : 0;
-    }
-
-    /**
-     * @return eindeutige Kennung
-     */
-    public long id() {
-        return id;
     }
 
     /**
@@ -120,38 +108,10 @@ public final class Projectile {
     }
 
     /**
-     * @return horizontale Mitte
-     */
-    public double x() {
-        return x;
-    }
-
-    /**
-     * @return vertikale Mitte
-     */
-    public double y() {
-        return y;
-    }
-
-    /**
      * @return Radius der Trefferzone
      */
     public double radius() {
         return radius;
-    }
-
-    /**
-     * @return horizontale Geschwindigkeit
-     */
-    public double vx() {
-        return vx;
-    }
-
-    /**
-     * @return vertikale Geschwindigkeit
-     */
-    public double vy() {
-        return vy;
     }
 
     /**

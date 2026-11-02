@@ -1,8 +1,8 @@
 # ABYSS · Vom Heck bis zur Brücke
 
-Ein Pixel-Art-Roguelite in Java/JavaFX: Du beginnst im Heck eines riesigen U-Boots und kämpfst dich durch vier Sektionen und 24 Räume bis zur Brücke nach vorn – und danach immer tiefer, gegen Schwärme aus bis zu 1600 gleichzeitigen Gegnern. Mit Laufstegen, Kombos, Ausweichen, acht aktiven Modulen, stapelbaren Modulen und Entfesselungen, Levelaufstiegen, fünf Taucherklassen, vier Sektorwächtern, der Prismenkaiserin und einer dauerhaften Laufbahn.
+Ein Pixel-Art-Roguelite in Java/JavaFX: Du beginnst im Heck eines riesigen U-Boots und kämpfst dich durch vier Sektionen und 24 Räume bis zur Brücke nach vorn – und danach immer tiefer, gegen Schwärme aus bis zu 1600 gleichzeitigen Gegnern. Mit Laufstegen, Kombos, Ausweichen, acht Fähigkeiten, stapelbaren Upgrades und Evolutionen, Level-Ups, fünf Taucherklassen, vier Bossen, der Prismenkaiserin und dauerhaften Talenten.
 
-**Version 1.6 vom 04.10.2026 (Bordorchester: eigener, adaptiver Soundtrack aus einem Synthesizer im Spiel; baut auf 1.5 Klare Sicht und dem Endgame-Update 1.4 auf).** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
+**Version 1.7 vom 05.10.2026 (Showdown: neuer Bosskampf gegen den Lotsen mit eigenem Thema, klare Begriffe im ganzen Spiel; baut auf 1.6 Bordorchester, 1.5 Klare Sicht und dem Endgame-Update 1.4 auf).** Weiterentwicklung des Prototyps 0.2 (22.09.2026) mit Claude Code (Modell Claude Opus 5.5). Das Spiel wird weiter ausgebaut. Code, Grafiken, Klänge und Dokumentation sind KI-gestützt entstanden; Details in `docs/KI_EINSATZ.md`. Menschliche Spieltests, Teamreview und fachliche Abnahme stehen noch aus.
 
 ## Sofort spielen
 
@@ -19,15 +19,40 @@ Erster Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen.** Der erste 
 | Durch Laufsteg fallen | S + Leertaste |
 | Angreifen (halten = Kombination) | J oder linke Maustaste; Mausrichtung zielt |
 | Ausweichen (auch in der Luft) | Shift oder L |
-| Aktives Modul | K oder rechte Maustaste |
-| Bergung, Händlerin, Werkstatt, Kapelle, Schott | E |
-| Reparaturset (+35 Integrität) | Q |
+| Fähigkeit | K oder rechte Maustaste |
+| Beute, Händlerin, Werkstatt, Schrein, Tür | E |
+| Medkit (+35 Leben) | Q |
 | Ausrüstung / Bootskarte | I oder Tab / M |
 | Pause · Vollbild · Bildschirmfoto | Esc · F11 · F12 |
 
-Rote Markierungen kündigen Angriffe an. Bosse tragen Panzerung; in ihrer Erholung ist der Kern offen („KERN OFFEN · JETZT ANGREIFEN“).
+Rote Markierungen kündigen Angriffe an. Bosse tragen Panzerung; in ihrer Erholung ist der Kern offen („KERN OFFEN · JETZT ANGREIFEN“). Der Lotse trägt Deckung: Weich seinen Mustern aus und schlag in seinen Pausen zu („PAUSE · JETZT ZUSCHLAGEN“).
 
 ## Inhalt
+
+**Neu in 1.7 – Showdown:**
+- **Der Lotse als echter Bosskampf.** Bisher fiel er nach 8–27 Sekunden, Ausweichen war unnötig. Jetzt:
+  - **Deckung:** Er blockt fast alles. Nur in den Pausen nach seinen Mustern dringt ein Teil des Schadens durch, auch bei Monster-Builds. Der Kampf dauert so etwa eine Minute.
+  - **Phasen-Sperre:** Keine Bossphase lässt sich überspringen, das gilt für alle Bosse. Beim Phasenwechsel verschwindet der Lotse und lässt eine Ankerkette los.
+  - **Blinzeln:** Wer ihm im Nahkampf zu nahe kommt, dem teleportiert er weg.
+  - **Fünf neue Ausweichmuster:**
+    - **Taktfeuer:** Lanzen im Rhythmus, tief zum Springen, hoch zum Unten-Bleiben.
+    - **Ankerkette:** Eine Säulenwelle von der Decke; zwischen zwei Säulen stehen oder hindurchdashen.
+    - **Zielstrahlen**
+    - **Enterangriff:** Er erscheint hinter dir.
+    - **Sonarringe** mit einer Lücke
+- **Neues Thema „Letzte Order“:** Chiptune mit 126 BPM, eigene Melodie, mit Phase für Phase mehr Stimmen. Im Geist klassischer Endgegner-Themen, aber eigene Noten.
+- **Klare Sprache:** Das Spiel spricht jetzt wie ein Spiel:
+  - Leben statt Integrität
+  - XP und Level-Up statt Überladung
+  - Medkit statt Reparaturset, Beute statt Bergung, Kerne statt Datenkerne
+  - Upgrades und Fähigkeiten statt passiver und aktiver Module
+  - Evolution und Synergie statt Entfesselung und Resonanz
+  - Durchlauf statt Zyklus, Schwierigkeit statt Druckstufe
+  - Schrein statt Kapelle, Tür statt Schott
+  - Talente, Freischalten und Erfolge statt Laufbahn, Archiv und Logbuch
+  - „Krit“ statt „Kritik“
+
+  Die Zuordnung steht in [docs/GLOSSAR.md](docs/GLOSSAR.md).
 
 **Neu in 1.6 – Bordorchester:** ABYSS hat einen eigenen Soundtrack. Er liegt nicht als Audiodatei bei, sondern ein im Spiel geschriebener Synthesizer mit Sequenzer erzeugt ihn beim Spielen aus Partituren im Java-Code (Java Sound, keine Samples, keine neue Bibliothek).
 - **Zehn Stücke:**
@@ -92,22 +117,22 @@ Rote Markierungen kündigen Angriffe an. Bosse tragen Panzerung; in ihrer Erholu
 **Neu in 1.2 – Schwarm-Update:** Wellen sind nicht mehr auf sechs Gegner begrenzt. Aus Lüftungen und Schotts strömen Rostmilben, Glimmfische und Nanodrohnen in Pulks nach: im ersten Raum eine Handvoll, im Endgame mehrere hundert gleichzeitig. Jeder Abschuss lässt einen Energiesplitter fallen; eine volle Überladung bringt einen Levelaufstieg mit drei Karten, die Zeit steht dabei still. Module stapeln bis zu achtfach und multiplikativ, dazu kommen Horden-Werkzeuge (Klingenwelle, Kreiselmesser, Teslafeld, Mehrfachlader, Druckwellenkern, Blutrausch, Druckkammer), mehrfach springende Kettenblitze und Kettenreaktionen, die durch ganze Schwärme laufen. Werkstattstufen gehen bis 8, und der unbegrenzt stapelbare Überladungskern hält ausgereizte Builds am Wachsen. Im Archiv wächst der Tiefenbaum (Schaden, Tempo, Fläche, Überladung, Magnet, Kritik, zusätzliche Karte). Gegner werden mit jeder Raumtiefe und jedem Zyklus exponentiell stärker.
 
 - **Vier Sektionen, 24 Raumpositionen:** Hecksektion (Rost, Amber), Maschinendeck (Turbinen, Grün), Forschungsdeck (Labore, Violett), Kommandodeck (Blau). 33 Abteilungen (Raumthemen) wie Kombüse, Kesselraum, Datenarchiv, Kryolabor oder Waffenkammer, Routenwahl mit Vorschau, Räume bis zu 1,75 Bildschirme breit mit Laufstegen.
-- **Raumarten:** Patrouille, Elite (drei Wellen und Elitegegner), Versorgung, Schwarzmarkt, Druckkapelle (Handel mit Fluch), Werkstatt (Reparatur, Waffenstufen), Sektorwächter, Brücke.
-- **Raumzustände:** Stromausfall (nur Stirnlampe, mehr Schrott), Alarmstufe Rot (mehr Gegner, seltene Bergung), Druckleck (Wasser, Dampf, zusätzliche Kisten), Hüllenbruch (40 Sekunden überleben, Wasser steigt), Schlagseite (das Boot krängt, alles rutscht, Trümmer fallen) – in der Routenwahl angekündigt.
-- **Raumtechnik:** Förderbänder, Dampfdüsen, Turbinenwind, Hydraulikpressen, Lasergitter und Notschalter (Torpedo, Dampfventil, Kältekammer, Überlast). Bossarenen haben feste Anlagen: Wer den Wächter unter die Presse oder durch den Laser lockt, legt seinen Kern frei.
+- **Raumarten:** Patrouille, Elite (drei Wellen und Elitegegner), Versorgung, Schwarzmarkt, Schrein (Handel mit Fluch), Werkstatt (heilen, Waffenstufen), Boss, Brücke.
+- **Raumzustände:** Stromausfall (nur Stirnlampe, mehr Schrott), Alarmstufe Rot (mehr Gegner, seltene Beute), Druckleck (Wasser, Dampf, zusätzliche Kisten), Hüllenbruch (40 Sekunden überleben, Wasser steigt), Schlagseite (das Boot krängt, alles rutscht, Trümmer fallen) – in der Routenwahl angekündigt.
+- **Raumtechnik:** Förderbänder, Dampfdüsen, Turbinenwind, Hydraulikpressen, Lasergitter und Notschalter (Torpedo, Dampfventil, Kältekammer, Überlast). Bossarenen haben feste Anlagen: Wer einen Boss unter die Presse oder durch den Laser lockt, legt seinen Kern frei.
 - **Schmugglerdrohnen:** fliehen mit Beute und entkommen nach 15 Sekunden.
 - **Zwölf Gegnerarten und die Schmugglerdrohne:** Schrottläufer, Wachdrohne, Schottwächter, Kugelbombe, Schweissroboter, Geschützturm, Minenleger, Leuchtqualle, Tiefseeaal, Schildträger, Sicherheitsautomat, Suchlichtsonde – plus fünf Elite-Eigenschaften. Dazu acht Schwarmarten, Brutnester und Bruteier.
-- **Fünf Bosse mit je drei Phasen:** Der Schottmeister, Der Reaktorkern, Die Brutmutter, Der Lotse und ab dem zweiten Zyklus Die Prismenkaiserin.
+- **Fünf Bosse mit je drei Phasen:** Der Schottmeister, Der Reaktorkern, Die Brutmutter, Der Lotse und ab dem zweiten Durchlauf Die Prismenkaiserin.
 - **Fünf Klassen:** Mechanikerin, Harpunier, Schweisserin, Koloss, Funkerin – mit eigenen Werten, Eigenheiten und Accessoires.
-- **Sieben Waffen** (Rohrzange, Bergungsmesser, Schweisslanze, Ankerhammer, Harpunenwerfer, Tesla-Handschuh, Enterhaken) mit Kombinationen, Luftangriffen und Werkstattstufen.
-- **Acht aktive Module:** Schildimpuls, Lichtbogen, Druckschild, Minitorpedo, Sonarpuls, Kryogranate, Wartungsdrohne, Überlastung.
-- **51 passive Module** in vier Seltenheiten (46 in Bergungen, 3 verfluchte aus Druckkapellen, dazu Überladungskern und Grenzbrecher) und **11 Entfesselungen**; Zustände Brand, Kälte, Frost, Markierung, Schock.
-- **Neun Resonanzen:** Modulpaare mit Zusatzbonus (z. B. Zündkerze + Übertakter = Feuersturm); Bergungskarten zeigen an, wenn ein Angebot eine Resonanz vervollständigt.
-- **Meta-Progression:** Datenkerne schalten Klassen, Waffen, Module, legendäre Baupläne, Anzugverstärkungen und Garderobe frei. Kompendium aller entdeckten Module, Logbuch mit 32 Zielen, die einmalig Kerne bringen. Tagestauchgang mit gemeinsamem Seed. Nach einem Sieg: nächster Zyklus oder höhere Druckstufe (bis 5).
-- **Garderobe:** 8 Anzugfarben, 4 Helmformen, 6 Visierfarben, 4 Metalltöne.
+- **Sieben Waffen** (Rohrzange, Bergungsmesser, Schweisslanze, Ankerhammer, Harpunenwerfer, Tesla-Handschuh, Enterhaken) mit Kombinationen, Luftangriffen und Waffenstufen.
+- **Acht Fähigkeiten:** Schildimpuls, Lichtbogen, Druckschild, Minitorpedo, Sonarpuls, Kryogranate, Wartungsdrohne, Überlastung.
+- **51 Upgrades** in vier Seltenheiten (46 als Beute, 3 verfluchte aus Schreinen, dazu Überladungskern und Grenzbrecher) und **11 Evolutionen**; Zustände Brand, Kälte, Frost, Markierung, Schock.
+- **Neun Synergien:** Upgrade-Paare mit Zusatzbonus (z. B. Zündkerze + Übertakter = Feuersturm); Beutekarten zeigen an, wenn ein Angebot eine Synergie vervollständigt.
+- **Meta-Progression:** Kerne schalten Klassen, Waffen, Fähigkeiten, legendäre Baupläne, Anzugverstärkungen und Aussehen frei. Sammlung aller entdeckten Upgrades, 32 Erfolge, die einmalig Kerne bringen, Talente mit Rängen für Konto und Klassen. Tagestauchgang mit gemeinsamem Seed. Nach einem Sieg: nächster Durchlauf oder höhere Schwierigkeit (bis 5).
+- **Aussehen:** 8 Anzugfarben, 4 Helmformen, 6 Visierfarben, 4 Metalltöne.
 - **Grafik:** eigene Software-Pixel-Pipeline (480 × 270) mit gestufter Lichtkarte, Stirnlampe, Bloom, Partikeln, Explosionen, Trefferpausen, Zeitlupe, Parallaxe-Meer und optionalem Röhrenfilter. Alle Grafiken werden prozedural in Java gemalt. Auftakt vor dem ersten Tauchgang, Siegesszene mit auftauchendem Boot, Schott-Animation beim Raumwechsel, kippendes Bild bei Schlagseite.
-- **Bordsystem-Oberfläche:** Alle Menüs, Bergungskarten, Händler, Routenwahl (mit Kamerabildern der nächsten Räume), Archiv und Optionen werden im selben Pixelbild gezeichnet wie das Spiel – als Schottplatten, Terminals und Hologramme, bedienbar mit Maus oder Tastatur.
-- **Audio:** 29 selbst synthetisierte Klänge (keine Fremd-Samples), gemischt im eigenen Effektmischer, und der Bordsynthesizer, der zehn Stücke zur Laufzeit spielt: Sägezahn-, Rechteck- und FM-Stimmen mit Filtern, synthetisches Schlagzeug, Hall und Echo, alles in Java.
+- **Bordsystem-Oberfläche:** Alle Menüs, Beutekarten, Händler, Routenwahl (mit Kamerabildern der nächsten Räume), Freischalten und Optionen werden im selben Pixelbild gezeichnet wie das Spiel – als Schottplatten, Terminals und Hologramme, bedienbar mit Maus oder Tastatur.
+- **Audio:** 29 selbst synthetisierte Klänge (keine Fremd-Samples), gemischt im eigenen Effektmischer, und der Bordsynthesizer, der elf Stücke zur Laufzeit spielt: Sägezahn-, Rechteck- und FM-Stimmen mit Filtern, synthetisches Schlagzeug, Hall und Echo, alles in Java.
 
 ## Dokumentation (PM3)
 
@@ -150,8 +175,8 @@ Auf Davids Mac vorher `source /Users/davidbass/abyss-tools/env.sh`.
 
 | Pfad | Inhalt |
 |---|---|
-| `src/main/java/ch/zhaw/abyss/domain` | Spielregeln ohne JavaFX und Dateien: `GameRun`, `Combat`, `Physics`, `Machinery`, Gegnerstrategien, `RoomGenerator` |
-| `application` / `ports` | Anwendungsfälle (`GameService`), Profil, Freischaltungen, Speichervertrag |
+| `src/main/java/ch/zhaw/abyss/domain` | Spielregeln ohne JavaFX und Dateien: `GameRun`, `Combat`, `Body`/`Actor` (Bewegung), `Boss`, `Machinery`, Gegnerstrategien, `RoomGenerator` |
+| `application` | Anwendungsfälle (`GameService` als Controller), Profil, Freischaltungen, Speichervertrag `GameRepository` |
 | `infrastructure` | Versioniertes Dateiformat, Audio; `infrastructure/music`: Bordsynthesizer, Partituren, Musikregie |
 | `ui` · `ui/gui` | JavaFX-Fenster, Bildschirme, Eingabe · Bordsystem-GUI im Pixelbild (Immediate Mode) |
 | `ui/pixel` · `ui/art` · `ui/render` | Software-Framebuffer · prozedurale Pixel-Art · Welt- und HUD-Renderer |

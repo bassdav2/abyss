@@ -4,7 +4,7 @@ package ch.zhaw.abyss.domain;
  * Aufsammelbare Beute. Fällt mit Schwerkraft, springt kurz und wird danach vom Sammelradius der
  * Figur angezogen. Der Wert wird genau einmal gutgeschrieben.
  */
-public final class Pickup {
+public final class Pickup extends Body {
     /** Beutearten. */
     public enum Kind {
         SCRAP,
@@ -15,27 +15,19 @@ public final class Pickup {
         SHARD
     }
 
-    final long id;
     final Kind kind;
     double value;
-    double x, y, vx, vy, age;
+    double age;
+
+    /** Schwerkraft für fallende Beute; leichter als bei Figuren, damit sie sichtbar springt. */
+    static final double GRAVITY = 1700;
+
     boolean collected;
 
     Pickup(long id, Kind kind, double value, double x, double y, double vx, double vy) {
-        this.id = id;
+        super(id, x, y, vx, vy);
         this.kind = kind;
         this.value = value;
-        this.x = x;
-        this.y = y;
-        this.vx = vx;
-        this.vy = vy;
-    }
-
-    /**
-     * @return eindeutige Kennung
-     */
-    public long id() {
-        return id;
     }
 
     /**
@@ -50,20 +42,6 @@ public final class Pickup {
      */
     public double value() {
         return value;
-    }
-
-    /**
-     * @return horizontale Position
-     */
-    public double x() {
-        return x;
-    }
-
-    /**
-     * @return vertikale Position
-     */
-    public double y() {
-        return y;
     }
 
     /**

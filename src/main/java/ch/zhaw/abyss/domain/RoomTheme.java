@@ -36,7 +36,7 @@ public enum RoomTheme {
     MAPROOM("Kartenraum", 3),
     WORKSHOP("Werkstatt", -1),
     MARKET("Schwarzmarkt", -1),
-    SHRINE("Die Druckkapelle", -1),
+    SHRINE("Der Schrein", -1),
     STORAGE("Vergessenes Depot", -1);
 
     private final String title;

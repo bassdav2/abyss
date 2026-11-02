@@ -6,7 +6,7 @@ public enum Affix {
     ARMORED("Gepanzert", "Erleidet 40 % weniger Schaden."),
     VOLATILE("Instabil", "Explodiert beim Zerstören."),
     SWIFT("Flink", "Bewegt sich und greift deutlich schneller an."),
-    REGENERATING("Selbstreparatur", "Stellt ohne Treffer Integrität wieder her."),
+    REGENERATING("Selbstreparatur", "Heilt sich, solange es nicht getroffen wird."),
     SHIELDED("Schildgenerator", "Ein Schild fängt Schaden ab und lädt sich wieder auf.");
     private final String title, description;
 

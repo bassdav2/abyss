@@ -33,10 +33,9 @@ final class Loot {
                 double pull = 520 + pickup.age * 900;
                 pickup.vx = (tx - pickup.x) / Math.max(1, distance) * pull;
                 pickup.vy = (ty - pickup.y) / Math.max(1, distance) * pull;
-                pickup.x += pickup.vx * dt;
-                pickup.y += pickup.vy * dt;
+                pickup.advance(dt);
             } else {
-                pickup.vy += 1700 * dt;
+                pickup.fall(Pickup.GRAVITY, Double.MAX_VALUE, dt);
                 pickup.x = GameRun.clamp(pickup.x + pickup.vx * dt, 60, layout.width() - 60);
                 pickup.y += pickup.vy * dt;
                 double surface = layout.surfaceBelow(pickup.x, pickup.y - 12 - pickup.vy * dt);

@@ -26,10 +26,10 @@ public record Unlock(
     public enum Category {
         DIVER("Taucher"),
         WEAPON("Waffen"),
-        MODULE("Module"),
+        MODULE("Fähigkeiten"),
         ITEM("Baupläne"),
         PERK("Ausrüstung"),
-        COSMETIC("Garderobe");
+        COSMETIC("Aussehen");
 
         private final String title;
 
@@ -148,7 +148,7 @@ public record Unlock(
                         "perk:hull1",
                         Category.PERK,
                         "Verstärkter Anzug I",
-                        "+10 maximale Integrität zu Beginn jedes Tauchgangs.",
+                        "+10 max. Leben zu Beginn jedes Tauchgangs.",
                         6,
                         null));
         list.add(
@@ -156,7 +156,7 @@ public record Unlock(
                         "perk:hull2",
                         Category.PERK,
                         "Verstärkter Anzug II",
-                        "Weitere +10 maximale Integrität.",
+                        "Weitere +10 max. Leben.",
                         10,
                         "perk:hull1"));
         list.add(
@@ -164,7 +164,7 @@ public record Unlock(
                         "perk:hull3",
                         Category.PERK,
                         "Verstärkter Anzug III",
-                        "Weitere +10 maximale Integrität.",
+                        "Weitere +10 max. Leben.",
                         15,
                         "perk:hull2"));
         list.add(
@@ -172,7 +172,7 @@ public record Unlock(
                         "perk:kit",
                         Category.PERK,
                         "Notfallvorrat",
-                        "Jeder Tauchgang beginnt mit einem zusätzlichen Reparaturset.",
+                        "Jeder Tauchgang beginnt mit einem zusätzlichen Medkit.",
                         10,
                         null));
         list.add(
@@ -197,7 +197,7 @@ public record Unlock(
                                 Cosmetics.unlockId(cosmetics[c][0], i),
                                 Category.COSMETIC,
                                 cosmetics[c][1] + " " + (i + 1),
-                                "Neue Option in der Garderobe.",
+                                "Neue Option für dein Aussehen.",
                                 2 + i / 2,
                                 null));
         return List.copyOf(list);

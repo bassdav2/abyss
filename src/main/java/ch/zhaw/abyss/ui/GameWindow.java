@@ -164,7 +164,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
             }
             accumulator += sim;
             while (accumulator >= STEP) {
-                run.update(STEP, input.frame(renderer.screenX(run.player().x())));
+                service.step(STEP, input.frame(renderer.screenX(run.player().x())));
                 accumulator -= STEP;
             }
             for (var event : run.drainEvents()) {
@@ -179,7 +179,6 @@ public final class GameWindow implements AutoCloseable, Navigator {
                 audio.play("upgrade");
             }
             if (run.phase() == GameRun.Phase.DEFEAT || run.phase() == GameRun.Phase.VICTORY) {
-                service.recordOutcome();
                 outcomeDelay += dt;
                 if (outcomeDelay > (run.phase() == GameRun.Phase.VICTORY ? 2.2 : 1.6)) outcome();
             }
@@ -215,7 +214,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
         for (var achievement : service.takeAchievements()) {
             renderer.hud()
                     .toast(
-                            "LOGBUCH: "
+                            "ERFOLG: "
                                     + achievement.title()
                                     + " · +"
                                     + achievement.reward()
@@ -420,21 +419,21 @@ public final class GameWindow implements AutoCloseable, Navigator {
             case REWARD -> {
                 var offers = run.offers();
                 if (offers.size() == 1 && offers.getFirst().type() == Offer.Type.SUPPLIES)
-                    run.take(offers.getFirst());
+                    service.take(offers.getFirst());
                 else reward();
             }
             case WORKSHOP -> {
-                run.repair();
+                service.repair();
                 reward();
             }
             case MERCHANT -> reward();
             case SHRINE -> shrine();
-            case CONSOLE -> run.useConsole();
+            case CONSOLE -> service.useConsole();
             case EXIT -> route();
             case LOCKED -> toast("Verriegelt · Sichere zuerst den Raum");
             case NONE -> {
                 if (run.phase() == GameRun.Phase.ROOM_CLEARED)
-                    toast("E an der Bergung oder am rechten Schott");
+                    toast("E an der Beute oder an der Tür rechts");
             }
         }
     }
@@ -605,7 +604,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
             return;
         }
         begin();
-        toast("Kämpf dich zur Brücke vor. Das rechte Schott führt weiter.");
+        toast("Kämpf dich zur Brücke vor. Die Tür rechts führt weiter.");
         // Auftakt, bis zum ersten Mal ein Raum gesichert wurde (auch nach Übernahme alter Stände).
         if (!service.profile().achievements().contains(Achievement.FIRST_ROOM)) intro = 0;
     }
@@ -632,9 +631,9 @@ public final class GameWindow implements AutoCloseable, Navigator {
                         value -> {
                             run = value;
                             begin();
-                            toast("Raum-Sicherung geladen");
+                            toast("Spielstand geladen");
                         },
-                        () -> toast("Keine gültige Raum-Sicherung"));
+                        () -> toast("Kein gültiger Spielstand"));
     }
 
     private void begin() {
@@ -658,7 +657,7 @@ public final class GameWindow implements AutoCloseable, Navigator {
             renderer.clearEffects();
             renderer.hud()
                     .banner(
-                            "ZYKLUS " + (run.cycle() + 1),
+                            "DURCHLAUF " + (run.cycle() + 1),
                             "Das Boot taucht tiefer",
                             Pal.RUST_6,
                             2.5);

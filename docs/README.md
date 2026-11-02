@@ -1,6 +1,6 @@
 # Dokumentation ABYSS · Wegweiser
 
-Stand 04.10.2026, Spielversion 1.6 (Bordorchester). Die Dokumentation folgt den Abgaben im Modul **PM3 Software-Projekt 3 (HS26)**: Projektskizze (M1), Technischer Bericht I zur Lösungsarchitektur (M2) und Technischer Bericht II zum Prototyp (M3), dazu die Präsentationen und die KI-Dokumentation. Die Originalunterlagen aus Moodle (Aufträge, Vorlagen, Folien der Dozierenden) liegen aus urheberrechtlichen Gründen **nicht** im Repository. Die Berichte nennen nur, welche Vorgabe sie umsetzen.
+Stand 05.10.2026, Spielversion 1.7 (Showdown). Die Dokumentation folgt den Abgaben im Modul **PM3 Software-Projekt 3 (HS26)**: Projektskizze (M1), Technischer Bericht I zur Lösungsarchitektur (M2) und Technischer Bericht II zum Prototyp (M3), dazu die Präsentationen und die KI-Dokumentation. Die Originalunterlagen aus Moodle (Aufträge, Vorlagen, Folien der Dozierenden) liegen aus urheberrechtlichen Gründen **nicht** im Repository. Die Berichte nennen nur, welche Vorgabe sie umsetzen.
 
 Stellen mit `[TEAM]` ergänzt oder bestätigt das Projektteam: Namen, Rollen, Stunden, eigene Begründungen. Die finalen Abgaben entstehen in der SoE-Vorlage. Die Markdown-Fassungen hier liefern den Inhalt dafür.
 
@@ -17,8 +17,10 @@ Stellen mit `[TEAM]` ergänzt oder bestätigt das Projektteam: Namen, Rollen, St
 
 | Dokument | Inhalt |
 |---|---|
-| [ANFORDERUNGEN.md](ANFORDERUNGEN.md) | Use Cases UC-01 bis UC-11, UC-02 fully dressed, funktionale (F-xx) und Qualitätsanforderungen (Q-xx) |
+| [ANFORDERUNGEN.md](ANFORDERUNGEN.md) | Use Cases UC-01 bis UC-03 mit Rang und Abhängigkeiten, UC-01 fully dressed, Arbeitspakete, funktionale (F-xx) und nicht-funktionale Anforderungen nach FURPS+ (Q-xx) |
 | [ARCHITEKTUR.md](ARCHITEKTUR.md) | Schichten, Pakete, Architekturentscheidungen ADR-01 bis ADR-10, Muster, Ereignisse |
+| [ARCHITEKTUR_ANALYSE.md](ARCHITEKTUR_ANALYSE.md) | Gemessene Code-Qualität (Kohäsion, Kopplung, Kapselung, Schichten), Schwachstellen S1–S7, Refactoring-Plan pro Paket |
+| [ENTWURF_BELOHNUNG.md](ENTWURF_BELOHNUNG.md) | Begriffe und Verantwortlichkeiten von Belohnung, Angebot, Handel und Station; Varianten, gewählter Entwurf mit Composite, Entscheid zur Raumwelt |
 | [TESTSTRATEGIE.md](TESTSTRATEGIE.md) | Teststufen, 106 JUnit-Tests, UI-Prüfung, Render-Dauertest, Balance-Testspieler |
 | [GLOSSAR.md](GLOSSAR.md) | Fachbegriffe (Tauchgang, Bergung, Raumzustand, Resonanz …) |
 | [INHALTE.md](INHALTE.md) | Generierter Katalog aller Inhalte: Gegner, Module, Räume, Zustände, Logbuch |
@@ -37,7 +39,7 @@ Quellen als PlantUML (`.puml`), gerendert als SVG und PNG. Neu erzeugen: `python
 | 02 | [Domänenmodell](diagrams/02-domain.svg) | M2 |
 | 03 | [Logische Architektur](diagrams/03-architecture.svg) | M2, M3 |
 | 04 | [Design-Klassendiagramm](diagrams/04-design-classes.svg) | M2 |
-| 05 | [Systemsequenzdiagramm UC-02](diagrams/05-ssd-progress.svg) | M2 |
+| 05 | [Systemsequenzdiagramm UC-01](diagrams/05-ssd-progress.svg) | M2 |
 | 06 | [Sequenz: Tauchgang starten](diagrams/06-start-sequence.svg) | M2 |
 | 07 | [Sequenz: Kampfschritt](diagrams/07-combat-sequence.svg) | M2 |
 | 08 | [Sequenz: Bergung wählen](diagrams/08-reward-sequence.svg) | M2 |
@@ -46,6 +48,8 @@ Quellen als PlantUML (`.puml`), gerendert als SVG und PNG. Neu erzeugen: `python
 | 11 | [Zustandsmaschine Gegner](diagrams/11-enemy-state.svg) | M3 |
 | 12 | [Bildschirmnavigation](diagrams/12-navigation.svg) | M2, M3 |
 | 13 | [Render-Pipeline](diagrams/13-render-pipeline.svg) | M3 |
+| 14 | [Arbeitspakete: Rang und Abhängigkeiten](diagrams/14-arbeitspakete.svg) | M2, Reviews |
+| 15 | [Risikomatrix](diagrams/15-risikomatrix.svg) | M2, Reviews |
 
 ## Präsentationen
 

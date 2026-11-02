@@ -7,7 +7,7 @@ package ch.zhaw.abyss.domain;
 public enum DiverClass {
     MECHANIC(
             "Die Mechanikerin",
-            "Ausgewogen. Werkstätten sind für sie 25 % günstiger, sie trägt ein Reparaturset mehr.",
+            "Ausgewogen. Werkstätten kosten sie 25 % weniger, dazu ein Medkit mehr.",
             100,
             1.0,
             Weapon.WRENCH,
@@ -15,7 +15,7 @@ public enum DiverClass {
             0),
     HARPOONER(
             "Der Harpunier",
-            "Kämpft auf Distanz. +10 % kritische Trefferchance, aber weniger Integrität.",
+            "Kämpft auf Distanz. +10 % Krit-Chance, aber weniger Leben.",
             85,
             1.05,
             Weapon.HARPOON,
@@ -31,7 +31,7 @@ public enum DiverClass {
             16),
     TITAN(
             "Der Koloss",
-            "Schwerer Panzeranzug: 150 Integrität und 20 % Schadensreduktion, aber langsamer.",
+            "Schwerer Panzeranzug: 150 Leben und 20 % weniger Schaden, aber langsamer.",
             150,
             .92,
             Weapon.ANCHOR,

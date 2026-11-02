@@ -92,10 +92,7 @@ final class Machinery {
         for (var e : run.enemies)
             if (e.alive() && !e.flying() && zone.intersects(e.bounds())) {
                 run.combat.hitEnemy(e, 70, Combat.Source.MACHINE, 0, m.x());
-                if (e.alive() && !e.kind.boss()) {
-                    e.state = Enemy.State.STUNNED;
-                    e.stateTime = .6;
-                }
+                if (e.alive()) e.stun(.6);
                 expose(e);
             }
     }
@@ -124,11 +121,9 @@ final class Machinery {
 
     /** Ein Treffer der Raumtechnik legt den Kern eines Wächters kurz frei. */
     private void expose(Enemy e) {
-        if (!e.alive() || !e.kind.boss() || e.state == Enemy.State.SPAWNING) return;
-        e.state = Enemy.State.RECOVER;
-        e.stateTime = 1.6;
-        e.telegraph = null;
-        run.emit(new GameEvent(GameEvent.Type.MACHINE, e.x, e.centerY(), 0, "EXPOSED"));
+        if (!e.alive() || e.state == Enemy.State.SPAWNING) return;
+        if (e.expose(Enemy.State.RECOVER, 1.6))
+            run.emit(new GameEvent(GameEvent.Type.MACHINE, e.x, e.centerY(), 0, "EXPOSED"));
     }
 
     /**
@@ -194,7 +189,7 @@ final class Machinery {
         for (var e : run.enemies)
             if (e.alive() && !e.flying() && e.grounded) {
                 run.combat.hitEnemy(e, 40, Combat.Source.EXPLOSION, 280, m.x());
-                if (e.alive() && !e.kind.boss()) e.vy = -760;
+                if (e.alive() && e.staggerable()) e.vy = -760;
             }
         run.emit(
                 new GameEvent(
@@ -217,11 +212,7 @@ final class Machinery {
         for (var e : run.enemies)
             if (e.alive()) {
                 e.statuses.apply(Status.MARK, 6);
-                if (!e.kind.boss()) {
-                    e.state = Enemy.State.STUNNED;
-                    e.stateTime = 1.4;
-                    e.telegraph = null;
-                }
+                if (e.stun(1.4)) e.telegraph = null;
                 run.emit(new GameEvent(GameEvent.Type.SHOCK, e.x, e.centerY(), 50, ""));
             }
         for (var m : run.fixtures) if (m.kind() == Fixture.Kind.LASER) m.disabled = 8;

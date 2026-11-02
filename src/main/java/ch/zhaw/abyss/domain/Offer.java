@@ -60,8 +60,8 @@ public record Offer(Type type, Item item, Weapon weapon, int price) {
         return switch (type) {
             case ITEM -> item.title();
             case WEAPON -> weapon.title();
-            case REPAIR_KIT -> "Reparaturset";
-            case HEAL -> "Notreparatur";
+            case REPAIR_KIT -> "Medkit";
+            case HEAL -> "Heilung";
             case WEAPON_UPGRADE -> "Waffe verbessern";
             case SUPPLIES -> "Vorräte";
         };
@@ -74,10 +74,10 @@ public record Offer(Type type, Item item, Weapon weapon, int price) {
         return switch (type) {
             case ITEM -> item.effect();
             case WEAPON -> weapon.description();
-            case REPAIR_KIT -> "+1 Reparaturset\nQ: +35 Integrität";
-            case HEAL -> "+40 Integrität sofort";
+            case REPAIR_KIT -> "+1 Medkit\nQ: +35 Leben";
+            case HEAL -> "+40 Leben sofort";
             case WEAPON_UPGRADE -> "+20 % Waffenschaden\nnächste Stufe";
-            case SUPPLIES -> "+25 Integrität, +35 Energie\n+10 Schrott";
+            case SUPPLIES -> "+25 Leben, +35 Energie\n+10 Schrott";
         };
     }
 }

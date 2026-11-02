@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="520" viewBox="0 0 1040 520" font-family="Arial, Helvetica, sans-serif">
+<rect width="1040" height="520" fill="#FFFFFF"/>
+<text x="520.0" y="38" font-size="24" font-weight="bold" fill="#102B35" text-anchor="middle">Risikomatrix ABYSS (Stand Iteration 3)</text>
+<rect x="150" y="72" width="160" height="118" fill="#FBEFD2" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="310" y="72" width="160" height="118" fill="#F7D9B8" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="470" y="72" width="160" height="118" fill="#F2C2B6" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="150" y="190" width="160" height="118" fill="#EEF3D2" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="310" y="190" width="160" height="118" fill="#FBEFD2" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="470" y="190" width="160" height="118" fill="#F7D9B8" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="150" y="308" width="160" height="118" fill="#DCEFD9" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="310" y="308" width="160" height="118" fill="#EEF3D2" stroke="#FFFFFF" stroke-width="3"/>
+<rect x="470" y="308" width="160" height="118" fill="#FBEFD2" stroke="#FFFFFF" stroke-width="3"/>
+<text x="230.0" y="454" font-size="20" fill="#355863" text-anchor="middle">niedrig</text>
+<text x="138" y="374.0" font-size="20" fill="#355863" text-anchor="end">niedrig</text>
+<text x="390.0" y="454" font-size="20" fill="#355863" text-anchor="middle">mittel</text>
+<text x="138" y="256.0" font-size="20" fill="#355863" text-anchor="end">mittel</text>
+<text x="550.0" y="454" font-size="20" fill="#355863" text-anchor="middle">hoch</text>
+<text x="138" y="138.0" font-size="20" fill="#355863" text-anchor="end">hoch</text>
+<text x="390.0" y="488" font-size="21" font-weight="bold" fill="#102B35" text-anchor="middle">Eintrittswahrscheinlichkeit</text>
+<text transform="translate(30 249.0) rotate(-90)" font-size="21" font-weight="bold" fill="#102B35" text-anchor="middle">Schadenspotenzial</text>
+<circle cx="550.0" cy="131.0" r="23" fill="#355863"/>
+<text x="550.0" y="137.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R1</text>
+<circle cx="365.0" cy="131.0" r="23" fill="#355863"/>
+<text x="365.0" y="137.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R2</text>
+<circle cx="415.0" cy="131.0" r="23" fill="#355863"/>
+<text x="415.0" y="137.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R9</text>
+<circle cx="340.0" cy="249.0" r="23" fill="#355863"/>
+<text x="340.0" y="255.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R3</text>
+<circle cx="390.0" cy="249.0" r="23" fill="#355863"/>
+<text x="390.0" y="255.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R6</text>
+<circle cx="440.0" cy="249.0" r="23" fill="#355863"/>
+<text x="440.0" y="255.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R7</text>
+<circle cx="230.0" cy="131.0" r="23" fill="#355863"/>
+<text x="230.0" y="137.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R4</text>
+<circle cx="180.0" cy="249.0" r="23" fill="#355863"/>
+<text x="180.0" y="255.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R5</text>
+<circle cx="230.0" cy="249.0" r="23" fill="#355863"/>
+<text x="230.0" y="255.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R8</text>
+<circle cx="280.0" cy="249.0" r="23" fill="#355863"/>
+<text x="280.0" y="255.0" font-size="17" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R10</text>
+<circle cx="683" cy="86" r="17" fill="#355863"/>
+<text x="683" y="91" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R1</text>
+<text x="710" y="93" font-size="20" fill="#102B35">Team versteht KI-Prototyp nicht</text>
+<circle cx="683" cy="126" r="17" fill="#355863"/>
+<text x="683" y="131" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R2</text>
+<text x="710" y="133" font-size="20" fill="#102B35">Umfang wächst zu stark</text>
+<circle cx="683" cy="166" r="17" fill="#355863"/>
+<text x="683" y="171" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R3</text>
+<text x="710" y="173" font-size="20" fill="#102B35">Steuerung überzeugt nicht</text>
+<circle cx="683" cy="206" r="17" fill="#355863"/>
+<text x="683" y="211" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R4</text>
+<text x="710" y="213" font-size="20" fill="#102B35">KI-Einsatz nicht akzeptiert</text>
+<circle cx="683" cy="246" r="17" fill="#355863"/>
+<text x="683" y="251" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R5</text>
+<text x="710" y="253" font-size="20" fill="#102B35">Darstellung zu langsam</text>
+<circle cx="683" cy="286" r="17" fill="#355863"/>
+<text x="683" y="291" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R6</text>
+<text x="710" y="293" font-size="20" fill="#102B35">Probleme unter Windows/Linux</text>
+<circle cx="683" cy="326" r="17" fill="#355863"/>
+<text x="683" y="331" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R7</text>
+<text x="710" y="333" font-size="20" fill="#102B35">Ausfall im Team</text>
+<circle cx="683" cy="366" r="17" fill="#355863"/>
+<text x="683" y="371" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R8</text>
+<text x="710" y="373" font-size="20" fill="#102B35">Spielstände beschädigt</text>
+<circle cx="683" cy="406" r="17" fill="#355863"/>
+<text x="683" y="411" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R9</text>
+<text x="710" y="413" font-size="20" fill="#102B35">Technische Qualität ungenügend</text>
+<circle cx="683" cy="446" r="17" fill="#355863"/>
+<text x="683" y="451" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">R10</text>
+<text x="710" y="453" font-size="20" fill="#102B35">Refactoring bricht das Spiel</text>
+</svg>

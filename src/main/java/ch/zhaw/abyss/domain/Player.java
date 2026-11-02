@@ -117,7 +117,7 @@ public final class Player extends Actor {
     void install(Item item) {
         int current = stacks(item);
         if (current >= maxStacks(item))
-            throw new IllegalStateException("Modul bereits auf Höchststufe");
+            throw new IllegalStateException("Upgrade bereits auf Höchststufe");
         items.put(item, current + 1);
         recompute();
         if (item == Item.MEDICAL) heal(30);

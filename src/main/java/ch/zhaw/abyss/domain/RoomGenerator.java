@@ -998,13 +998,12 @@ public final class RoomGenerator {
 
     private static String description(RoomPlan.Kind kind, int sector, int cycle) {
         return switch (kind) {
-            case COMBAT -> "Sichere den Raum. Berge ein Modul und zerschlage Vorratskisten.";
-            case ELITE ->
-                    "Drei Patrouillen und ein Elitegegner. Seltene Bergung und ein Datenkern.";
-            case WORKSHOP -> "Kostenlose Reparatur, Modul, Reparatursets und Waffenverbesserung.";
-            case CACHE -> "Sicherer Umweg: Vorräte, Reparaturset und Schrott.";
-            case MERCHANT -> "Eine Händlerin im Dunkeln. Module gegen Schrott.";
-            case SHRINE -> "Eine vergessene Kapelle. Macht verlangt ein Opfer.";
+            case COMBAT -> "Besiege alle Gegner, hol dir ein Upgrade und zerschlag Kisten.";
+            case ELITE -> "Drei Patrouillen und ein Elitegegner. Seltene Beute und ein Kern.";
+            case WORKSHOP -> "Gratis heilen, ein Upgrade, Medkits und eine stärkere Waffe.";
+            case CACHE -> "Sicherer Umweg: Vorräte, Medkit und Schrott.";
+            case MERCHANT -> "Eine Händlerin im Dunkeln. Upgrades gegen Schrott.";
+            case SHRINE -> "Ein vergessener Schrein. Macht verlangt ein Opfer.";
             case BOSS ->
                     switch (sector) {
                         case 0 ->

@@ -10,7 +10,7 @@ import java.util.List;
 public enum Item {
     SERVO(
             "Servoverstärker",
-            "+15 % Werkzeugschaden",
+            "+15 % Waffenschaden",
             "Mehr Kraft hinter jedem Schlag.",
             Rarity.COMMON),
     PLATING(
@@ -20,22 +20,22 @@ public enum Item {
             Rarity.COMMON),
     CAPACITOR(
             "Kondensator",
-            "+20 Energie\n+15 % Modulschaden",
+            "+20 Energie\n+15 % Fähigkeitsschaden",
             "Speichert die Energie des Bootes.",
             Rarity.COMMON),
     MEDICAL(
             "Notfallreserve",
-            "+20 max. Integrität\nheilt sofort 30",
+            "+20 max. Leben\nheilt sofort 30",
             "Ein Puffer für den nächsten Raum.",
             Rarity.COMMON),
     COOLANT(
             "Kühlkreislauf",
-            "−12 % Abklingzeit\nfür Ausweichen und Modul",
+            "−12 % Abklingzeit\nfür Ausweichen und Fähigkeit",
             "Ein kühler Antrieb reagiert schneller.",
             Rarity.COMMON),
     RECOVERY(
             "Rückgewinnung",
-            "+3 Integrität\npro Abschuss",
+            "+3 Leben\npro Abschuss",
             "Restenergie wird zu deiner Reserve.",
             Rarity.COMMON),
     LANCE(
@@ -56,11 +56,11 @@ public enum Item {
     SIPHON(
             "Energiesiphon",
             "+4 Energie pro Abschuss\n+1 Energie pro Sekunde",
-            "Speist das aktive Modul aus Restladung.",
+            "Speist deine Fähigkeit aus Restladung.",
             Rarity.COMMON),
     REGEN(
             "Reparaturschwarm",
-            "+8 Integrität\nnach jedem Raum",
+            "+8 Leben\nnach jedem Raum",
             "Kleine Wartungsdrohnen schliessen die Lecks.",
             Rarity.COMMON),
     MAGNET(
@@ -70,7 +70,7 @@ public enum Item {
             Rarity.COMMON),
     LENS(
             "Glasfaserlinse",
-            "+7 % kritische\nTrefferchance",
+            "+7 % Krit-Chance",
             "Findet die Schwachstelle im Panzer.",
             Rarity.COMMON),
     BALLAST("Ballastgurt", "+35 % Rückstoss", "Schwere Gewichte, schwere Schläge.", Rarity.COMMON),
@@ -86,7 +86,7 @@ public enum Item {
             Rarity.COMMON),
     TOOLBELT(
             "Werkzeuggürtel",
-            "+1 Reparaturset\n+1 Kapazität",
+            "+1 Medkit\n+1 Kapazität",
             "Mehr Taschen, mehr Überleben.",
             Rarity.COMMON,
             4),
@@ -97,12 +97,12 @@ public enum Item {
             Rarity.COMMON),
     AREA(
             "Druckkammer",
-            "+12 % Wirkungsbereich\nvon Schlägen und Explosionen",
+            "+12 % Fläche\nvon Schlägen und Explosionen",
             "Mehr Druck, mehr Fläche.",
             Rarity.COMMON),
     CHARGER(
             "Ladungsverstärker",
-            "+15 % Überladung\naus Energiesplittern",
+            "+15 % XP\naus Energiesplittern",
             "Saugt jeden Funken aus den Trümmern.",
             Rarity.COMMON),
     BLOODRUSH(
@@ -123,7 +123,7 @@ public enum Item {
             Rarity.RARE),
     ADRENALINE(
             "Adrenalinpumpe",
-            "+30 % Schaden unter\n35 % Integrität",
+            "+30 % Schaden unter\n35 % Leben",
             "Gefahr schärft die Sinne.",
             Rarity.RARE),
     AMBUSH(
@@ -189,8 +189,7 @@ public enum Item {
             Rarity.RARE,
             3,
             false),
-    CRIT_DAMAGE(
-            "Hohlspitzen", "+40 % kritischer Schaden", "Wenn es sitzt, dann richtig.", Rarity.RARE),
+    CRIT_DAMAGE("Hohlspitzen", "+40 % Krit-Schaden", "Wenn es sitzt, dann richtig.", Rarity.RARE),
     BLADE_WAVE(
             "Klingenwelle",
             "Schläge schleudern eine\nDruckklinge (40 % Schaden)",
@@ -215,14 +214,14 @@ public enum Item {
             4),
     COMPASS(
             "Messingkompass",
-            "+1 Auswahl bei\njeder Bergung",
+            "+1 Auswahl bei\njeder Beute",
             "Zeigt immer auf das Wertvollste.",
             Rarity.LEGENDARY,
             2,
             false),
     SECOND_HEART(
             "Notfallkapsel",
-            "Einmal wiederbeleben\nmit 50 % Integrität",
+            "Einmal wiederbeleben\nmit 50 % Leben",
             "Ein zweiter Atemzug in der Tiefe.",
             Rarity.LEGENDARY,
             1),
@@ -235,21 +234,21 @@ public enum Item {
             false),
     SINGULARITY(
             "Singularitätszelle",
-            "−50 % Modul-Abklingzeit\n+25 % Modulschaden",
+            "−50 % Abklingzeit der Fähigkeit\n+25 % Fähigkeitsschaden",
             "Ein Stern im Taschenformat.",
             Rarity.LEGENDARY,
             2,
             false),
     LEVIATHAN_TOOTH(
             "Leviathanzahn",
-            "Kritische Treffer: Kettenblitz\nund +2 Integrität",
+            "Krits: Kettenblitz\nund +2 Leben",
             "Vom grössten Wesen der Tiefe.",
             Rarity.LEGENDARY,
             3,
             false),
     OVERCHARGE(
             "Überladungskern",
-            "+6 % Schaden, +6 % Tempo\n+6 Integrität (unbegrenzt)",
+            "+6 % Schaden, +6 % Tempo\n+6 Leben (unbegrenzt)",
             "Wenn nichts mehr passt, wird es heisser.",
             Rarity.LEGENDARY,
             999),
@@ -262,7 +261,7 @@ public enum Item {
             false),
     GLASS_HULL(
             "Gläserner Rumpf",
-            "+40 % Schaden\n−30 % max. Integrität",
+            "+40 % Schaden\n−30 % max. Leben",
             "Stärker, aber zerbrechlich.",
             Rarity.CURSED,
             1),
@@ -282,7 +281,7 @@ public enum Item {
     /** Grenzbrecher: hebt die Höchststufe aller Standard- und Seltenmodule. */
     LIMIT_BREAK(
             "Grenzbrecher",
-            "+2 Höchststufe für alle\nStandard- und Seltenmodule",
+            "+2 Höchststufe für alle\nStandard- und seltenen Upgrades",
             "Die Sicherungen sind längst durchgebrannt.",
             Rarity.LEGENDARY,
             99,
@@ -333,7 +332,7 @@ public enum Item {
     /** Glasfaserlinse und Hohlspitzen. */
     DEATH_EYE(
             "Todesblick",
-            "+25 % Kritik, Überkritik ×1,5\nkritische Treffer explodieren",
+            "+25 % Krit, Überkrit ×1,5\nKrits explodieren",
             "Es sieht jede Schwachstelle gleichzeitig.",
             Rarity.MYTHIC,
             1,

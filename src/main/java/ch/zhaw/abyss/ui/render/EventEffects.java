@@ -180,7 +180,7 @@ final class EventEffects {
                 camera.shake((e.type() == GameEvent.Type.ELITE_DOWN ? .3 : .12) * shake);
                 feel.hitStop = Math.max(feel.hitStop, .05);
                 if (e.type() == GameEvent.Type.ELITE_DOWN)
-                    hud.toast("ELITE ZERSTÖRT · DATENKERN", Pal.TEAL_5);
+                    hud.toast("ELITE ZERSTÖRT · +1 KERN", Pal.TEAL_5);
             }
             case BOSS_DOWN -> {
                 for (int i = 0; i < 6; i++)
@@ -322,11 +322,7 @@ final class EventEffects {
                 fx.flash(px, py, 60, Pal.VIOLET_4, 1, .25);
                 feel.flash = Math.max(feel.flash, .2);
                 feel.flashColor = Pal.VIOLET_4;
-                hud.banner(
-                        "ÜBERLADUNG · STUFE " + (int) e.amount(),
-                        "Wähle eine Verstärkung",
-                        Pal.VIOLET_4,
-                        1.6);
+                hud.banner("LEVEL " + (int) e.amount(), "Wähle ein Upgrade", Pal.VIOLET_4, 1.6);
             }
             case NOVA -> {
                 double radius = e.amount() * PX;
@@ -338,8 +334,7 @@ final class EventEffects {
                 feel.flashColor = Pal.RUST_6;
             }
             case ROOM_CLEAR -> {
-                hud.banner(
-                        "RAUM GESICHERT", "Bergung im Raum · Schott rechts offen", Pal.TEAL_5, 2.4);
+                hud.banner("RAUM GESICHERT", "Beute im Raum · Tür rechts offen", Pal.TEAL_5, 2.4);
                 feel.flash = .15;
                 feel.flashColor = Pal.TEAL_5;
             }
@@ -364,7 +359,7 @@ final class EventEffects {
                 String effect = "";
                 for (var synergy : Synergy.values())
                     if (synergy.title().equals(e.text())) effect = synergy.effect();
-                hud.toast("RESONANZ: " + e.text() + " · " + effect, Pal.VIOLET_4);
+                hud.toast("SYNERGIE: " + e.text() + " · " + effect, Pal.VIOLET_4);
             }
             case HEAL -> {
                 double px = run.player().x() * PX, py = run.player().centerY() * PX;
@@ -432,7 +427,7 @@ final class EventEffects {
             }
             case CORE -> {
                 fx.burst(Effects.Kind.STAR, x, y, 10, 60, 0, 6.3, Pal.TEAL_5);
-                hud.toast("+" + Math.round(e.amount()) + " DATENKERN", Pal.TEAL_5);
+                hud.toast("+" + Math.round(e.amount()) + " KERN", Pal.TEAL_5);
             }
             case REINFORCEMENTS ->
                     hud.banner("VERSTÄRKUNG", "Welle " + Math.round(e.amount()), Pal.RED_4, 1.6);
@@ -470,7 +465,7 @@ final class EventEffects {
                     case "CAUGHT" -> {
                         fx.burst(Effects.Kind.STAR, x, y, 24, 110, 0, 6.3, Pal.RUST_6);
                         fx.ring(x, y, 4, 34, .5, Pal.RUST_6);
-                        hud.toast("BEUTE GESICHERT · +1 DATENKERN", Pal.RUST_6);
+                        hud.toast("BEUTE GESICHERT · +1 KERN", Pal.RUST_6);
                     }
                     case "LIST_WARN" -> {
                         hud.toast("SCHLAGSEITE · FESTHALTEN!", Pal.RUST_6);
@@ -547,7 +542,7 @@ final class EventEffects {
                             hud.toast(
                                     "PRÜFUNG BESTANDEN · "
                                             + e.text().substring(6).toUpperCase()
-                                            + " · +1 DATENKERN",
+                                            + " · +1 KERN",
                                     Pal.TEAL_5);
                     }
                 }
@@ -587,7 +582,7 @@ final class EventEffects {
                 feel.flash = Math.max(feel.flash, .5);
                 feel.flashColor = Pal.MYTHIC;
                 camera.shake(.4 * shake);
-                hud.banner("ENTFESSELT", e.text().toUpperCase(), Pal.MYTHIC, 2.8);
+                hud.banner("EVOLUTION", e.text().toUpperCase(), Pal.MYTHIC, 2.8);
             }
             case SWING, TELEGRAPH -> {}
         }

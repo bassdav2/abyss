@@ -22,7 +22,7 @@ public enum Weapon {
             true),
     KNIVES(
             "Bergungsmesser",
-            "Vier blitzschnelle Schnitte. Deutlich höhere kritische Trefferchance.",
+            "Vier blitzschnelle Schnitte. Deutlich höhere Krit-Chance.",
             List.of(
                     new Swing(Style.SLASH, .03, .07, .09, 135, 120, 10, 70, 50),
                     new Swing(Style.SLASH, .03, .07, .09, 135, 120, 10, 70, 50),

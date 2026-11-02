@@ -132,3 +132,14 @@ Auftrag: einen coolen Soundtrack machen. Entscheid: keine Audiodateien und keine
   - Lösung: Effektmischer im Audio-Thread (`SoundMixer`, `SoundBank`), Budget für Trefferpausen, Neustart der Tonausgabe nach Geräteverlust.
   - Prüfung: 196 Tests, 59/59 UI-Schritte, 30 s Endgame in Echtzeit über die echte Tonausgabe.
 
+## Version 1.7 · Showdown (05.10.2026)
+
+Auftrag: ein Stück wie Megalovania, den Lotsen zu einem echten Bosskampf mit Ausweichen machen (kein One-Shot), die Sprache überarbeiten.
+
+- Messung vorher: Lotse fällt im Testspieler-Lauf nach 8–27 s, meist ohne Schaden für den Bot.
+- Lotse: Deckung mit Fenstern, Phasensperre für alle Bosse, Blinzeln gegen Nahkampf, Verschwinden beim Phasenwechsel, fünf neue Muster (Taktfeuer, Ankerkette, Zielstrahlen, Enterangriff, Sonarringe); Abstimmung auf 65 s gegen unendlichen Schaden.
+- Testspieler: weicht tiefen Lanzen per Sprung, hohen durch Unten-Bleiben und senkrechten oder gezielten per Ausweichen aus.
+- Musik: „Letzte Order“ (Chiptune, 126 BPM, eigene Melodie, Leitmotiv), Chiptune-Instrumente, Musikregie spielt es beim Lotsen.
+- Sprache: Begriffstabelle, rund 260 Texte ersetzt, Zuordnung im Glossar.
+- Prüfung: 204 Tests, 59/59 UI-Schritte mit neuen Bildschirmfotos, sechs Bildproben der Lotsenmuster, Testspieler 15/15 Siege bei 58–79 s Kampfdauer.
+

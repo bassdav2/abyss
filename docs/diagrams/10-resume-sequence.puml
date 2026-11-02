@@ -17,7 +17,7 @@ skinparam packageBorderColor #6E8B91
 skinparam stateBackgroundColor #EAF3F2
 skinparam stateBorderColor #355863
 hide empty members
-title Sequenz: Fortsetzen (UC-05)
+title Sequenz: Fortsetzen (UC-01, Erweiterung 1a)
 participant ":GameWindow" as W
 participant ":GameService" as S
 participant ":FileGameRepository" as F

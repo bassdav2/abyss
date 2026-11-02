@@ -173,6 +173,14 @@ public enum EnemyKind {
     }
 
     /**
+     * @return {@code true}, wenn der Boss Deckung trägt: nur in seinen Erholungsfenstern dringt
+     *     nennenswert Schaden durch, damit selbst starke Builds den Kampf erleben
+     */
+    public boolean guarded() {
+        return this == CAPTAIN;
+    }
+
+    /**
      * @return Panzerfaktor ausserhalb der Erholung; 1 bedeutet ungepanzert
      */
     public double armor() {

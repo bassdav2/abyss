@@ -14,7 +14,7 @@ public enum Synergy {
     /** Kälte und Kettenblitz. */
     PERMAFROST("Permafrost", Item.CRYO_COIL, Item.ARC_COIL, "+15 % Kältechance."),
     /** Kritische Chance und kritischer Schaden. */
-    MARKSMAN("Scharfschütze", Item.LENS, Item.CRIT_DAMAGE, "+8 % kritische Trefferchance."),
+    MARKSMAN("Scharfschütze", Item.LENS, Item.CRIT_DAMAGE, "+8 % Krit-Chance."),
     /** Panzerung und Schild. */
     FORTRESS("Festung", Item.PLATING, Item.SHIELD_CELL, "+20 Schild."),
     /** Lebensraub und Heilung pro Abschuss. */
@@ -28,11 +28,7 @@ public enum Synergy {
     /** Tempo und Abklingzeiten. */
     SLIPSTREAM("Sturmläufer", Item.THRUSTER, Item.COOLANT, "−10 % Abklingzeiten, +5 % Tempo."),
     /** Schrott und Vorräte. */
-    SCRAPPER(
-            "Schrotthändler",
-            Item.MAGNET,
-            Item.TOOLBELT,
-            "+20 % Schrott und +1 Reparaturset-Kapazität."),
+    SCRAPPER("Schrotthändler", Item.MAGNET, Item.TOOLBELT, "+20 % Schrott und +1 Medkit-Platz."),
     /** Rückstoss und Schlagkraft. */
     HEAVYWEIGHT("Schwergewicht", Item.BALLAST, Item.SERVO, "+10 % Schaden.");
 

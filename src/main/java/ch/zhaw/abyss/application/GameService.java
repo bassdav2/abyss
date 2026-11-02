@@ -1,10 +1,12 @@
 package ch.zhaw.abyss.application;
 
 import ch.zhaw.abyss.domain.GameRun;
+import ch.zhaw.abyss.domain.InputFrame;
+import ch.zhaw.abyss.domain.Offer;
 import ch.zhaw.abyss.domain.RunCheckpoint;
 import ch.zhaw.abyss.domain.RunSetup;
+import ch.zhaw.abyss.domain.ShrineDeal;
 import ch.zhaw.abyss.domain.Weapon;
-import ch.zhaw.abyss.ports.GameRepository;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -17,6 +19,11 @@ import java.util.Optional;
  * Anwendungsfälle: Tauchgang beginnen, fortsetzen, sichern, Ergebnis verbuchen, im Archiv
  * freischalten und Aussehen wählen. Koordiniert Domäne und Repository, enthält aber weder
  * Spielregeln noch UI-Elemente.
+ *
+ * <p>GRASP Controller: Alle Systemoperationen eines Tauchgangs ({@link #step}, {@link
+ * #chooseNextRoom}, {@link #take} …) laufen über diese Klasse. Die Oberfläche liest den Zustand des
+ * {@link GameRun} nur noch; wann gesichert und wann das Ergebnis verbucht wird, entscheidet allein
+ * die Anwendungsschicht.
  */
 public final class GameService {
     private final GameRepository repository;
@@ -145,7 +152,7 @@ public final class GameService {
         try {
             repository.saveCheckpoint(run.checkpoint());
         } catch (IOException e) {
-            storageMessage = "Raum konnte nicht gesichert werden: " + e.getMessage();
+            storageMessage = "Spielstand konnte nicht gespeichert werden: " + e.getMessage();
         }
     }
 
@@ -162,7 +169,7 @@ public final class GameService {
         try {
             repository.clearCheckpoint();
         } catch (IOException e) {
-            storageMessage = "Alte Raum-Sicherung konnte nicht entfernt werden.";
+            storageMessage = "Alter Spielstand konnte nicht entfernt werden.";
         }
     }
 
@@ -176,6 +183,81 @@ public final class GameService {
         outcomeRecorded = false;
         saveRoom();
         return true;
+    }
+
+    // --- Systemoperationen während eines Tauchgangs (GRASP Controller) -------------------------
+
+    /**
+     * Führt einen Simulationsschritt aus und verbucht ein Ende des Tauchgangs genau einmal.
+     *
+     * @param seconds Dauer des Schritts
+     * @param input Eingabe dieses Schritts
+     */
+    public void step(double seconds, InputFrame input) {
+        if (run == null) return;
+        run.update(seconds, input);
+        recordOutcome();
+    }
+
+    /**
+     * Betritt den gewählten nächsten Raum und sichert dessen Eingang.
+     *
+     * @param branch Index der Abzweigung
+     * @return {@code true}, wenn der Raum betreten wurde
+     */
+    public boolean chooseNextRoom(int branch) {
+        if (run == null || !run.chooseNextRoom(branch)) return false;
+        saveRoom();
+        recordOutcome();
+        return true;
+    }
+
+    /**
+     * Übernimmt ein Angebot aus Bergung, Schwarzmarkt oder Werkstatt.
+     *
+     * @param offer Angebot
+     * @return {@code true}, wenn das Angebot übernommen wurde
+     */
+    public boolean take(Offer offer) {
+        return run != null && run.take(offer);
+    }
+
+    /**
+     * Wählt eine Verbesserung beim Stufenaufstieg.
+     *
+     * @param offer gewählte Verbesserung
+     * @return {@code true}, wenn sie übernommen wurde
+     */
+    public boolean chooseLevelUp(Offer offer) {
+        return run != null && run.chooseLevelUp(offer);
+    }
+
+    /**
+     * Nimmt einen Handel in der Druckkapelle an.
+     *
+     * @param deal Handel
+     * @return {@code true}, wenn der Handel zustande kam
+     */
+    public boolean acceptDeal(ShrineDeal deal) {
+        return run != null && run.acceptDeal(deal);
+    }
+
+    /**
+     * Nutzt die einmalige Gratisreparatur der Werkstatt.
+     *
+     * @return {@code true}, wenn repariert wurde
+     */
+    public boolean repair() {
+        return run != null && run.repair();
+    }
+
+    /**
+     * Löst den Notschalter des aktuellen Raums aus.
+     *
+     * @return {@code true}, wenn der Schalter bereit war
+     */
+    public boolean useConsole() {
+        return run != null && run.useConsole();
     }
 
     /**

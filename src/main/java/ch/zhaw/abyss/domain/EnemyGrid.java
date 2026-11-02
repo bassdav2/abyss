@@ -172,7 +172,7 @@ final class EnemyGrid {
     }
 
     private static boolean movable(Enemy e) {
-        return !e.kind.boss()
+        return e.staggerable()
                 && e.kind != EnemyKind.TURRET
                 && e.kind != EnemyKind.EEL
                 && e.state != Enemy.State.HIDDEN;

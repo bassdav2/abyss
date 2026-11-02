@@ -17,7 +17,7 @@ skinparam packageBorderColor #6E8B91
 skinparam stateBackgroundColor #EAF3F2
 skinparam stateBorderColor #355863
 hide empty members
-title Systemsequenzdiagramm UC-02 Zum nächsten Raum vordringen
+title Systemsequenzdiagramm UC-01 Tauchgang spielen (Raumschleife, Schritte 3–7)
 actor "Spieler/in" as P
 participant ":ABYSS" as S
 loop bis der Raum gesichert ist

@@ -17,73 +17,50 @@ skinparam packageBorderColor #6E8B91
 skinparam stateBackgroundColor #EAF3F2
 skinparam stateBorderColor #355863
 hide empty members
-title Logische Architektur (Schichten, Abhängigkeiten nach innen)
-package "ui (JavaFX)" {
- [GameWindow] as GW
- [MenuScreens / RunScreens] as Screens
- [PixelView] as PV
- [InputController] as IC
+title Logische Architektur: Schichten und Abhängigkeiten (nach innen)
+skinparam componentStyle rectangle
+package "Präsentation (ui, JavaFX)" {
+ [Bildschirme, Spielschleife, Eingabe\n(GameWindow, Screens, Gui)] as Screens
+ [Darstellung\n(render, art, pixel)] as Render
 }
-package "ui.gui" {
- [Gui (Bordsystem, Immediate-Mode)] as Gui
+package "Anwendung (application)" {
+ [GameService\n«Controller»] as GS
+ [Profile, Loadout, Unlock,\nCareer, SkillTree] as Meta
+ [GameRepository\n«Interface, Port»] as Port
 }
-package "ui.render" {
- [WorldRenderer] as WR
- [HudRenderer] as HR
- [MachinePainter] as MP
- [Effects / Camera / Ocean] as FX
-}
-package "ui.art" {
- [DiverArt / EnemyArt / BossArt] as Art
- [RoomArt / PropArt / IconArt] as RoomArt
-}
-package "ui.pixel" {
- [Frame / Sprite / LightMap / PostProcess / PixelFont] as Pixel
-}
-package "application" {
- [GameService] as GS
- [Profile / Loadout / Unlock / Achievement] as Meta
-}
-package "ports" {
- [GameRepository] as Port
-}
-package "infrastructure" {
- [FileGameRepository] as File
- [AudioSystem] as Audio
-}
-package "domain (reines Java)" {
- [GameRun] as Run
- [Combat / Physics / Machinery] as Rules
- [EnemyBehavior-Strategien] as AI
+package "Domäne (domain, reines Java)" {
+ [GameRun\n«Aggregat»] as Run
+ [Mitarbeiter: PlayerMotor, Combat, Arsenal,\nBallistics, Loot, Rewards, Machinery] as Coll
+ [EnemyBehavior\n«Interface, Strategie»] as Beh
+ [Brain «Schablonenmethode»\n5 Wächter, 23 Gegnerarten] as Brain
  [RoomGenerator] as Gen
+ [Wertobjekte: RoomPlan, RunCheckpoint,\nStatSheet, Offer] as VO
+ [GameEvent-Liste] as Ev
 }
-GW --> Screens
-GW --> Gui
-Screens --> Gui
-Gui --> Pixel
-GW --> WR
-WR --> MP
-GW --> IC
-GW --> PV
-GW --> GS
-GW --> Audio
-Screens --> GS
-WR --> HR
-WR --> FX
-WR --> Art
-WR --> RoomArt
-WR --> Pixel
-Art --> Pixel
-RoomArt --> Pixel
-WR ..> Run : liest
-GS --> Run
-GS --> Meta
-GS --> Port
-File ..|> Port
-Run --> Rules
-Run --> AI
-Run --> Gen
-note bottom of Run : Keine Importe aus JavaFX,\nDateien oder Anwendungsschicht
-note right of Pixel : Software-Framebuffer 480 x 270,\nohne JavaFX testbar
+package "Infrastruktur (infrastructure)" {
+ [FileGameRepository\n«Adapter»] as File
+ [AudioSystem, MusicEngine] as Audio
+}
+Screens -down-> GS : Systemoperationen
+Screens -right-> Render
+Render .down.> Run : liest Zustand
+GS -down-> Run
+GS -right-> Meta
+GS -down-> Port
+File .up.|> Port
+Audio .left.> Ev : liest
+Run *-down- Coll
+Run -down-> Beh
+Brain .right.|> Beh
+Run -down-> Gen
+Run -down-> VO
+Run -right-> Ev
+Screens .right.> File
+legend bottom
+ Abhängigkeiten zeigen nach innen: Präsentation → Anwendung → Domäne.
+ Die Domäne importiert weder JavaFX noch Dateien noch andere Schichten; ArchitectureTest prüft das.
+ Der Port liegt in der Anwendung, Infrastruktur implementiert ihn (Port/Adapter): keine Paketzyklen.
+ Die Präsentation erzeugt die Adapter beim Start (bekannte Abweichung, im Test festgehalten).
+endlegend
 
 @enduml

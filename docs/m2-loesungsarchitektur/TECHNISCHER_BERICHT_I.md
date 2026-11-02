@@ -1,6 +1,6 @@
 # M2 · Technischer Bericht I – Lösungsarchitektur ABYSS
 
-*Arbeitsfassung nach dem PM3-Auftrag „Lösungsarchitektur (M2)“, Stand 25.09.2026 (Prototyp-Version 1.1). Gliederung gemäss den acht Berichtskapiteln des Auftrags. Die Abgabe erfolgt als PDF in der SoE-Vorlage „Technischer Bericht I“ zusammen mit einer ZIP-Datei aus Quellcode, Konfiguration und Javadoc. Stellen mit `[TEAM]` sind durch das Team zu ergänzen.*
+*Arbeitsfassung nach dem PM3-Auftrag „Lösungsarchitektur (M2)“, Stand 25.09.2026 (Prototyp-Version 1.1), Kapitel 1, 2 und 7.3 überarbeitet am 06.10.2026 nach dem Feedback zur Projektskizze M1. Gliederung gemäss den acht Berichtskapiteln des Auftrags. Die Abgabe erfolgt als PDF in der SoE-Vorlage „Technischer Bericht I“ zusammen mit einer ZIP-Datei aus Quellcode, Konfiguration und Javadoc. Stellen mit `[TEAM]` sind durch das Team zu ergänzen.*
 
 **Abgabeartefakte laut Auftrag und ihr Ort im Repository**
 
@@ -17,82 +17,98 @@
 
 ### 1.1 Übersicht
 
-Abbildung 1 zeigt den Systemkontext: Eine spielende Person ist die einzige Akteurin; das lokale Dateisystem ist Nachbarsystem für Profil und Raum-Sicherung.
+Abbildung 1 zeigt den Systemkontext: Die spielende Person ist der einzige Akteur. Profil und Raum-Sicherung speichert das System selbst; das lokale Dateisystem liegt innerhalb der Systemgrenze und ist deshalb kein Akteur. Kundennutzen ist Spielspass; der Kernfall UC-01 „Tauchgang spielen“ bildet ihn ab.
 
 ![Use-Case-Diagramm](../diagrams/01-use-cases.svg)
 
 *Abbildung 1: Use-Case-Diagramm von ABYSS (PlantUML-Quelle: `docs/diagrams/01-use-cases.puml`).*
 
-*Tabelle 1: Use Cases mit Priorität und Beschreibungstiefe*
+*Tabelle 1: Use Cases mit relativem Rang und Abhängigkeiten*
 
-| ID | Use Case | Priorität | Tiefe |
+| ID | Use Case | Rang | Abhängig von | Tiefe |
+|---|---|---|---|---|
+| UC-01 | Tauchgang spielen | 1 (Kernfall) | – | fully dressed |
+| UC-02 | Fortschritt freischalten und Figur gestalten | 2 | UC-01 (Datenkerne aus Tauchgängen) | casual |
+| UC-03 | Spiel einstellen | 3 | – | brief |
+
+Bergung, Handel, Unterbrechen und Fortsetzen, Sieg mit nächstem Zyklus und Niederlage mit erneutem Tauchen sind Varianten von UC-01 und als Erweiterungen beschrieben. Als Arbeitspakete priorisiert das Team sie relativ zueinander (Abbildung 2, Tabelle 2). Muss/Soll wird bewusst noch nicht festgelegt.
+
+![Arbeitspakete](../diagrams/14-arbeitspakete.svg)
+
+*Abbildung 2: Arbeitspakete der Use Cases mit relativem Rang und Abhängigkeiten.*
+
+*Tabelle 2: Arbeitspakete mit Rang und Voraussetzungen*
+
+| Rang | Arbeitspaket | Use Case | Voraussetzung |
 |---|---|---|---|
-| UC-01 | Tauchgang vorbereiten und beginnen | Muss | casual |
-| UC-02 | Zum nächsten Raum vordringen | Muss, Kern | fully dressed |
-| UC-03 | Bergung wählen | Muss | casual |
-| UC-04 | Handeln: Schwarzmarkt, Werkstatt, Druckkapelle | Muss | casual |
-| UC-05 | Unterbrechen und fortsetzen | Muss | casual |
-| UC-06 | Brücke erobern / nächster Zyklus | Muss | casual |
-| UC-07 | Nach Niederlage erneut tauchen | Muss | brief |
-| UC-08 | Im Archiv freischalten | Soll | brief |
-| UC-09 | Aussehen anpassen | Soll | brief |
-| UC-10 | Ausrüstung und Bootskarte ansehen | Soll | brief |
-| UC-11 | Optionen und Steuerung | Muss | brief |
+| 1 | Raum bewältigen: Bewegung, Kampf, Vorwarnung | UC-01 | – |
+| 2 | Tauchgang beginnen: Ausrüstung wählen, Boot erzeugen | UC-01 | – |
+| 3 | Raum sichern und nächsten Raum wählen | UC-01 | 1, 2 |
+| 4 | Bergung wählen | UC-01 | 3 |
+| 5 | Niederlage und erneut tauchen | UC-01 | 1 |
+| 6 | Wächterkampf mit Phasen | UC-01 | 1 |
+| 7 | Unterbrechen und fortsetzen | UC-01 | 3 |
+| 8 | In Sonderräumen handeln | UC-01 | 4 |
+| 9 | Brücke erobern, nächster Zyklus | UC-01 | 3, 6 |
+| 10 | Raumzustände und Raumtechnik | UC-01 | 3 |
+| 11 | Ausrüstung und Bootskarte ansehen | UC-01 | 4 |
+| 12 | Im Archiv freischalten, Logbuch | UC-02 | 5 |
+| 13 | Figur gestalten (Garderobe) | UC-02 | 12 |
+| 14 | Optionen und Steuerung | UC-03 | – |
 
-### 1.2 UC-02 „Zum nächsten Raum vordringen“ (fully dressed)
+### 1.2 UC-01 „Tauchgang spielen“ (fully dressed)
 
-**Ziel:** Alle Wellen eines Raums bewältigen, optional die Belohnung nutzen und einen zulässigen nächsten Raum betreten. **Umfang/Ebene:** ABYSS, Benutzerziel. **Primärakteur:** Spielerin. **Auslöser:** Tauchgang gestartet oder fortgesetzt.
+**Ziel:** Einen Tauchgang vom Heck bis zur Brücke spielen und dabei Ausrüstung, Route und Kampf selbst entscheiden. **Umfang/Ebene:** ABYSS, Benutzerziel. **Primärakteur:** Spieler/in. **Auslöser:** Die Person startet im Hauptmenü einen neuen Tauchgang.
 
-**Stakeholder und Interessen:** Spielende erwarten lesbare Gefahren, reaktionsschnelle Steuerung, faire Belohnungen und sicheren Unterbruch. Das Team braucht nachvollziehbare, testbare Regeln.
+**Stakeholder und Interessen:** Spielende erwarten Spielspass, lesbare Gefahren, reaktionsschnelle Steuerung, faire Belohnungen und sicheren Unterbruch. Das Team braucht nachvollziehbare, testbare Regeln.
 
-**Vorbedingungen:** Gültiger Tauchgang aktiv, Figur lebt, Raum stammt aus einer gültigen Route. **Erfolgsgarantie:** Der gewählte Raum ist aktiv, Build und Ressourcen sind übernommen, der neue Raumeingang ist gesichert. **Minimalgarantie:** Ein ungesicherter Raum kann nicht verlassen werden; Speicherfehler beenden das Spiel nicht.
+**Vorbedingungen:** Das Spiel läuft, ein Profil ist geladen oder neu angelegt. **Erfolgsgarantie:** Der Tauchgang endet mit Sieg oder Niederlage; Datenkerne und Entdeckungen sind dem Profil gutgeschrieben. **Minimalgarantie:** Ein ungesicherter Raum kann nicht verlassen werden; Speicherfehler beenden das Spiel nicht.
 
 **Standardszenario**
 
-1. Das System zeigt Raum, Figur, Laufstege, Gegner, Raumtechnik, HUD sowie Name und Sektion des Raums.
-2. Die Spielerin bewegt sich, springt, weicht aus und greift mit Waffe und Modul an.
-3. Das System kündigt jeden Gegnerangriff an und berechnet Treffer, Kritik, Zustände, Panzerung und Modul-Auslöser.
-4. Nach der letzten Welle markiert das System den Raum als gesichert und öffnet das Schott.
-5. Die Spielerin öffnet die Bergungskapsel.
-6. Das System zeigt drei bis vier Angebote.
-7. Die Spielerin wählt ein Angebot; das System installiert es genau einmal.
-8. Die Spielerin interagiert mit dem Schott.
-9. Das System zeigt ein oder zwei nächste Räume mit Art, Kamerabild, Beschreibung und Bedrohung.
-10. Die Spielerin wählt; das System betritt den Raum und sichert den Eingang.
+1. Die Person wählt in der Schleuse Taucherklasse, Waffe, aktives Modul und Druckstufe und startet.
+2. Das System stellt das Boot mit Route und Räumen zusammen und zeigt den ersten Raum.
+3. Die Person bewegt sich, springt, weicht aus und greift mit Waffe und Modul an.
+4. Das System kündigt jeden Gegnerangriff an und berechnet Treffer. Nach der letzten Welle markiert es den Raum als gesichert, öffnet das Schott und zeigt die Bergungskapsel.
+5. Die Person wählt eines von drei bis vier Angeboten; das System installiert es genau einmal.
+6. Die Person interagiert mit dem Schott; das System zeigt ein oder zwei nächste Räume mit Art, Kamerabild, Beschreibung und Bedrohung.
+7. Die Person wählt; das System betritt den Raum und sichert den Eingang. Die Schritte 3 bis 7 wiederholen sich bis zur Brücke.
+8. Die Person besiegt auf der Brücke den Lotsen.
+9. Das System zeigt Sieg und Auswertung und schreibt die Datenkerne dem Profil gut.
 
-**Erweiterungen:** 2a Pause hält die Simulation an. 2b Unten + Sprung lässt durch einen Laufsteg fallen. 2c An einem Notschalter löst E den Sektionseffekt aus. 2d Eine Anlage trifft einen Wächter und legt seinen Kern frei. 3a Energie fehlt: kein Modul. 3b Integrität null: Niederlage (UC-07) oder Notfallkapsel. 4a Weitere Welle folgt nach Ansage. 4b Hüllenbruch: gesichert nach 40 Sekunden. 6a Alle Module maximiert: weniger Angebote. 7a Angebot vervollständigt eine Resonanz: einmalige Meldung. 9a Nur ein Raum zulässig (Wächter, Werkstatt, Brücke). 10a Speicherfehler: Meldung, Spiel läuft weiter.
+**Erweiterungen:** *a Pause hält die Simulation an. *b Unterbrechen: Der Tauchgang bleibt am letzten Raumeingang gesichert. *c Ausrüstung oder Bootskarte ansehen pausiert. 1a Fortsetzen am letzten Raumeingang; defekte Stände blockieren den Start nicht. 1b Seed oder Tagestauchgang. 3a Unten + Sprung lässt durch einen Laufsteg fallen. 3b Notschalter löst den Sektionseffekt aus. 3c Energie fehlt: kein Modul. 4a Leben null: Notfallkapsel oder Niederlage mit Auswertung, Kerne bleiben, erneut tauchen. 4b Wächter mit Panzerung und drei Phasen; Raumtechnik legt seinen Kern frei. 4c Weitere Welle nach Ansage. 4d Hüllenbruch: gesichert nach 40 Sekunden. 5a Sonderraum: Schrott bei Schwarzmarkt, Werkstatt oder Kapelle einsetzen. 5b Angebot vervollständigt eine Resonanz. 6a Nur ein Raum zulässig (Wächter, Werkstatt, Brücke). 6b Raumzustand mit Regel und Belohnung. 7a Speicherfehler: Meldung, Spiel läuft weiter. 9a Nächster Zyklus mit gleichem Build und stärkeren Gegnern.
 
-**Besondere Anforderungen:** Simulationsschritt 1/120 s; Darstellung und Audio verändern keine Regeln. **Häufigkeit:** bis zu 24-mal pro Zyklus.
+**Besondere Anforderungen:** Simulationsschritt 1/120 s; Darstellung und Audio verändern keine Regeln. **Häufigkeit:** mehrmals pro Spielsitzung.
 
-Die weiteren Use Cases in casual/brief-Form stehen in [ANFORDERUNGEN.md](../ANFORDERUNGEN.md#weitere-use-cases-casualbrief).
+UC-02 und UC-03 in casual/brief-Form stehen in [ANFORDERUNGEN.md](../ANFORDERUNGEN.md#uc-02--fortschritt-freischalten-und-figur-gestalten-casual).
 
 ### 1.3 Systemsequenzdiagramm
 
-Abbildung 2 zeigt das SSD für das Standardszenario von UC-02. Die Systemoperationen `update`, `interaction`, `take` und `chooseNextRoom` bilden die Schnittstelle zwischen Spielerin und System.
+Abbildung 3 zeigt das SSD für die Raumschleife von UC-01 (Schritte 3 bis 7). Die Systemoperationen `update`, `interaction`, `take` und `chooseNextRoom` bilden die Schnittstelle zwischen Spieler/in und System.
 
-![Systemsequenzdiagramm UC-02](../diagrams/05-ssd-progress.svg)
+![Systemsequenzdiagramm UC-01](../diagrams/05-ssd-progress.svg)
 
-*Abbildung 2: Systemsequenzdiagramm zu UC-02.*
+*Abbildung 3: Systemsequenzdiagramm zur Raumschleife von UC-01.*
 
 ### 1.4 UI-Skizzen und Navigation
 
-Die Oberfläche ist als „Bordsystem“ gestaltet: Alle Menüs werden im selben Pixelbild wie das Spiel gezeichnet. Abbildung 3 zeigt drei zentrale Bildschirme, Abbildung 4 die Navigation zwischen allen Bildschirmen.
+Die Oberfläche ist als „Bordsystem“ gestaltet: Alle Menüs werden im selben Pixelbild wie das Spiel gezeichnet. Abbildung 4 zeigt drei zentrale Bildschirme, Abbildung 5 die Navigation zwischen allen Bildschirmen.
 
 | Vorbereitung (Schleuse) | Bergung | Routenwahl |
 |---|---|---|
 | ![Schleuse](../qa/screens/loadout.png) | ![Bergung](../qa/screens/reward.png) | ![Route](../qa/screens/route-condition.png) |
 
-*Abbildung 3: Bildschirmfotos aus dem Prototyp (automatisch erzeugt mit `./gradlew uiSmoke --args="--capture=docs/qa/screens"`).*
+*Abbildung 4: Bildschirmfotos aus dem Prototyp (automatisch erzeugt mit `./gradlew uiSmoke --args="--capture=docs/qa/screens"`).*
 
 ![Navigationsdiagramm](../diagrams/12-navigation.svg)
 
-*Abbildung 4: Navigationsdiagramm der Bildschirme.*
+*Abbildung 5: Navigationsdiagramm der Bildschirme.*
 
 ## 2 Zusätzliche Anforderungen
 
 ### 2.1 Weitere Funktionen
 
-*Tabelle 2: Funktionale Anforderungen und ihr Nachweis*
+*Tabelle 3: Funktionale Anforderungen und ihr Nachweis*
 
 | ID | Anforderung | Nachweis |
 |---|---|---|
@@ -110,20 +126,25 @@ Die Oberfläche ist als „Bordsystem“ gestaltet: Alle Menüs werden im selben
 | F-13 | Raumtechnik und interaktive Bossarenen | MachineryTest |
 | F-15 | Bordsystem-Oberfläche, bedienbar mit Maus und Tastatur | UI-Prüfung |
 
-### 2.2 Qualitätsanforderungen
+### 2.2 Nicht-funktionale Anforderungen nach FURPS+
 
-| ID | Anforderung | Messung / Status |
-|---|---|---|
-| Q-01 | Testbarkeit: Domäne und Pixel-Pipeline ohne JavaFX testbar | 106 JUnit-Tests ohne Fenster |
-| Q-02 | Robustheit: defekte Stände blockieren den Start nicht | Migrations- und Fehlertests |
-| Q-03 | Performance: Bild deutlich unter 16 ms | gemessen ≈ 1,9 ms im Mittel |
-| Q-04 | Bedienbarkeit: angekündigte Angriffe erkennbar | Nutzertest mit Personen offen |
-| Q-05 | Nachvollziehbarkeit: KI, Quellen, Tests dokumentiert | [KI_EINSATZ.md](../KI_EINSATZ.md) |
-| Q-06 | Portabilität: Java-Code plattformneutral | nur macOS geprüft |
+Tabelle 4 gruppiert die nicht-funktionalen Anforderungen nach der FURPS+-Checkliste [SWEN1 LE03, PDF-Seite 40]. Die IDs stammen aus der Projektskizze.
 
-### 2.3 Randbedingungen
+*Tabelle 4: Nicht-funktionale Anforderungen nach FURPS+ mit Messung und Status*
 
-Java als Sprache, JavaFX als Oberflächentechnologie, eigene geschichtete Architektur, keine Frameworks oder Datenbanken, Bibliotheken nur nach Absprache (PM3-Kick-off). Einzige Produktionsbibliothek ist JavaFX; Gradle, JUnit und google-java-format sind Entwicklungswerkzeuge.
+| Kategorie | ID | Anforderung | Messung / Status |
+|---|---|---|---|
+| Functionality (Sicherheit) | Q-07 | Datenschutz: keine Datenübertragung | kein Netzwerkzugriff im Code; Spielstände nur lokal |
+| Usability | Q-04 | Angriffe erkennbar, Einstieg ohne Anleitung | Ziel: vier von fünf Testpersonen; Nutzertest offen |
+| Reliability | Q-02 | Wiederanlauf und Datensicherung: defekte Stände blockieren den Start nicht | Migrations- und Fehlertests |
+| Performance | Q-03 | 60 Bilder pro Sekunde, Bild im Mittel unter 16 ms | gemessen ≈ 1,9 ms im Mittel |
+| Supportability (Wartbarkeit) | Q-01 | Spielregeln ohne Oberfläche und Speicherung testbar | 106 JUnit-Tests ohne Fenster |
+| + Implementation | Q-06 | Desktop-Anwendung für macOS, Windows und Linux, keine Mobile-App | macOS geprüft; Windows und Linux auf den Rechnern des sechsköpfigen Teams offen |
+| + Legal | Q-05 | KI-Einsatz, Quellen und Assets offengelegt | [KI_EINSATZ.md](../KI_EINSATZ.md), [CREDITS.md](../CREDITS.md) |
+
+### 2.3 Randbedingungen (+ Implementation, Interface, Packaging)
+
+Java als Sprache, JavaFX als Oberflächentechnologie, eigene geschichtete Architektur, keine Frameworks oder Datenbanken, Bibliotheken nur nach Absprache (PM3-Kick-off). Einzige Produktionsbibliothek ist JavaFX; Gradle, JUnit und google-java-format sind Entwicklungswerkzeuge. Es gibt keine externen Schnittstellen und keinen Serverbetrieb. Ausgeliefert wird ein Gradle-Projekt mit Wrapper, für macOS zusätzlich ein App-Paket.
 
 ### 2.4 Spielregeln (Auszug)
 
@@ -137,33 +158,33 @@ Vollständige Regeln: [ANFORDERUNGEN.md](../ANFORDERUNGEN.md), Werte aller Inhal
 
 ## 3 Domänenmodell
 
-Abbildung 5 zeigt die fachlichen Konzepte der wichtigsten Use Cases. Ein Tauchgang führt durch ein Boot aus vier Sektionen mit je sechs Räumen. Räume enthalten Wellen von Gegnern, Laufstege, Gefahren, Raumtechnik und Beute und können einen Raumzustand haben. Die Taucherin trägt Waffe, aktives Modul und passive Module; Resonanzen verbinden je zwei Module. Das Profil hält Freischaltungen und Logbuch-Einträge über Tauchgänge hinweg.
+Abbildung 6 zeigt die fachlichen Konzepte der wichtigsten Use Cases. Ein Tauchgang führt durch ein Boot aus vier Sektionen mit je sechs Räumen. Räume enthalten Wellen von Gegnern, Laufstege, Gefahren, Raumtechnik und Beute und können einen Raumzustand haben. Die Taucherin trägt Waffe, aktives Modul und passive Module; Resonanzen verbinden je zwei Module. Das Profil hält Freischaltungen und Logbuch-Einträge über Tauchgänge hinweg.
 
 ![Domänenmodell](../diagrams/02-domain.svg)
 
-*Abbildung 5: Konzeptuelles Domänenmodell (fachliche Begriffe, keine Softwareklassen).*
+*Abbildung 6: Konzeptuelles Domänenmodell (fachliche Begriffe, keine Softwareklassen).*
 
 ## 4 Softwarearchitektur
 
 ### 4.1 Logische Architektur
 
-Die Anwendung ist in Schichten gegliedert, deren Abhängigkeiten nach innen zeigen (Abbildung 6): Oberfläche → Anwendung → Domäne; die Infrastruktur implementiert den Speicher-Port. Die Domäne importiert weder JavaFX noch Dateisystem-Klassen.
+Die Anwendung ist in Schichten gegliedert, deren Abhängigkeiten nach innen zeigen (Abbildung 7): Oberfläche → Anwendung → Domäne; die Infrastruktur implementiert den Speicher-Port. Die Domäne importiert weder JavaFX noch Dateisystem-Klassen.
 
 ![Logische Architektur](../diagrams/03-architecture.svg)
 
-*Abbildung 6: Logische Architektur mit Paketen und Abhängigkeiten.*
+*Abbildung 7: Logische Architektur mit Paketen und Abhängigkeiten.*
 
 | Schicht / Paket | Verantwortung |
 |---|---|
 | `domain` | Spielregeln: `GameRun` als Aggregat mit Mitarbeitern (`PlayerMotor`, `Arsenal`, `Ballistics`, `Loot`, `Rewards`, `Machinery`), `Combat`, `Physics`, Gegnerstrategien, `RoomGenerator` |
 | `application` | `GameService` für Anwendungsfälle; `Profile`, `Loadout`, `Unlock`, `Achievement` |
-| `ports` / `infrastructure` | `GameRepository` / `FileGameRepository`, `AudioSystem` |
+| `application` (Port) / `infrastructure` | `GameRepository` / `FileGameRepository`, `AudioSystem` |
 | `ui.pixel`, `ui.art`, `ui.render` | Software-Framebuffer, prozedurale Pixel-Art, Welt-Renderer |
 | `ui.gui`, `ui` | Bordsystem-GUI, Fenster, Spielschleife, Bildschirme, Eingabe |
 
 ### 4.2 Architektur-Analyse: die vier wichtigsten Einflussfaktoren
 
-*Tabelle 3: Einflussfaktoren, Lösungen und Belege im Prototyp*
+*Tabelle 5: Einflussfaktoren, Lösungen und Belege im Prototyp*
 
 | Einflussfaktor | Lösung | Beleg |
 |---|---|---|
@@ -192,31 +213,31 @@ Die Anwendung ist nicht verteilt; es gibt keine Netzwerkkommunikation.
 
 ![Design-Klassendiagramm](../diagrams/04-design-classes.svg)
 
-*Abbildung 7: Design-Klassendiagramm der Domänenschicht (Auszug, ohne UI-Klassen).*
+*Abbildung 8: Design-Klassendiagramm der Domänenschicht (Auszug, ohne UI-Klassen).*
 
-Abbildung 7 zeigt `GameRun` als einzige öffentliche Änderungsschnittstelle eines Tauchgangs. Mitarbeiterklassen sind paketintern. Gegnerverhalten sind Strategien hinter `EnemyBehavior`; die abstrakte Klasse `Brain` gibt als Schablonenmethode den Ablauf Annähern → Ausholen → Angriff → Erholung vor.
+Abbildung 8 zeigt `GameRun` als einzige öffentliche Änderungsschnittstelle eines Tauchgangs. Mitarbeiterklassen sind paketintern. Gegnerverhalten sind Strategien hinter `EnemyBehavior`; die abstrakte Klasse `Brain` gibt als Schablonenmethode den Ablauf Annähern → Ausholen → Angriff → Erholung vor.
 
 ### 5.2 Systemoperationen und Interaktionsdiagramme
 
-*Tabelle 4: Systemoperationen mit Interaktionsdiagramm*
+*Tabelle 6: Systemoperationen mit Interaktionsdiagramm*
 
 | Systemoperation | Auslöser | Diagramm |
 |---|---|---|
-| `GameService.start(loadout, seed)` | Tauchgang beginnen (UC-01) | [06-start-sequence](../diagrams/06-start-sequence.svg) |
-| `GameRun.update(dt, input)` | jeder Simulationsschritt im Kampf (UC-02) | [07-combat-sequence](../diagrams/07-combat-sequence.svg) |
-| `GameRun.take(offer)` | Bergung wählen (UC-03) | [08-reward-sequence](../diagrams/08-reward-sequence.svg) |
-| `GameRun.chooseNextRoom(branch)` | nächsten Raum betreten (UC-02) | [09-room-sequence](../diagrams/09-room-sequence.svg) |
-| `GameService.resume()` | Tauchgang fortsetzen (UC-05) | [10-resume-sequence](../diagrams/10-resume-sequence.svg) |
+| `GameService.start(loadout, seed)` | Tauchgang beginnen (UC-01, Schritte 1–2) | [06-start-sequence](../diagrams/06-start-sequence.svg) |
+| `GameService.step(dt, input)` | jeder Simulationsschritt im Kampf (UC-01, Schritte 3–4) | [07-combat-sequence](../diagrams/07-combat-sequence.svg) |
+| `GameService.take(offer)` | Bergung wählen (UC-01, Schritt 5) | [08-reward-sequence](../diagrams/08-reward-sequence.svg) |
+| `GameService.chooseNextRoom(branch)` | nächsten Raum betreten und Eingang sichern (UC-01, Schritte 6–7) | [09-room-sequence](../diagrams/09-room-sequence.svg) |
+| `GameService.resume()` | Tauchgang fortsetzen (UC-01, Erweiterung 1a) | [10-resume-sequence](../diagrams/10-resume-sequence.svg) |
 
 ![Kampfsequenz](../diagrams/07-combat-sequence.svg)
 
-*Abbildung 8: Interaktionsdiagramm der Systemoperation `update` während eines Kampfes.*
+*Abbildung 9: Interaktionsdiagramm der Systemoperation `update` während eines Kampfes.*
 
 Das Zustandsdiagramm der Gegner ([11-enemy-state](../diagrams/11-enemy-state.svg)) und die Darstellungs-Pipeline ([13-render-pipeline](../diagrams/13-render-pipeline.svg)) ergänzen die Interaktionsdiagramme.
 
 ### 5.3 Designentscheide und Patterns
 
-*Tabelle 5: Angewandte Entwurfsmuster*
+*Tabelle 7: Angewandte Entwurfsmuster*
 
 | Muster | Umsetzung | Nutzen |
 |---|---|---|
@@ -241,7 +262,7 @@ Der Prototyp (Version 1.1) implementiert alle Use Cases. Kritische Architekturan
 
 ### 6.2 Teststrategie
 
-*Tabelle 6: Teststufen*
+*Tabelle 8: Teststufen*
 
 | Stufe | Inhalt | Werkzeug |
 |---|---|---|
@@ -257,7 +278,7 @@ Details und Ergebnisse: [TESTSTRATEGIE.md](../TESTSTRATEGIE.md).
 
 ### 7.1 Bisherige Iterationen
 
-*Tabelle 7: Iterationen bis zum aktuellen Stand*
+*Tabelle 9: Iterationen bis zum aktuellen Stand*
 
 | Iteration | Ziel | Ergebnis | Soll/Ist-Aufwand |
 |---|---|---|---|
@@ -273,11 +294,28 @@ Die Prototyp-Versionen entstanden überwiegend in autonomen KI-Sitzungen (siehe 
 1. **Verstehen und verteilen:** Jedes Teammitglied übernimmt ein Paket und erklärt dessen Klassen (Code-Walkthrough).
 2. **Nutzertest:** drei bis fünf Personen spielen die ersten zehn Minuten; Beobachtungen priorisieren.
 3. **Spielgefühl und Balancing** anhand der Beobachtungen anpassen.
-4. **Zielplattformen:** Build und Test auf allen Teamrechnern.
+4. **Zielplattformen:** Build und Test unter macOS, Windows und Linux; das sechsköpfige Team deckt alle drei Betriebssysteme mit eigenen Rechnern ab.
 
 ### 7.3 Aktuelle Risiken
 
-Siehe [PROJEKTMANAGEMENT.md](../PROJEKTMANAGEMENT.md#risikoliste). Höchstes Risiko: Das Team muss den umfangreichen Code verstehen und selbst begründen können.
+Abbildung 10 ordnet die Risiken nach Eintrittswahrscheinlichkeit und Schadenspotenzial ein, Tabelle 10 nennt die Massnahmen. Die vollständige Risikoliste wird in [PROJEKTMANAGEMENT.md](../PROJEKTMANAGEMENT.md#risikoliste) gepflegt.
+
+![Risikomatrix](../diagrams/15-risikomatrix.svg)
+
+*Abbildung 10: Risikomatrix (Eintrittswahrscheinlichkeit × Schadenspotenzial), Stand Iteration 2.*
+
+*Tabelle 10: Risiken mit Einschätzung und Massnahme*
+
+| Nr. | Risiko | Wahrsch. | Schaden | Massnahme |
+|---|---|---|---|---|
+| R1 | Das Team versteht den KI-gestützten Prototyp nicht ausreichend und kann Entscheide nicht begründen. | hoch | hoch | Verantwortung pro Paket, Code-Walkthroughs, Änderungen nur mit eigenem Test |
+| R2 | Der Umfang wächst über das Semester hinaus. | mittel | hoch | Arbeitspakete nach Rang abarbeiten (Tabelle 2), neue Inhalte erst nach Erreichen der Iterationsziele |
+| R3 | Steuerung und Fairness überzeugen die Testpersonen nicht. | mittel | hoch | Spieltests mit drei bis fünf Personen ab Iteration 3 |
+| R4 | Der KI-Einsatz wird von den Dozierenden nicht akzeptiert. | mittel | hoch | Im M1-Feedback kein Einwand; ausdrückliche Freigabe im Review einholen |
+| R5 | Die Darstellung ist auf schwächeren Rechnern zu langsam. | niedrig | mittel | interne Auflösung 480 × 270, Messung der Zeichenzeit in jedem Build |
+| R6 | Unter Windows oder Linux treten Probleme auf. | mittel | mittel | plattformneutraler Code, Gradle-Build, Test auf den Teamrechnern |
+| R7 | Teammitglieder fallen aus oder sind unterschiedlich verfügbar. | mittel | mittel | Pair Programming, Aufgaben im Iterationsplan sichtbar |
+| R8 | Spielstände werden beschädigt. | niedrig | mittel | Validierung, temporäres Schreiben, Sicherung der Originale, Integrationstests |
 
 ## 8 Glossar
 
@@ -287,8 +325,8 @@ Die wichtigsten Begriffe (Tauchgang, Zyklus, Druckstufe, Sektion, Raumzustand, R
 
 ## Abbildungsverzeichnis
 
-1. Use-Case-Diagramm · 2. Systemsequenzdiagramm UC-02 · 3. Bildschirmfotos · 4. Navigationsdiagramm · 5. Domänenmodell · 6. Logische Architektur · 7. Design-Klassendiagramm · 8. Kampfsequenz
+1. Use-Case-Diagramm · 2. Arbeitspakete mit Rang und Abhängigkeiten · 3. Systemsequenzdiagramm UC-01 · 4. Bildschirmfotos · 5. Navigationsdiagramm · 6. Domänenmodell · 7. Logische Architektur · 8. Design-Klassendiagramm · 9. Kampfsequenz · 10. Risikomatrix
 
 ## Tabellenverzeichnis
 
-1. Use Cases · 2. Funktionale Anforderungen · 3. Einflussfaktoren · 4. Systemoperationen · 5. Entwurfsmuster · 6. Teststufen · 7. Iterationen
+1. Use Cases · 2. Arbeitspakete · 3. Funktionale Anforderungen · 4. Nicht-funktionale Anforderungen nach FURPS+ · 5. Einflussfaktoren · 6. Systemoperationen · 7. Entwurfsmuster · 8. Teststufen · 9. Iterationen · 10. Risiken

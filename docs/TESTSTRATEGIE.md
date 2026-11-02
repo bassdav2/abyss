@@ -1,4 +1,4 @@
-# Teststrategie und Prüfnachweise · Version 1.6
+# Teststrategie und Prüfnachweise · Version 1.7
 
 Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2. Automatisierte Tests, Bot-Läufe und Bildschirmfotos ersetzen keine menschlichen Usability-, Spielgefühl- oder Hörtests.
 
@@ -29,12 +29,13 @@ Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2.
 
 | Prüfung | Ergebnis |
 |---|---|
-| JUnit | 196 Testfälle bestanden, darunter `MusicEngineTest`, `MusicCueTest` und das Budget der Trefferpausen in `RenderSmokeTest` (neu in 1.6), `EndgameTest`, `BossMechanicsTest` und `EvolutionTest` (neu in 1.4), Oberflächenebene in `RenderSmokeTest` und `FrameTest` (neu in 1.5), `SwarmTest`, `CareerTest` und `CareerWeaponTest` (siehe `docs/qa/test-summary.json`) |
+| JUnit | 204 Testfälle bestanden, darunter `CaptainTest` (Deckung, Phasensperre, Blinzeln, Taktfeuer, Ankerkette, Mindestdauer; neu in 1.7), `MusicEngineTest`, `MusicCueTest` und das Budget der Trefferpausen in `RenderSmokeTest` (neu in 1.6), `EndgameTest`, `BossMechanicsTest` und `EvolutionTest` (neu in 1.4), Oberflächenebene in `RenderSmokeTest` und `FrameTest` (neu in 1.5), `SwarmTest`, `CareerTest` und `CareerWeaponTest` (siehe `docs/qa/test-summary.json`) |
 | Formatprüfung und Javadoc (`-Xdoclint`) | bestanden, keine Compiler-Warnungen |
-| UI-Komponentenprüfung | 59/59 auf der Oberflächenebene, inklusive Start des Bordsynthesizers über das echte Ausgabegerät, Levelaufstieg, Laufbahn, Endgame-Schwarm, Routenwahl mit Bedrohung, Entfesselung und Prismenkaiserin (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
+| UI-Komponentenprüfung | 59/59 mit den neuen Begriffen (Bildschirmfotos neu), auf der Oberflächenebene, inklusive Start des Bordsynthesizers über das echte Ausgabegerät, Levelaufstieg, Laufbahn, Endgame-Schwarm, Routenwahl mit Bedrohung, Entfesselung und Prismenkaiserin (`docs/qa/ui-smoke.txt`, Bildschirmfotos in `docs/qa/screens`) |
 | Endgame-Bildproben | 14 Bilder ohne Fenster in 1920 × 1080 mit HUD: Schwarm mit über 1100 Gegnern, vier Bedrohungen, Kernschmelze, Prismenspirale, Tintenwolke, Fischzug, Kreuzfeuer und vier Muster der Prismenkaiserin (`./gradlew endgameShots`, `docs/qa/endgame`) |
+| Lotse | Testspieler-Kämpfe 58–79 s statt 8–27 s, 15/15 Siege; gegen unendlichen Schaden 65 s (Entdecker 49 s). Sechs Bildproben der Lotsenmuster in `docs/qa/endgame` (Kreuzfeuer, Taktfeuer, Ankerkette, Zielstrahlen, Enterangriff, Sonarringe) |
 | Endgame-Ton und Ruckeln | Ereignisrate im dritten Durchlauf bis 7 000/s (erster Durchlauf ≈ 30/s); 30 s Endgame in Echtzeit über die echte Tonausgabe: 3 µs je Klang im Spiel-Thread, Ausgabe läuft durch. Trefferpausen froren vorher 4–19 % der Zeit ein, jetzt ≈ 4 % in allen Durchläufen. Raumwechsel nach Bosskämpfen unter 1 ms |
-| Soundtrack | 10 Stücke je 80 s ohne Ausgabegerät aufgenommen: Spitze höchstens 0,99, RMS −14 bis −17 dB, 28- bis 53-fache Echtzeit; Klangbalance und Harmonien automatisch geprüft, nicht angehört (`docs/qa/music-report.json`) |
+| Soundtrack | 11 Stücke (neu: „Letzte Order“ für den Lotsen) je 80 s ohne Ausgabegerät aufgenommen: Spitze höchstens 0,99, RMS −14 bis −17 dB, 28- bis 53-fache Echtzeit; Klangbalance und Harmonien automatisch geprüft, nicht angehört (`docs/qa/music-report.json`) |
 | Render-Probelauf | 60 s, 26 980 Bilder, 0 Fehler, Mittel 2,2 ms, 95 % unter 2,4 ms inklusive Oberflächenebene; einzelne Spitze 77 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
 | Schwarm-Lastprobe | Testspieler über fünf Zyklen, bis 1600 Gegner gleichzeitig. Bei 600–999 Gegnern ≈ 3,6 ms Zeichnen und 0,4 ms Simulation pro Bild, bei 1000+ Gegnern ≈ 3,9 ms und 1,0 ms. Einzelne Spitzen bis knapp 200 ms bei Raumwechseln und grossen Abschusswellen (`./gradlew swarmBench --args="777 5 0"`) |
 | Balance | Testspieler ohne Laufbahnboni gewinnt Zyklus 1 mit jeder Klasse (8/8 je Klasse). Zwei Endgame-Läufe: beide besiegen die Prismenkaiserin im zweiten Zyklus, einer fällt im dritten Zyklus an ihr, der andere gewinnt alle fünf Zyklen. Danach wurden Wächter ab Eskalation 40 zäher, weil sie dort in Sekunden fielen. Kein menschlicher Spieltest |

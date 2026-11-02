@@ -1,4 +1,4 @@
-# ABYSS 1.6 – Überblick für David
+# ABYSS 1.7 – Überblick für David
 
 Stand 25.09.2026, Nachmittag. Version 1.1 baut auf dem Nachtstand 1.0 auf; was dazugekommen ist, steht direkt unter der Steuerung. Aus deinem Prototyp ist über Nacht ein vollständiges Pixel-Art-Roguelite geworden. Es bleibt dabei: ein riesiges U-Boot, du startest ganz hinten im Heck und kämpfst dich Raum für Raum bis zur Brücke vor. Geschrieben ist alles in Java mit JavaFX, ohne Frameworks und ohne neue Bibliotheken.
 
@@ -15,14 +15,45 @@ Aus dem Quellcode: `./run.command` oder `./gradlew run` (JDK 25).
 | S + Leertaste | durch einen Laufsteg nach unten fallen |
 | J / linke Maus | angreifen (Kombination), in der Luft: Luftangriff |
 | Shift / L | ausweichen (kurz unverwundbar) |
-| K / rechte Maus | aktives Modul (kostet Energie) |
-| E | Bergung öffnen, handeln, Schott benutzen, Notschalter bedienen |
-| Q | Reparaturset |
+| K / rechte Maus | Fähigkeit (kostet Energie) |
+| E | Beute öffnen, handeln, Tür benutzen, Notschalter bedienen |
+| Q | Medkit (+35 Leben) |
 | I / Tab · M | Ausrüstung · Bootskarte |
 | Esc | Pause · in Menüs zurück |
 | Menüs | Pfeile/WASD oder Maus, Enter/Leertaste wählt, Ziffern wählen Karten direkt |
 
 Für den ersten Versuch: **Neuer Tauchgang → Die Mechanikerin → Tauchen**. Bis du zum ersten Mal einen Raum sicherst, läuft vor dem Tauchgang ein kurzer Auftakt, den jede Taste überspringt. Wer es gemütlicher will, schaltet in der Vorbereitung **Entdecker** ein.
+
+## Neu in Version 1.7 · Showdown
+
+Stand 05.10.2026. Drei Wünsche von dir: ein Lied wie Megalovania, ein Lotse, bei dem man ausweichen muss und der nicht nach ein paar Treffern fällt, und eine Sprache, die nicht komisch klingt.
+
+**Der Lotse.** Gemessen fiel er bisher nach 8–27 Sekunden, und der Testspieler nahm dabei meist gar keinen Schaden.
+- **Deckung:** Er blockt fast alles. Schaden kommt nur in seinen Pausen nach einem Muster durch („PAUSE · JETZT ZUSCHLAGEN“) und auch dann nur ein Stück. Selbst ein Build, der alles in einem Schlag zerlegt, braucht so gut eine Minute.
+- **Phasen-Sperre:** Keine Phase lässt sich überspringen, das gilt für alle Bosse. Beim Wechsel verschwindet der Lotse für gut zwei Sekunden und lässt eine Ankerkette los.
+- **Blinzeln:** Läufst du ihm ins Gesicht, teleportiert er weg. Zuschlagen lohnt sich nur in seinen Pausen.
+- **Neue Muster:**
+  - **Taktfeuer:** Lanzen von beiden Wänden im Rhythmus. Tief heisst springen, hoch heisst unten bleiben.
+  - **Ankerkette:** Säulen fallen als Welle von der Decke. Stell dich in eine Lücke oder dash hindurch.
+  - **Zielstrahlen:** Harpunen von oben zielen auf deine Stelle, also weitergehen.
+  - **Enterangriff:** Er erscheint hinter dir, ein Warnkreis, dann ein Hieb.
+  - **Sonarringe:** Geschossringe mit einer Lücke.
+- Gemessen über 15 Testspieler-Läufe dauert der Kampf jetzt 42–81 Sekunden. Der Bot muss ausweichen und kassiert viel Schaden, gewinnt aber weiterhin.
+
+**„Letzte Order“.** Das neue Kampfthema des Lotsen: Chiptune, 126 BPM, ein hämmerndes, synkopiertes Riff, ab Takt 9 das Leitmotiv. In Phase 1 laufen Bass, Schlagzeug und Riff, Phase 2 bringt Arpeggios, Phase 3 die Oktavdopplung und Becken. Megalovania selbst durfte ich nicht übernehmen, weder als Kopie noch als Nachbau. Das Stück ist eine eigene Komposition im selben Geist. Hörprobe: `Documents/Abyss/Soundtrack/11 Letzte Order (Lotse).mp3`.
+
+**Sprache.** Alle 1 300 Texte sind durchgesehen und auf einfache Begriffe umgestellt:
+- Leben statt Integrität
+- XP und Level-Up statt Überladung
+- Medkit, Beute, Kerne
+- Upgrades und Fähigkeiten statt passiver und aktiver Module
+- Evolution, Synergie
+- Durchlauf, Schwierigkeit
+- Schrein, Tür
+- Talente, Freischalten, Erfolge
+- „Krit“ statt „Kritik“
+
+Die vollständige Zuordnung steht im Glossar.
 
 ## Neu in Version 1.6 · Bordorchester
 

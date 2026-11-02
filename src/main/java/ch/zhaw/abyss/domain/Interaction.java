@@ -3,10 +3,10 @@ package ch.zhaw.abyss.domain;
 /** Was die Interaktionstaste an der aktuellen Position der Figur auslöst. */
 public enum Interaction {
     NONE("", ""),
-    REWARD("E", "BERGEN"),
+    REWARD("E", "BEUTE"),
     WORKSHOP("E", "WERKSTATT"),
     MERCHANT("E", "HANDELN"),
-    SHRINE("E", "KAPELLE"),
+    SHRINE("E", "SCHREIN"),
     EXIT("E", "WEITER"),
     CONSOLE("E", "SCHALTER"),
     LOCKED("", "VERRIEGELT");

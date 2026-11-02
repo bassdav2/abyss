@@ -53,6 +53,7 @@ final class Scores {
                     research(),
                     command(),
                     boss(),
+                    lotse(),
                     empress(),
                     abyss(),
                     haven(),
@@ -486,6 +487,76 @@ final class Scores {
                 .sends(0, .4);
         s.drum("crash", CRASH).add(s.hits("1,5,9,13,17,21,25,29", ONE)).layer(.9).gain(.22);
         s.drum("impact", IMPACT).add(s.hits("1,17", ONE)).layer(.9).gain(.4).sends(0, .3);
+        return s;
+    }
+
+    /**
+     * Letzte Order: der Kampf gegen den Lotsen. Chiptune, treibender Oktavbass, ein hämmerndes Riff
+     * mit Synkopen und das Leitmotiv in e-Moll. Eigene Komposition im Geist klassischer
+     * Endgegner-Themen; die Phasen des Lotsen schalten die Stimmen zu.
+     */
+    static Song lotse() {
+        var s = new Song("lotse", "Letzte Order", 126, 32);
+        s.gain = .7;
+        s.reverbSize = .8;
+        s.reverbSeconds = 1.3;
+        s.reverbBrightness = .6;
+        s.delayBeats = .5;
+        s.delayFeedback = .25;
+        s.harmony(
+                "Em Em C D Em Em C B Cmaj7 D Em B7 Cmaj7 D Am B7"
+                        + " Am Am Em Em C C D B Em Em C D Em Em C B");
+        String riff =
+                "e5 - e5 g5 - e5 d5 - e5 - b4 - d5 e5 - g5 | f#5 - - - e5 d5 - b4 - - a4 - b4 - d5"
+                    + " - | e5 - e5 g5 - e5 d5 - c5 - b4 - c5 d5 - e5 | f#5 - - - a5 - g5 f#5 - -"
+                    + " d5 - - a4 - - | e5 - e5 g5 - e5 d5 - e5 - b4 - d5 e5 - g5 | f#5 - - - e5 d5"
+                    + " - b4 - - a4 - b4 - d5 - | g5 - g5 b5 - g5 e5 - c5 - e5 - g5 e5 - c5 | d#5 -"
+                    + " - - f#5 - b5 - a5 - f#5 - d#5 - b4 -";
+        String climb =
+                "a5 - a5 c6 - a5 g5 - e5 - g5 - a5 - - - | c6 - b5 - a5 - g5 - e5 - - - . . . ."
+                        + " | b5 - b5 d6 - b5 a5 - g5 - a5 - b5 - - -"
+                        + " | e6 - d6 - b5 - a5 - g5 - - - . . . ."
+                        + " | g5 - g5 c6 - g5 e5 - c6 - e6 - d6 - c6 -"
+                        + " | b5 - - - g5 - - - e5 - g5 - c6 - - -"
+                        + " | a5 - - - f#5 - a5 - d6 - - - c6 - a5 -"
+                        + " | b5 - - - - - - - d#6 - - - f#6 - - -";
+        s.synth("bass", Instruments.chipBass())
+                .add(s.bass(40, "x o x o x o x o", 8))
+                .gain(.3)
+                .duck(.25);
+        s.drum("kick", KICK).add(s.hits("X . . . . . X . X . . . . . X .")).gain(.45).sidechain();
+        s.drum("hat", HAT).add(s.hits(EIGHTHS)).layer(.3).gain(.7);
+        s.drum("snare", SNARE).add(s.hits(BACKBEAT)).layer(.5).gain(.4).sends(0, .15);
+        s.synth("riff", Instruments.chipLead())
+                .add(s.melody(1, riff))
+                .add(s.melody(17, climb))
+                .add(s.melody(25, riff))
+                .layer(.5)
+                .gain(.3)
+                .sends(.15, .1);
+        s.synth("theme", Instruments.chipLead())
+                .add(s.melody(9, THEME))
+                .transpose(2)
+                .layer(.5)
+                .gain(.3)
+                .sends(.2, .12);
+        s.synth("arp", Instruments.chipArp())
+                .add(s.arp(76, "0 1 2 3 2 1 0 1 2 3 4 3 2 1 0 1"))
+                .layer(.72)
+                .gain(.14)
+                .sends(.15, .05)
+                .pan(.25);
+        s.synth("double", Instruments.chipThin())
+                .add(s.melody(1, riff))
+                .add(s.melody(17, climb))
+                .add(s.melody(25, riff))
+                .transpose(12)
+                .layer(.9)
+                .gain(.11)
+                .pan(-.3)
+                .sends(.15, .05);
+        s.drum("crash", CRASH).add(s.hits("1,9,17,25", ONE)).layer(.9).gain(.22);
+        s.drum("roll", SNARE).add(s.hits("8,16,24,32", ROLL)).layer(.9).gain(.3);
         return s;
     }
 

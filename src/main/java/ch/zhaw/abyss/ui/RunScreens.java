@@ -74,18 +74,18 @@ final class RunScreens {
         g.text(x + 16, 106, "TAUCHGANG", Pal.TEAL_5);
         String[][] facts = {
             {"RAUM", String.format("%02d/%d", run.room().depth() + 1, RoomGenerator.ROOM_COUNT)},
-            {"ZYKLUS", "" + (run.cycle() + 1)},
-            {"DRUCKSTUFE", "" + run.pressure()},
+            {"DURCHLAUF", "" + (run.cycle() + 1)},
+            {"SCHWIERIGKEIT", "" + run.pressure()},
             {"ESKALATION", run.escalation() > 0 ? "" + run.escalation() : "–"},
-            {"ÜBERLADUNG", "STUFE " + p.level()},
+            {"LEVEL", "" + p.level()},
             {"GEGNER BESIEGT", "" + run.kills()},
             {
                 "TAUCHZEIT",
                 String.format("%02d:%02d", (int) run.elapsed() / 60, (int) run.elapsed() % 60)
             },
-            {"MODULE", "" + p.items().values().stream().mapToInt(Integer::intValue).sum()},
+            {"UPGRADES", "" + p.items().values().stream().mapToInt(Integer::intValue).sum()},
             {"SCHROTT", "" + p.salvage()},
-            {"DATENKERNE", "" + p.cores()}
+            {"KERNE", "" + p.cores()}
         };
         for (int i = 0; i < facts.length; i++) {
             g.text(x + 16, 130 + i * 20, facts[i][0], Gui.DIM);
@@ -127,16 +127,16 @@ final class RunScreens {
                 title = run.repaired() ? "REPARIERT. VOLLE ENERGIE." : "DURCHATMEN.";
             }
             case ELITE -> {
-                kicker = "SELTENE BERGUNG";
+                kicker = "SELTENE BEUTE";
                 title = "MACH DIESEN RUN ZU DEINEM.";
             }
             case BOSS -> {
-                kicker = "WÄCHTERBERGUNG";
-                title = "DIE BEUTE EINES WÄCHTERS.";
+                kicker = "BOSS-BEUTE";
+                title = "DIE BEUTE EINES BOSSES.";
             }
             default -> {
-                kicker = "BERGUNGSKAPSEL";
-                title = "WÄHLE EIN MODUL.";
+                kicker = "BEUTEKAPSEL";
+                title = "WÄHLE EIN UPGRADE.";
             }
         }
         boolean shop = kind == RoomPlan.Kind.MERCHANT || kind == RoomPlan.Kind.WORKSHOP;
@@ -189,10 +189,10 @@ final class RunScreens {
         var p = run.player();
         int shown = p.level() - run.pendingLevelUps() + 1;
         g.header(
-                "ÜBERLADUNG · STUFE " + shown,
+                "LEVEL " + shown,
                 run.pendingLevelUps() > 1
                         ? "WÄHLE · NOCH " + (run.pendingLevelUps() - 1) + " WEITERE"
-                        : "WÄHLE EINE VERSTÄRKUNG",
+                        : "WÄHLE EIN UPGRADE",
                 Tone.VIOLET);
         levelMode = true;
         cards(g, run.levelOffers(), 76);
@@ -201,13 +201,13 @@ final class RunScreens {
         var f = g.frame();
         f.fill(0, FOOT, W, H - FOOT, 0xF0070B10);
         f.fill(0, FOOT, W, 2, 0xFF2A3440);
-        g.big(16, FOOT + 16, "STUFE " + p.level(), Pal.VIOLET_4, 2);
+        g.big(16, FOOT + 16, "LEVEL " + p.level(), Pal.VIOLET_4, 2);
         g.text(
                 160,
                 FOOT + 20,
-                "MODULE "
+                "UPGRADES "
                         + p.items().values().stream().mapToInt(Integer::intValue).sum()
-                        + "   ·   INTEGRITÄT "
+                        + "   ·   LEBEN "
                         + Math.round(p.health())
                         + "/"
                         + Math.round(p.maxHealth())
@@ -219,7 +219,7 @@ final class RunScreens {
         var run = nav.run();
         var offers = run.levelOffers();
         if (index < 0 || index >= offers.size()) return;
-        if (run.chooseLevelUp(offers.get(index))) {
+        if (nav.service().chooseLevelUp(offers.get(index))) {
             if (run.pendingLevelUps() == 0) nav.play();
         } else nav.toast("Nicht möglich");
     }
@@ -233,11 +233,11 @@ final class RunScreens {
         g.text(
                 280,
                 FOOT + 22,
-                "SETS "
+                "MEDKITS "
                         + kits
                         + "/"
                         + maxKits
-                        + "   ·   INTEGRITÄT "
+                        + "   ·   LEBEN "
                         + Math.round(health)
                         + "/"
                         + Math.round(max),
@@ -305,7 +305,7 @@ final class RunScreens {
                 g.center(
                         cx,
                         y + h - 57,
-                        "+ RESONANZ " + completes.getFirst().title().toUpperCase(),
+                        "+ SYNERGIE " + completes.getFirst().title().toUpperCase(),
                         Pal.VIOLET_4);
             }
             var next = Item.evolutionOf(offer.item());
@@ -346,7 +346,7 @@ final class RunScreens {
                 g.text(
                         x + 10,
                         y + h - 42,
-                        "+ RESONANZ " + completes.getFirst().title().toUpperCase(),
+                        "+ SYNERGIE " + completes.getFirst().title().toUpperCase(),
                         Pal.VIOLET_4);
         }
         String price = offer.price() > 0 ? offer.price() + " SCHROTT" : "GRATIS";
@@ -384,7 +384,7 @@ final class RunScreens {
         return switch (offer.type()) {
             case ITEM ->
                     offer.item().evolution()
-                            ? "ENTFESSELUNG"
+                            ? "EVOLUTION"
                             : offer.item().rarity().title().toUpperCase()
                                     + " "
                                     + (p.stacks(offer.item()) + 1)
@@ -419,7 +419,7 @@ final class RunScreens {
         boolean shop =
                 run.room().kind() == RoomPlan.Kind.MERCHANT
                         || run.room().kind() == RoomPlan.Kind.WORKSHOP;
-        if (run.take(run.offers().get(index))) {
+        if (nav.service().take(run.offers().get(index))) {
             if (!shop) nav.play();
         } else nav.toast("Nicht möglich");
     }
@@ -429,7 +429,7 @@ final class RunScreens {
     void shrine(Gui g) {
         var run = nav.run();
         var f = g.frame();
-        g.header("DRUCKKAPELLE", "EIN OPFER, EIN HANDEL.", Tone.VIOLET);
+        g.header("SCHREIN", "EIN OPFER, EIN HANDEL.", Tone.VIOLET);
         var deals = run.deals();
         int w = 264, gap = 24;
         int left = CX - (deals.size() * w + (deals.size() - 1) * gap) / 2;
@@ -472,7 +472,7 @@ final class RunScreens {
     void acceptDeal(int index) {
         var run = nav.run();
         if (index < 0 || index >= run.deals().size()) return;
-        if (run.acceptDeal(run.deals().get(index))) nav.play();
+        if (nav.service().acceptDeal(run.deals().get(index))) nav.play();
         else nav.toast("Dafür fehlt dir etwas");
     }
 
@@ -614,11 +614,7 @@ final class RunScreens {
      * @param index Index
      */
     void chooseRoute(int index) {
-        var run = nav.run();
-        if (run.chooseNextRoom(index)) {
-            nav.service().saveRoom();
-            nav.play();
-        }
+        if (nav.service().chooseNextRoom(index)) nav.play();
     }
 
     private static String threat(RoomPlan room) {
@@ -664,15 +660,15 @@ final class RunScreens {
         f.addRect(116, 84, 100, 112, 0xFFB8E0FF, .05);
         g.sprite(idle.get(((int) (g.time() * 4)) % idle.size()), 166, 198, 2);
         String[][] stats = {
-            {"INTEGRITÄT", Math.round(p.health()) + " / " + Math.round(p.maxHealth())},
+            {"LEBEN", Math.round(p.health()) + " / " + Math.round(p.maxHealth())},
             {"SCHILD", Math.round(p.shield()) + " / " + Math.round(s.maxShield())},
             {"SCHADEN", pct(s.damage())},
-            {"MODULSCHADEN", pct(s.abilityDamage())},
+            {"FÄHIGKEITSSCHADEN", pct(s.abilityDamage())},
             {"ANGRIFFSTEMPO", pct(s.attackSpeed())},
             {"REICHWEITE · FLÄCHE", pct(s.reach()) + " · " + pct(s.area())},
             {"LAUFTEMPO", pct(s.moveSpeed())},
-            {"KRIT. CHANCE", Math.round(s.critChance() * 100) + " %"},
-            {"KRIT. SCHADEN", "×" + String.format(Locale.ROOT, "%.1f", s.critDamage())},
+            {"KRIT-CHANCE", Math.round(s.critChance() * 100) + " %"},
+            {"KRIT-SCHADEN", "×" + String.format(Locale.ROOT, "%.1f", s.critDamage())},
             {"ERLITTEN", Math.round(s.damageTaken() * 100) + " %"},
             {"ABKLINGZEIT", Math.round(s.cooldown() * 100) + " %"},
             {
@@ -681,7 +677,7 @@ final class RunScreens {
             },
             {"LEBENSRAUB", Math.round(s.lifesteal() * 100) + " %"},
             {"ZUSÄTZL. GESCHOSSE", "+" + s.extraProjectiles()},
-            {"ÜBERLADUNG", pct(s.xpGain())},
+            {"XP-GEWINN", pct(s.xpGain())},
         };
         for (int i = 0; i < stats.length; i++) {
             int y = 214 + i * 17;
@@ -721,7 +717,7 @@ final class RunScreens {
                     344,
                     338,
                     584,
-                    "Noch keine Module installiert. Bergungen und Händler liefern sie.",
+                    "Noch keine Upgrades. Beute und Händler liefern sie.",
                     Gui.MUTED,
                     3);
             g.target("empty", 328, 322, 1, 1);
@@ -745,13 +741,13 @@ final class RunScreens {
         var resonances = Synergy.activeIn(p.items());
         var text = new StringBuilder();
         for (var synergy : resonances)
-            text.append(text.isEmpty() ? "RESONANZ: " : "  ·  ")
+            text.append(text.isEmpty() ? "SYNERGIE: " : "  ·  ")
                     .append(synergy.title().toUpperCase());
         var fb = g.frame();
         fb.fill(0, FOOT, W, H - FOOT, 0xF0070B10);
         fb.fill(0, FOOT, W, 2, 0xFF2A3440);
         if (!text.isEmpty()) g.wrap(16, FOOT + 12, 740, text.toString(), Pal.VIOLET_4, 2);
-        else g.text(16, FOOT + 18, "Noch keine Resonanz aktiv.", Gui.DIM);
+        else g.text(16, FOOT + 18, "Noch keine Synergie aktiv.", Gui.DIM);
         g.prefer(items.isEmpty() ? "resume" : "item." + items.getFirst().name());
         if (g.button("resume", W - 16 - 160, FOOT + 10, 160, 30, "WEITER  →", Tone.AMBER, true))
             nav.play();
@@ -768,14 +764,14 @@ final class RunScreens {
             g.text(
                     x,
                     y,
-                    "ENTFESSELT AUS " + item.base().title() + " + " + item.partner().title(),
+                    "ENTWICKELT AUS " + item.base().title() + " + " + item.partner().title(),
                     Pal.MYTHIC);
             return;
         }
         var target = evolution != null ? evolution : fromPartner;
         if (target == null) return;
         if (p.stacks(target) > 0) {
-            g.text(x, y, "ENTFESSELT: " + target.title().toUpperCase(), Pal.MYTHIC);
+            g.text(x, y, "EVOLUTION: " + target.title().toUpperCase(), Pal.MYTHIC);
             return;
         }
         var base = target.base();
@@ -808,7 +804,7 @@ final class RunScreens {
     void map(Gui g) {
         var run = nav.run();
         var f = g.frame();
-        g.header("BOOTSKARTE", "VIERUNDZWANZIG SCHOTTS.", Tone.TEAL);
+        g.header("BOOTSKARTE", "VIERUNDZWANZIG RÄUME.", Tone.TEAL);
         String[] sectors = {"HECK", "MASCHINEN", "FORSCHUNG", "KOMMANDO"};
         String[] bosses = {"SCHOTTMEISTER", "REAKTORKERN", "BRUTMUTTER", "LOTSE"};
         int roomW = (440 - 110) / RoomGenerator.ROOM_COUNT;
@@ -837,7 +833,7 @@ final class RunScreens {
                 CX,
                 440,
                 String.format(
-                        "ZYKLUS %d  ·  ESKALATION %d  ·  %d GEGNER BESIEGT",
+                        "DURCHLAUF %d  ·  ESKALATION %d  ·  %d GEGNER BESIEGT",
                         run.cycle() + 1, run.escalation(), run.kills()),
                 Gui.MUTED);
         g.prefer("resume");
@@ -864,7 +860,7 @@ final class RunScreens {
             String.format("%02d:%02d", (int) run.elapsed() / 60, (int) run.elapsed() % 60),
             "+" + service.lastCoreReward()
         };
-        String[] names = {"ERREICHTER RAUM", "GEGNER BESIEGT", "TAUCHZEIT", "DATENKERNE"};
+        String[] names = {"ERREICHTER RAUM", "GEGNER BESIEGT", "TAUCHZEIT", "KERNE"};
         for (int i = 0; i < 4; i++) {
             int x = 40 + i * 228;
             g.big(x, 86, values[i], won ? Pal.RUST_6 : Gui.TEXT, 4);
@@ -874,12 +870,12 @@ final class RunScreens {
         g.text(
                 40,
                 150,
-                "ZYKLUS "
+                "DURCHLAUF "
                         + (run.cycle() + 1)
-                        + "  ·  DRUCKSTUFE "
+                        + "  ·  SCHWIERIGKEIT "
                         + run.pressure()
                         + (run.escalation() > 0 ? "  ·  ESKALATION " + run.escalation() : "")
-                        + "  ·  ÜBERLADUNG STUFE "
+                        + "  ·  LEVEL "
                         + run.player().level(),
                 Gui.MUTED);
         g.text(16, 192, "BUILD", Pal.TEAL_5);
@@ -892,7 +888,7 @@ final class RunScreens {
                 g.icon(IconArt.item(item), x + 1, y + 1, 2);
                 i++;
             }
-        if (i == 0) g.text(16, 212, "Keine Module installiert.", Gui.MUTED);
+        if (i == 0) g.text(16, 212, "Keine Upgrades.", Gui.MUTED);
         g.icon(IconArt.weapon(run.player().weapon()), 16, 290, 2);
         g.text(
                 58,
@@ -904,7 +900,7 @@ final class RunScreens {
             String line =
                     "+"
                             + report.xp()
-                            + " LAUFBAHN-EP  ·  RANG "
+                            + " RANG-XP  ·  RANG "
                             + report.rank()
                             + (report.rankUps() > 0 ? " (+" + report.rankUps() + ")" : "")
                             + "  ·  "
@@ -926,18 +922,25 @@ final class RunScreens {
                 g.text(16, 354, "MEISTERSCHAFT ↑ " + String.join(", ", upgraded), Pal.RUST_6);
             }
         }
-        g.big(16, 384, "♦ " + service.profile().cores() + " DATENKERNE IM ARCHIV", Pal.TEAL_5, 2);
+        g.big(16, 384, "♦ " + service.profile().cores() + " KERNE ZUM FREISCHALTEN", Pal.TEAL_5, 2);
         var fb = g.frame();
         fb.fill(0, FOOT - 6, W, H - FOOT + 6, 0xF0070B10);
         fb.fill(0, FOOT - 6, W, 2, 0xFF2A3440);
         if (g.button("menu", 16, FOOT + 12, 170, 24, "ZUM HAUPTMENÜ", Tone.QUIET, true))
             nav.title();
-        if (g.button("career", 300, FOOT + 6, 180, 32, "LAUFBAHN", Tone.VIOLET, true)) nav.career();
-        if (g.button("archive", 494, FOOT + 6, 180, 32, "ARCHIV", Tone.STEEL, true)) nav.archive(0);
+        if (g.button("career", 300, FOOT + 6, 180, 32, "TALENTE", Tone.VIOLET, true)) nav.career();
+        if (g.button("archive", 494, FOOT + 6, 180, 32, "FREISCHALTEN", Tone.STEEL, true))
+            nav.archive(0);
         if (won) {
             if (g.button(
-                    "primary", W - 16 - 256, FOOT, 256, 40, "NÄCHSTER ZYKLUS  →", Tone.AMBER, true))
-                nav.nextCycle();
+                    "primary",
+                    W - 16 - 256,
+                    FOOT,
+                    256,
+                    40,
+                    "NÄCHSTER DURCHLAUF  →",
+                    Tone.AMBER,
+                    true)) nav.nextCycle();
         } else if (g.button(
                 "primary", W - 16 - 256, FOOT, 256, 40, "ERNEUT TAUCHEN [R]", Tone.AMBER, true))
             nav.startRun(service.profile().loadout(), System.nanoTime());

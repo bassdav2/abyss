@@ -11,7 +11,7 @@ import java.util.Random;
 class SwarmTest {
 
     private static Enemy swarm(GameRun run, EnemyKind kind, double x, double y) {
-        var enemy = new Enemy(run.nextId(), kind, Affix.NONE, x, y, 1, 99);
+        var enemy = Enemy.create(run.nextId(), kind, Affix.NONE, x, y, 1, 99);
         enemy.state = Enemy.State.APPROACH;
         run.enemies.add(enemy);
         return enemy;

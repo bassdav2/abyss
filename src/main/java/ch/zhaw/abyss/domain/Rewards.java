@@ -280,7 +280,7 @@ final class Rewards {
                 p.repairKits++;
                 run.emit(
                         new GameEvent(
-                                GameEvent.Type.SUPPLY, p.x, p.y - 65, 0, "Reparaturset verstaut"));
+                                GameEvent.Type.SUPPLY, p.x, p.y - 65, 0, "Medkit eingesteckt"));
             }
             case HEAL -> {
                 if (p.health >= p.maxHealth) return false;

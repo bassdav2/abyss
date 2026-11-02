@@ -26,23 +26,23 @@ public enum Achievement {
     /** Sieg über den Lotsen. */
     BRIDGE("Kommando übernommen", "Erobere die Brücke.", 8),
     /** Zweiter Zyklus. */
-    CYCLE("Tiefer als tief", "Erreiche den zweiten Zyklus.", 6),
+    CYCLE("Tiefer als tief", "Erreiche den zweiten Durchlauf.", 6),
     /** Sieg unter hohem Druck. */
-    PRESSURE("Unter Druck", "Erobere die Brücke auf Druckstufe 3 oder höher.", 10),
+    PRESSURE("Unter Druck", "Erobere die Brücke auf Schwierigkeit 3 oder höher.", 10),
     /** Viele Module entdeckt. */
-    COLLECTOR("Sammler", "Entdecke 20 verschiedene Module.", 5),
+    COLLECTOR("Sammler", "Entdecke 20 verschiedene Upgrades.", 5),
     /** Alle Module entdeckt. */
-    CODEX("Vollständiges Kompendium", "Entdecke alle regulären Module.", 12),
+    CODEX("Komplette Sammlung", "Entdecke alle regulären Upgrades.", 12),
     /** Drei legendäre Module gleichzeitig. */
-    LEGENDS("Legendenschmiede", "Trage drei legendäre Module in einem Tauchgang.", 6),
+    LEGENDS("Legendenschmiede", "Trage drei legendäre Upgrades in einem Tauchgang.", 6),
     /** Sieg mit einem verfluchten Modul. */
-    CURSED("Fluch als Werkzeug", "Erobere die Brücke mit einem verfluchten Modul.", 8),
+    CURSED("Fluch als Werkzeug", "Erobere die Brücke mit einem verfluchten Upgrade.", 8),
     /** Viele Abschüsse. */
     HUNTER("Jäger der Tiefe", "Besiege insgesamt 500 Gegner.", 6),
     /** Viel Schrott auf einmal. */
     HOARDER("Schrottkönig", "Besitze 250 Schrott gleichzeitig.", 4),
     /** Drei Resonanzen gleichzeitig. */
-    RESONANCE("Im Einklang", "Aktiviere drei Resonanzen in einem Tauchgang.", 5),
+    RESONANCE("Im Einklang", "Aktiviere drei Synergien in einem Tauchgang.", 5),
     /** Hüllenbruch überstanden. */
     SEALED("Dicht gehalten", "Überstehe einen Hüllenbruch.", 4),
     /** Raum mit Schlagseite gesichert. */
@@ -72,9 +72,9 @@ public enum Achievement {
     /** Eine Bedrohung bestanden. */
     TRIAL("Prüfling", "Sichere einen Raum mit einer Bedrohung.", 4),
     /** Ein Modul entfesselt. */
-    UNLEASHED("Entfesselt", "Entfessle ein ausgereiztes Modul mit seinem Partner.", 6),
+    UNLEASHED("Evolution", "Entwickle ein ausgereiztes Upgrade mit seinem Partner.", 6),
     /** Überkritik. */
-    OVERCRIT("Überkritisch", "Erreiche mehr als 200 % kritische Chance.", 6),
+    OVERCRIT("Überkritisch", "Erreiche mehr als 200 % Krit-Chance.", 6),
     /** Tiefe Eskalation. */
     DEEP("Tausend Augen", "Sichere einen Raum ab Eskalation 30.", 10),
     /** Prismenkaiserin besiegt. */

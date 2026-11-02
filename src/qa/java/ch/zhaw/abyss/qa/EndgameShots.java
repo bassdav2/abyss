@@ -85,7 +85,49 @@ public final class EndgameShots {
                 build(2),
                 120,
                 run -> !run.lances().isEmpty() && run.roomTime() > 3);
-        shoot("boss-captain-crossfire", 0, 23, starter(), 120, run -> !run.lances().isEmpty());
+        shoot(
+                "boss-captain-crossfire",
+                0,
+                23,
+                starter(),
+                300,
+                run -> pattern(run, 6, Enemy.State.WINDUP, .5));
+        // Lotse: Taktfeuer 8, Ankerkette 9, Zielstrahlen 10, Enterangriff 11, Sonarringe 12.
+        shoot(
+                "captain-rhythm",
+                0,
+                23,
+                build(2),
+                120,
+                run -> pattern(run, 8, Enemy.State.STRIKE, 1.4));
+        shoot(
+                "captain-anchors",
+                0,
+                23,
+                starter(),
+                300,
+                run -> pattern(run, 9, Enemy.State.STRIKE, .9));
+        shoot(
+                "captain-beams",
+                0,
+                23,
+                starter(),
+                300,
+                run -> pattern(run, 10, Enemy.State.STRIKE, .7));
+        shoot(
+                "captain-blink",
+                0,
+                23,
+                build(2),
+                180,
+                run -> pattern(run, 11, Enemy.State.WINDUP, .25));
+        shoot(
+                "captain-rings",
+                0,
+                23,
+                build(2),
+                180,
+                run -> pattern(run, 12, Enemy.State.STRIKE, .6));
         shoot("empress-lances", 1, 23, build(2), 90, run -> run.lances().size() > 10);
         shoot(
                 "empress-sundance",

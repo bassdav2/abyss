@@ -39,9 +39,8 @@ final class Ballistics {
                         && run.phase() == GameRun.Phase.RUNNING) detonate(q);
                 continue;
             }
-            q.vy += q.gravity * dt;
-            q.x += q.vx * dt;
-            q.y += q.vy * dt;
+            q.fall(q.gravity, Double.MAX_VALUE, dt);
+            q.advance(dt);
             if (q.gravity > 0 && q.vy > 0) {
                 double surface = run.layout().surfaceBelow(q.x, q.y - q.radius - q.vy * dt);
                 if (q.y + q.radius >= surface) land(q, surface);
@@ -180,14 +179,9 @@ final class Ballistics {
             if (!q.bounds().intersects(e.bounds())) continue;
             q.life = 0;
             q.explosionRadius = 0;
-            double damage = e.kind.boss() ? e.maxHealth * .045 : e.maxHealth * .5;
-            run.combat.hitEnemy(e, damage, Combat.Source.MACHINE, 0, q.x);
-            if (e.alive() && e.kind.boss()) {
-                e.state = Enemy.State.STUNNED;
-                e.stateTime = 1.8;
-                e.telegraph = null;
+            run.combat.hitEnemy(e, e.maxHealth * e.torpedoShare(), Combat.Source.MACHINE, 0, q.x);
+            if (e.alive() && e.expose(Enemy.State.STUNNED, 1.8))
                 run.emit(new GameEvent(GameEvent.Type.MACHINE, e.x, e.centerY(), 0, "EXPOSED"));
-            }
             run.combat.explode(q.x, q.y, 120, q.damage, true, false, null);
             return true;
         }

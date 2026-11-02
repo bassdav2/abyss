@@ -62,7 +62,11 @@ public final class MusicDirector {
         var room = run.room();
         var boss = run.boss();
         if (boss != null && run.phase() == GameRun.Phase.RUNNING)
-            return boss.kind() == EnemyKind.EMPRESS ? "empress" : "boss";
+            return switch (boss.kind()) {
+                case EMPRESS -> "empress";
+                case CAPTAIN -> "lotse";
+                default -> "boss";
+            };
         return switch (room.kind()) {
             case CACHE, MERCHANT, SHRINE, WORKSHOP -> "haven";
             case COMBAT, ELITE -> run.escalation() > 0 ? "abyss" : sector;

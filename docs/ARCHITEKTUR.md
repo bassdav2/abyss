@@ -20,7 +20,7 @@ ABYSS ist ein lokales Einzelspieler-Desktopspiel. Eine Figur kämpft sich vom He
 
 - **domain** – reine Spielregeln. `GameRun` ist Aggregat und Konsistenzgrenze eines Tauchgangs und einzige öffentliche Änderungsschnittstelle. Intern arbeitet es mit paketinternen Mitarbeiterklassen: `PlayerMotor` (Bewegung, Sprünge, Ausweichen), `Arsenal` (Kombinationen, Luftangriffe, Harpunen, aktive Module, Drohne), `Ballistics` (Geschosse), `Loot` (Beute und Kisten) und `Rewards` (Bergung, Handel, Kapelle). `StatSheet` leitet alle Kampfwerte aus Klasse, Waffenstufe, Modulen und aktiven Resonanzen (`Synergy`) ab. `Combat` bündelt Schadensregeln (Kritik, Panzerung, Zustände, Modul-Auslöser, Explosionen, Kettenblitze), `Physics` die Bewegung mit Laufstegen. Gegnerverhalten sind Strategien (`EnemyBehavior`), gemeinsam über die Schablone `Brain`. `RoomGenerator` erzeugt reproduzierbare `RoomPlan`s mit `RoomLayout`, Wellen, Gefahren, Kisten, Raumtechnik (`Fixture`, gesteuert von `Machinery`) und `RoomCondition` (Raumzustand, aus einem eigenen Zufallsstrom, damit die übrigen Raumdaten eines Seeds unverändert bleiben). Keine Importe aus JavaFX, `java.io` oder den äusseren Schichten.
 - **application** – `GameService` koordiniert Anwendungsfälle (starten, fortsetzen, sichern, Ergebnis verbuchen, freischalten, Aussehen). Unveränderliche Werte: `Profile`, `Loadout`, `Cosmetics`, `Settings`, `Unlock`-Katalog, `Achievement` (Logbuch; Bedingungen werden nach jeder Verbuchung gegen Tauchgang und Profil geprüft).
-- **ports** – `GameRepository` als Speichervertrag.
+- **application** enthält auch `GameRepository`, den Speichervertrag (Port). `infrastructure.FileGameRepository` implementiert ihn von aussen; das frühere Paket `ports` ist seit dem 26.10.2026 aufgelöst, weil es mit `application` einen Paketzyklus bildete.
 - **infrastructure** – `FileGameRepository` (Properties-Format 3, Migration 1/2, atomares Schreiben, `.bak`-Sicherung); `AudioSystem` übersetzt Ereignisse in Klänge und gibt der Musikregie den Spielzustand; `infrastructure/music` enthält den Bordsynthesizer (`MusicEngine`), die Partituren (`Scores`) und die Musikregie (`MusicDirector`).
 - **ui.pixel** – JavaFX-freie Pixelgrundlagen: `Frame` (Framebuffer mit Alpha, Clipping, Sprites, Linien), `Sprite` (mit Leuchtebene), `LightMap` (gestuftes Licht mit Bayer-Raster), `PostProcess` (Bloom, Farbstimmung, Vignette, Aberration), `PixelFont`.
 - **ui.art** – prozedurale Pixel-Art: `Painter` (Formen, Kugelschattierung, Kontur, gedrehte Stempel), `DiverArt` (Figur mit Skelett-Posen und Garderobe), `EnemyArt`/`BossArt`, `RoomArt` (Raumstreifen, Lichter, Requisiten), `PropArt`, `IconArt`, Palette `Pal`.
@@ -111,6 +111,17 @@ Auch alle Spielklänge laufen seit 1.6 durch diesen Thread. JavaFX-`AudioClip`s 
 Klänge umgehen den Unterwasserfilter und die Musiklautstärke; der Begrenzer schützt die Summe. Fällt das Ausgabegerät weg, öffnet der Thread es nach zwei Sekunden neu.
 
 `MusicDirector` übersetzt den Spielzustand rein lesend in Stück, Intensität, Dämpfung und Tempo. So ist die Musikregie ohne Ausgabegerät testbar. Der Render-Thread teilt nach dem Aufbau eines Stücks keinen Speicher mehr zu. Eine Aufnahme ohne Ausgabegerät (`MusicEngine.offline()`) dient Tests, `musicRender` und dem Demo-Video. Kosten: 28- bis 53-fache Echtzeit auf einem Kern, also etwa 2–4 % Last.
+
+### ADR-17 · Deckung und Phasensperre für Bosskämpfe (neu in 1.7)
+Mit gestapelten Upgrades, Krits und Evolutionen machen Builds im späten ersten Durchlauf tausende Schaden pro Sekunde. Der Lotse fiel dadurch nach 8–27 Sekunden, seine Muster sah man kaum. Mehr Leben hätte nur schwache Builds bestraft. Deshalb begrenzt der Kampf nicht das Leben, sondern den Schaden pro Zeit:
+- **Phasensperre** (alle Bosse): `Combat.hitEnemy` schneidet Schaden an der Grenze der laufenden Phase ab (`Brain.phaseFloor`). Die nächste Phase beginnt im nächsten Schritt.
+- **Deckung** (`EnemyKind.guarded()`, derzeit der Lotse): Ein Kontingent `Enemy.guard` legt fest, wie viel Schaden noch durchdringt.
+  - Ausserhalb der Erholung füllt es sich langsam auf höchstens 1,2 % des Lebens.
+  - Beim Öffnen eines Fensters (Erholung, Betäubung) springt es auf 3 bzw. 5 % und wächst bis 6 %.
+  - Was darüber hinausgeht, prallt ab („GEBLOCKT“).
+  - Eigene Torpedos und Anlagen (`Source.MACHINE`) schlagen durch und belohnen das Mitdenken.
+
+Die Bossstrategie bekommt dafür zwei neue Einstiegspunkte der Schablonenmethode: `tick` (jeder Schritt, für Deckung und Zeitgeber) und `phaseChanged`. Der Lotse nutzt `phaseChanged`, um zu verschwinden (Zustand `HIDDEN`) und eine Ankerkette auszulösen. Seine neuen Muster sind Kombinationen vorhandener Domänenobjekte: Lanzen mit Warnlinie, Geschossringe und ein Teleport mit Kreiswarnung. So brauchen Darstellung und Ballistik keine Änderung. Messung ohne Fenster: Gegen unendlichen Schaden hält der Lotse 65 s (Entdecker 49 s), Testspieler-Kämpfe dauern 58–79 s.
 
 ## Verantwortlichkeiten
 

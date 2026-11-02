@@ -187,8 +187,8 @@ public record RoomPlan(
             case WORKSHOP -> "Werkstatt";
             case CACHE -> "Versorgung";
             case MERCHANT -> "Schwarzmarkt";
-            case SHRINE -> "Druckkapelle";
-            case BOSS -> "Sektorwächter";
+            case SHRINE -> "Schrein";
+            case BOSS -> "Boss";
             case BRIDGE -> "Brücke";
         };
     }

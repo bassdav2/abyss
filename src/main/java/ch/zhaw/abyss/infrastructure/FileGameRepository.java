@@ -3,6 +3,7 @@ package ch.zhaw.abyss.infrastructure;
 import ch.zhaw.abyss.application.Achievement;
 import ch.zhaw.abyss.application.Career;
 import ch.zhaw.abyss.application.Cosmetics;
+import ch.zhaw.abyss.application.GameRepository;
 import ch.zhaw.abyss.application.Loadout;
 import ch.zhaw.abyss.application.Profile;
 import ch.zhaw.abyss.application.Settings;
@@ -13,7 +14,6 @@ import ch.zhaw.abyss.domain.Item;
 import ch.zhaw.abyss.domain.RoomGenerator;
 import ch.zhaw.abyss.domain.RunCheckpoint;
 import ch.zhaw.abyss.domain.Weapon;
-import ch.zhaw.abyss.ports.GameRepository;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -153,7 +153,8 @@ public final class FileGameRepository implements GameRepository {
         } catch (IllegalArgumentException | IOException e) {
             preserveBeforeReplace.add(path);
             throw new IOException(
-                    "Profil nicht lesbar. Das Original wird vor einem neuen Save gesichert.", e);
+                    "Profil nicht lesbar. Das Original wird vor dem nächsten Speichern gesichert.",
+                    e);
         }
     }
 
@@ -208,7 +209,7 @@ public final class FileGameRepository implements GameRepository {
         } catch (IllegalArgumentException | NullPointerException | IOException e) {
             preserveBeforeReplace.add(path);
             throw new IOException(
-                    "Raum-Sicherung nicht lesbar. Das Original wird vor einem neuen Save"
+                    "Spielstand nicht lesbar. Das Original wird vor einem neuen Spielstand"
                             + " gesichert.",
                     e);
         }

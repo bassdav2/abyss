@@ -1,5 +1,5 @@
-"""Erzeugt editierbare UML-Quellen, die den implementierten Stand 1.1 beschreiben, und rendert sie
-mit PlantUML als SVG und PNG."""
+"""Erzeugt editierbare UML-Quellen, die den implementierten Stand beschreiben, und rendert sie
+mit PlantUML als SVG und PNG. Die Risikomatrix entsteht direkt als SVG (PNG über rsvg-convert)."""
 from pathlib import Path
 import subprocess
 
@@ -31,36 +31,27 @@ hide empty members
 DIAGRAMS = {
 '01-use-cases': r'''left to right direction
 actor "Spieler/in" as Player
-rectangle "ABYSS 1.1 · lokales Desktopspiel" {
- usecase "UC-01\nTauchgang vorbereiten\nund beginnen" as Start
- usecase "UC-02\nZum nächsten Raum\nvordringen" as Progress
- usecase "UC-03\nBergung wählen" as Reward
- usecase "UC-04\nHandeln: Schwarzmarkt,\nWerkstatt, Kapelle" as Trade
- usecase "UC-05\nUnterbrechen und\nfortsetzen" as Resume
- usecase "UC-06\nBrücke erobern /\nnächster Zyklus" as Win
- usecase "UC-07\nNach Niederlage\nerneut tauchen" as Retry
- usecase "UC-08\nIm Archiv freischalten" as Archive
- usecase "UC-09\nAussehen anpassen" as Wardrobe
- usecase "UC-10\nAusrüstung und\nBootskarte ansehen" as Inventory
- usecase "UC-11\nOptionen und Steuerung" as Options
+rectangle "ABYSS · Desktopspiel für macOS, Windows und Linux" {
+ usecase "UC-01\nTauchgang spielen" as Dive
+ usecase "UC-02\nFortschritt freischalten\nund Figur gestalten" as Progress
+ usecase "UC-03\nSpiel einstellen" as Options
 }
-actor "Lokales Dateisystem" as Disk
-Player --> Start
+Player --> Dive
 Player --> Progress
-Player --> Reward
-Player --> Trade
-Player --> Resume
-Player --> Win
-Player --> Retry
-Player --> Archive
-Player --> Wardrobe
-Player --> Inventory
 Player --> Options
-Progress ..> Reward : <<extend>>
-Progress ..> Trade : <<extend>>
-Start --> Disk
-Resume --> Disk
-Archive --> Disk
+note right of Dive
+ Kernfall (Rang 1), Varianten als Erweiterungen:
+ Bergung wählen, in Sonderräumen handeln,
+ unterbrechen und fortsetzen, Brücke erobern
+ und nächster Zyklus, nach Niederlage erneut tauchen
+end note
+note right of Progress
+ Rang 2, setzt UC-01 voraus
+ (Datenkerne aus Tauchgängen)
+end note
+note right of Options
+ Rang 3, unabhängig
+end note
 ''',
 '02-domain': r'''title Konzeptuelles Domänenmodell (Fachbegriffe)
 class Tauchgang {
@@ -155,252 +146,165 @@ Raum *-- "0..3" Raumtechnik
 Resonanz --> "2" Item : verbindet
 Tauchgang ..> Checkpoint : beim Raumeingang
 ''',
-'03-architecture': r'''title Logische Architektur (Schichten, Abhängigkeiten nach innen)
-package "ui (JavaFX)" {
- [GameWindow] as GW
- [MenuScreens / RunScreens] as Screens
- [PixelView] as PV
- [InputController] as IC
+'03-architecture': r'''title Logische Architektur: Schichten und Abhängigkeiten (nach innen)
+skinparam componentStyle rectangle
+package "Präsentation (ui, JavaFX)" {
+ [Bildschirme, Spielschleife, Eingabe\n(GameWindow, Screens, Gui)] as Screens
+ [Darstellung\n(render, art, pixel)] as Render
 }
-package "ui.gui" {
- [Gui (Bordsystem, Immediate-Mode)] as Gui
+package "Anwendung (application)" {
+ [GameService\n«Controller»] as GS
+ [Profile, Loadout, Unlock,\nCareer, SkillTree] as Meta
+ [GameRepository\n«Interface, Port»] as Port
 }
-package "ui.render" {
- [WorldRenderer] as WR
- [HudRenderer] as HR
- [MachinePainter] as MP
- [Effects / Camera / Ocean] as FX
+package "Domäne (domain, reines Java)" {
+ [GameRun\n«Aggregat»] as Run
+ [Mitarbeiter: PlayerMotor, Combat, Arsenal,\nBallistics, Loot, Rewards, Machinery] as Coll
+ [EnemyBehavior\n«Interface, Strategie»] as Beh
+ [Brain «Schablonenmethode»\n5 Wächter, 23 Gegnerarten] as Brain
+ [RoomGenerator] as Gen
+ [Wertobjekte: RoomPlan, RunCheckpoint,\nStatSheet, Offer] as VO
+ [GameEvent-Liste] as Ev
 }
-package "ui.art" {
- [DiverArt / EnemyArt / BossArt] as Art
- [RoomArt / PropArt / IconArt] as RoomArt
+package "Infrastruktur (infrastructure)" {
+ [FileGameRepository\n«Adapter»] as File
+ [AudioSystem, MusicEngine] as Audio
 }
-package "ui.pixel" {
- [Frame / Sprite / LightMap / PostProcess / PixelFont] as Pixel
-}
+Screens -down-> GS : Systemoperationen
+Screens -right-> Render
+Render .down.> Run : liest Zustand
+GS -down-> Run
+GS -right-> Meta
+GS -down-> Port
+File .up.|> Port
+Audio .left.> Ev : liest
+Run *-down- Coll
+Run -down-> Beh
+Brain .right.|> Beh
+Run -down-> Gen
+Run -down-> VO
+Run -right-> Ev
+Screens .right.> File
+legend bottom
+ Abhängigkeiten zeigen nach innen: Präsentation → Anwendung → Domäne.
+ Die Domäne importiert weder JavaFX noch Dateien noch andere Schichten; ArchitectureTest prüft das.
+ Der Port liegt in der Anwendung, Infrastruktur implementiert ihn (Port/Adapter): keine Paketzyklen.
+ Die Präsentation erzeugt die Adapter beim Start (bekannte Abweichung, im Test festgehalten).
+endlegend
+''',
+'04-design-classes': r'''title Design-Klassendiagramm: Kern der Domänenschicht
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
 package "application" {
- [GameService] as GS
- [Profile / Loadout / Unlock / Achievement] as Meta
-}
-package "ports" {
- [GameRepository] as Port
+ class GameService <<Controller>> {
+  - repository: GameRepository
+  - run: GameRun
+  + start(loadout, seed): GameRun
+  + resume(): Optional<GameRun>
+  + step(seconds, input)
+  + chooseNextRoom(branch): boolean
+  + take(offer): boolean
+  + acceptDeal(deal): boolean
+  + saveRoom()
+  + recordOutcome()
+ }
+ interface GameRepository <<Port>> {
+  + loadProfile(): Profile
+  + loadCheckpoint(): Optional<RunCheckpoint>
+  + saveCheckpoint(checkpoint)
+  + clearCheckpoint()
+ }
 }
 package "infrastructure" {
- [FileGameRepository] as File
- [AudioSystem] as Audio
+ class FileGameRepository <<Adapter>>
 }
-package "domain (reines Java)" {
- [GameRun] as Run
- [Combat / Physics / Machinery] as Rules
- [EnemyBehavior-Strategien] as AI
- [RoomGenerator] as Gen
+package "domain" {
+ class GameRun <<Aggregat>> {
+  ~ phase: Phase
+  ~ room: RoomPlan
+  + update(seconds, input)
+  + take(offer): boolean
+  + chooseNextRoom(branch): boolean
+  + checkpoint(): RunCheckpoint
+  + drainEvents(): List<GameEvent>
+ }
+ class Combat {
+  ~ hitEnemy(enemy, base, source, knockback, x): double
+  ~ applyStatus(enemy, status, seconds)
+ }
+ abstract class Body {
+  ~ x, y, vx, vy: double
+  ~ fall(gravity, maxFall, dt)
+  ~ advance(dt)
+  + id(): long
+ }
+ abstract class Actor {
+  ~ health, maxHealth: double
+  ~ move(layout, dt)
+  + bounds(): Bounds
+ }
+ class Player
+ class Projectile
+ class Pickup
+ class Enemy {
+  ~ kind: EnemyKind
+  ~ state: State
+  ~ {static} create(id, kind, affix, x, y, strength, delay): Enemy
+  ~ stun(seconds): boolean
+  ~ knockbackFactor(): double
+  ~ limitDamage(damage): double
+  ~ expose(state, seconds): boolean
+  ~ onDefeated(run)
+  + armored(): boolean
+ }
+ class Boss {
+  ~ phaseFloor(): double
+  ~ stun(seconds): boolean
+  ~ knockbackFactor(): double
+  ~ limitDamage(damage): double
+  ~ expose(state, seconds): boolean
+  ~ onDefeated(run)
+  + armored(): boolean
+ }
+ interface EnemyBehavior <<Strategie>> {
+  ~ update(enemy, run, dt)
+ }
+ abstract class Brain <<Schablonenmethode>> {
+  + update(enemy, run, dt) {final}
+  ~ windup(enemy, run, dt)
+  ~ strike(enemy, run, dt)
+ }
+ class "WardenBrain, CaptainBrain, …\n28 Gegnerverhalten" as Brains
+ enum EnemyKind {
+  ~ behavior(): EnemyBehavior
+  + boss(): boolean
+ }
 }
-GW --> Screens
-GW --> Gui
-Screens --> Gui
-Gui --> Pixel
-GW --> WR
-WR --> MP
-GW --> IC
-GW --> PV
-GW --> GS
-GW --> Audio
-Screens --> GS
-WR --> HR
-WR --> FX
-WR --> Art
-WR --> RoomArt
-WR --> Pixel
-Art --> Pixel
-RoomArt --> Pixel
-WR ..> Run : liest
-GS --> Run
-GS --> Meta
-GS --> Port
-File ..|> Port
-Run --> Rules
-Run --> AI
-Run --> Gen
-note bottom of Run : Keine Importe aus JavaFX,\nDateien oder Anwendungsschicht
-note right of Pixel : Software-Framebuffer 480 x 270,\nohne JavaFX testbar
-''',
-'04-design-classes': r'''title Design-Klassendiagramm der Domänenschicht (Auszug)
-class GameRun {
- - phase: Phase
- - room: RoomPlan
- - cycle: int
- + update(seconds, input)
- + interaction(): Interaction
- + take(offer): boolean
- + acceptDeal(deal): boolean
- + chooseNextRoom(branch): boolean
- + nextCycle(): boolean
- + checkpoint(): RunCheckpoint
- + drainEvents(): List<GameEvent>
- + {static} restore(saved, items, weapons): GameRun
-}
-class Combat {
- ~ hitEnemy(enemy, base, source, knockback, x): double
- ~ hurtPlayer(amount, x, source, melee): boolean
- ~ explode(x, y, radius, damage, ...)
- ~ chain(origin, damage, range)
-}
-class Physics {
- ~ {static} move(actor, layout, dt)
-}
-class PlayerMotor {
- ~ tick(dt)
- ~ move(dt, input)
-}
-class Arsenal {
- ~ update(dt, input)
- ~ slamImpact()
- ~ updateDrone(dt)
-}
-class Ballistics {
- ~ update(dt)
-}
-class Loot {
- ~ update(dt)
- ~ drop(kind, value, x, y)
- ~ breakCrate(crate)
-}
-class Rewards {
- ~ open(room)
- ~ take(offer): boolean
- ~ accept(deal): boolean
- ~ repair(): boolean
-}
-abstract class Actor {
- # x, y, vx, vy
- # health, maxHealth
- + bounds(): Bounds
-}
-class Player {
- - weapon: Weapon
- - items: Map<Item,Integer>
- - stats: StatSheet
- + stacks(item): int
-}
-class Enemy {
- - kind: EnemyKind
- - affix: Affix
- - state: State
- + telegraph(): Telegraph
- + armored(): boolean
-}
-interface EnemyBehavior {
- update(enemy, run, dt)
-}
-abstract class Brain {
- + update(enemy, run, dt) {final}
- # approach(...)
- # ready(...): boolean
- # strikeStart(...)
- # strike(...)
-}
-class WardenBrain
-class ReactorBrain
-class BroodBrain
-class CaptainBrain
-class EmpressBrain
-class "Behaviors.*\n(17 reguläre und Schwarmarten)" as Regular
-class Lance {
- - angle, speed, delay
- + progress(): double
-}
-class Beam <<record>> {
- + touches(x, y, radius): boolean
-}
-enum Threat {
- + prepared(player): boolean
-}
-class Fixture {
- - kind: Kind
- - x, direction, sector
- + active(): boolean
- + warning(): boolean
-}
-class Machinery {
- ~ push(actor): double
- ~ update(dt)
- ~ use(): boolean
-}
-class RoomGenerator {
- + choices(depth): List<RoomPlan>
- + room(depth, branch): RoomPlan
- + {static} escalation(cycle, depth): int
- + {static} surge(escalation): double
-}
-class StatSheet <<record>> {
- + {static} compute(diver, weapon, level, items, bonus)
-}
-class RoomPlan <<record>>
-class RoomLayout <<record>>
-class Platform <<record>>
-class RunSetup <<record>>
-class RunCheckpoint <<record>>
-class Offer <<record>>
-enum Weapon
-enum Item
-enum ActiveModule
-enum DiverClass
-enum RoomCondition
-enum Synergy
-enum EnemyKind {
- ~ behavior(): EnemyBehavior
-}
-GameRun *-- Player
+GameService --> GameRepository
+GameService --> "0..1" GameRun : steuert
+FileGameRepository ..|> GameRepository
+GameRun *-- "1" Player
 GameRun *-- "0..*" Enemy
 GameRun *-- "0..*" Projectile
-GameRun *-- "0..*" Hazard
 GameRun *-- "0..*" Pickup
-GameRun *-- "0..*" SupplyCrate
-GameRun *-- Combat
-GameRun *-- PlayerMotor
-GameRun *-- Arsenal
-GameRun *-- Ballistics
-GameRun *-- Loot
-GameRun *-- Rewards
-GameRun *-- Machinery
-GameRun *-- "0..*" Fixture
-GameRun *-- "0..*" Lance
-GameRun *-- "0..*" Beam
-Machinery ..> Fixture
-PlayerMotor ..> Physics
-StatSheet ..> Synergy
-Synergy ..> Item
-Rewards ..> Offer
-note top of Rewards : Mitarbeiterklassen des Aggregats:\nnur GameRun ist öffentlich
-GameRun --> RoomGenerator
-GameRun --> RoomPlan
-GameRun --> RunSetup
-GameRun ..> RunCheckpoint
-RoomPlan *-- RoomLayout
-RoomPlan --> RoomCondition
-RoomPlan --> Threat
-RoomLayout *-- "0..*" Platform
+GameRun *-- "1" Combat
+Combat ..> Enemy
+Body <|-- Actor
+Body <|-- Projectile
+Body <|-- Pickup
 Actor <|-- Player
 Actor <|-- Enemy
-Player --> StatSheet
-Player --> Weapon
-Player --> ActiveModule
-Player --> DiverClass
-Player ..> Item
-Enemy --> EnemyKind
-Enemy --> EnemyBehavior
+Enemy <|-- Boss
+Enemy --> "1" EnemyKind
+Enemy --> "1" EnemyBehavior
 EnemyKind ..> EnemyBehavior : Fabrikmethode
 EnemyBehavior <|.. Brain
-Brain <|-- WardenBrain
-Brain <|-- ReactorBrain
-Brain <|-- BroodBrain
-Brain <|-- CaptainBrain
-Brain <|-- EmpressBrain
-Brain <|-- Regular
-note right of Brain : Schablonenmethode:\ngemeinsame Zustandsmaschine,\nArten überschreiben Einstiegspunkte
-note bottom of EnemyBehavior : Strategie: austauschbares\nVerhalten pro Gegnerart
+Brain <|-- Brains
+legend bottom
+ + öffentlich   ~ paketintern   - privat. Paketinterne Felder auf private umstellen ist der nächste Schritt.
+endlegend
 ''',
-'05-ssd-progress': r'''title Systemsequenzdiagramm UC-02 Zum nächsten Raum vordringen
+'05-ssd-progress': r'''title Systemsequenzdiagramm UC-01 Tauchgang spielen (Raumschleife, Schritte 3–7)
 actor "Spieler/in" as P
 participant ":ABYSS" as S
 loop bis der Raum gesichert ist
@@ -417,7 +321,7 @@ S --> P : nächste Räume (1–2)
 P -> S : chooseNextRoom(abzweig)
 S --> P : neuer Raum, Raum-Sicherung geschrieben
 ''',
-'06-start-sequence': r'''title Sequenz: Tauchgang beginnen (UC-01)
+'06-start-sequence': r'''title Sequenz: Tauchgang beginnen (UC-01, Schritte 1–2)
 actor "Spieler/in" as P
 participant ":MenuScreens" as M
 participant ":GameWindow" as W
@@ -457,7 +361,7 @@ R -> E : behavior.update(): Vorwarnung, Angriff
 W -> R : drainEvents()
 W -> V : event(e) → Funken, Zahlen, Trefferpause
 ''',
-'08-reward-sequence': r'''title Sequenz: Bergung wählen (UC-03)
+'08-reward-sequence': r'''title Sequenz: Bergung wählen (UC-01, Schritt 5)
 actor "Spieler/in" as P
 participant ":GameWindow" as W
 participant ":GameRun" as R
@@ -490,7 +394,7 @@ R -> R : spawnWave() oder clearRoom()
 U -> S : saveRoom()
 S -> Repo : saveCheckpoint(run.checkpoint())
 ''',
-'10-resume-sequence': r'''title Sequenz: Fortsetzen (UC-05)
+'10-resume-sequence': r'''title Sequenz: Fortsetzen (UC-01, Erweiterung 1a)
 participant ":GameWindow" as W
 participant ":GameService" as S
 participant ":FileGameRepository" as F
@@ -558,10 +462,120 @@ start
 :Schadenszahlen, Hinweise, HUD in Pixelschrift;
 :PixelView: WritableImage, Nachbarpixel-Skalierung, Röhrenfilter;
 stop
+''',
+'14-arbeitspakete': r'''left to right direction
+skinparam defaultFontSize 17
+skinparam rectangleBackgroundColor #EAF3F2
+skinparam rectangleBorderColor #355863
+skinparam packageStyle rectangle
+package "UC-01 Tauchgang spielen" {
+ rectangle "1 Raum\nbewältigen" as P1
+ rectangle "2 Tauchgang\nbeginnen" as P2
+ rectangle "3 Raum sichern,\nRoute wählen" as P3
+ rectangle "4 Bergung\nwählen" as P4
+ rectangle "5 Niederlage,\nerneut tauchen" as P5
+ rectangle "6 Wächter-\nkampf" as P6
+ rectangle "7 Unterbrechen,\nfortsetzen" as P7
+ rectangle "8 Handeln" as P8
+ rectangle "9 Brücke,\nnächster Zyklus" as P9
+ rectangle "10 Raumzustände,\nRaumtechnik" as P10
+ rectangle "11 Ausrüstung,\nKarte ansehen" as P11
+}
+package "UC-02 Freischalten und gestalten" {
+ rectangle "12 Archiv,\nLogbuch" as P12
+ rectangle "13 Garderobe" as P13
+}
+package "UC-03 Einstellen" {
+ rectangle "14 Optionen" as P14
+}
+P1 --> P3
+P2 --> P3
+P3 --> P4
+P1 --> P5
+P1 --> P6
+P3 --> P7
+P4 --> P8
+P3 --> P9
+P6 --> P9
+P3 --> P10
+P4 --> P11
+P5 --> P12
+P12 --> P13
+legend right
+ Zahl = relativer Rang (1 = zuerst)
+ Pfeil: Voraussetzung → abhängiges Paket
+endlegend
 '''
 }
+
+# Risikoliste R1–R8 (Stand Iteration 2): (Nr., Kurztext, Eintrittswahrscheinlichkeit, Schadenspotenzial)
+# mit 0 = niedrig, 1 = mittel, 2 = hoch. Quelle der Einschätzung: docs/PROJEKTMANAGEMENT.md#risikoliste.
+RISKS = [
+    ('R1', 'Team versteht KI-Prototyp nicht', 2, 2),
+    ('R2', 'Umfang wächst zu stark', 1, 2),
+    ('R3', 'Steuerung überzeugt nicht', 1, 1),
+    ('R4', 'KI-Einsatz nicht akzeptiert', 0, 2),
+    ('R5', 'Darstellung zu langsam', 0, 1),
+    ('R6', 'Probleme unter Windows/Linux', 1, 1),
+    ('R7', 'Ausfall im Team', 1, 1),
+    ('R8', 'Spielstände beschädigt', 0, 1),
+    ('R9', 'Technische Qualität ungenügend', 1, 2),
+    ('R10', 'Refactoring bricht das Spiel', 0, 1),
+]
+
+
+def risk_matrix():
+    """Zeichnet die Risikomatrix Eintrittswahrscheinlichkeit × Schadenspotenzial als SVG (druckgross beschriftet)."""
+    W, H = 1040, 520
+    x0, y0, cell_w, cell_h = 150, 72, 160, 118
+    levels = ['niedrig', 'mittel', 'hoch']
+    fills = ['#DCEFD9', '#EEF3D2', '#FBEFD2', '#F7D9B8', '#F2C2B6']
+    out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}" '
+           'font-family="Arial, Helvetica, sans-serif">',
+           f'<rect width="{W}" height="{H}" fill="#FFFFFF"/>',
+           f'<text x="{W / 2}" y="38" font-size="24" font-weight="bold" fill="#102B35" text-anchor="middle">'
+           'Risikomatrix ABYSS (Stand Iteration 3)</text>']
+    for row in range(3):
+        for col in range(3):
+            impact = 2 - row
+            x, y = x0 + col * cell_w, y0 + row * cell_h
+            out.append(f'<rect x="{x}" y="{y}" width="{cell_w}" height="{cell_h}" '
+                       f'fill="{fills[col + impact]}" stroke="#FFFFFF" stroke-width="3"/>')
+    for i, name in enumerate(levels):
+        out.append(f'<text x="{x0 + i * cell_w + cell_w / 2}" y="{y0 + 3 * cell_h + 28}" font-size="20" '
+                   f'fill="#355863" text-anchor="middle">{name}</text>')
+        out.append(f'<text x="{x0 - 12}" y="{y0 + (2 - i) * cell_h + cell_h / 2 + 7}" font-size="20" '
+                   f'fill="#355863" text-anchor="end">{name}</text>')
+    out.append(f'<text x="{x0 + 1.5 * cell_w}" y="{y0 + 3 * cell_h + 62}" font-size="21" font-weight="bold" '
+               f'fill="#102B35" text-anchor="middle">Eintrittswahrscheinlichkeit</text>')
+    out.append(f'<text transform="translate(30 {y0 + 1.5 * cell_h}) rotate(-90)" font-size="21" '
+               f'font-weight="bold" fill="#102B35" text-anchor="middle">Schadenspotenzial</text>')
+    cells = {}
+    for nr, _, p, i in RISKS:
+        cells.setdefault((p, i), []).append(nr)
+    for (p, i), nrs in cells.items():
+        cx, cy = x0 + p * cell_w + cell_w / 2, y0 + (2 - i) * cell_h + cell_h / 2
+        for k, nr in enumerate(nrs):
+            dx = (k - (len(nrs) - 1) / 2) * 50
+            out.append(f'<circle cx="{cx + dx}" cy="{cy}" r="23" fill="#355863"/>')
+            out.append(f'<text x="{cx + dx}" y="{cy + 6}" font-size="17" font-weight="bold" fill="#FFFFFF" '
+                       f'text-anchor="middle">{nr}</text>')
+    lx = x0 + 3 * cell_w + 36
+    for k, (nr, text, _, _) in enumerate(RISKS):
+        y = y0 + 14 + k * 40
+        out.append(f'<circle cx="{lx + 17}" cy="{y}" r="17" fill="#355863"/>')
+        out.append(f'<text x="{lx + 17}" y="{y + 5}" font-size="14" font-weight="bold" fill="#FFFFFF" '
+                   f'text-anchor="middle">{nr}</text>')
+        out.append(f'<text x="{lx + 44}" y="{y + 7}" font-size="20" fill="#102B35">{text}</text>')
+    out.append('</svg>')
+    svg = OUT / '15-risikomatrix.svg'
+    svg.write_text('\n'.join(out) + '\n')
+    subprocess.run(['rsvg-convert', '-z', '2', '-o', str(svg.with_suffix('.png')), str(svg)], check=True)
+
+
 for name, body in DIAGRAMS.items():
     (OUT / (name + '.puml')).write_text(STYLE + body + '\n@enduml\n')
 for fmt in ['svg', 'png']:
     subprocess.run(['plantuml', '-charset', 'UTF-8', '-t' + fmt, *map(str, sorted(OUT.glob('*.puml')))], check=True)
-print('DIAGRAMS_READY', len(DIAGRAMS))
+risk_matrix()
+print('DIAGRAMS_READY', len(DIAGRAMS) + 1)

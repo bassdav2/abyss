@@ -47,7 +47,7 @@ final class TestRuns {
 
     static Enemy place(GameRun run, EnemyKind kind, double x) {
         var enemy =
-                new Enemy(
+                Enemy.create(
                         900 + run.enemies.size(),
                         kind,
                         Affix.NONE,

@@ -8,7 +8,7 @@ public enum Rarity {
     CURSED("Verflucht", 0, 0),
 
     /** Entfesselung: entsteht aus einem ausgereizten Modul und seinem Partner. */
-    MYTHIC("Entfesselt", 0, 0);
+    MYTHIC("Evolution", 0, 0);
 
     private final String title;
     private final int price;

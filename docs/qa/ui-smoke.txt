@@ -1,5 +1,5 @@
-ABYSS 1.6 · JavaFX-Komponentenprüfung · 04.10.2026
-./gradlew uiSmoke -Psilent
+ABYSS 1.7 · JavaFX-Komponentenprüfung · 05.10.2026
+./gradlew uiSmoke -Psilent --args="--capture=docs/qa/screens"
 
 OK     title → TITLE
 OK     loadout → LOADOUT
@@ -26,10 +26,10 @@ OK     merchant → REWARD
 OK     boss → PLAY
 OK     shrine-or-workshop → REWARD
 OK     sector2 → PLAY
-OK     Levelaufstieg offen
+OK     Level-Up offen
 OK     Auswahl angeboten
 OK     level-up → LEVEL_UP
-OK     alle Levelaufstiege gewählt
+OK     alle Level-Ups gewählt
 OK     level-up-chosen → PLAY
 OK     Raumzustand in der Routenwahl
 OK     route-condition → ROUTE
@@ -43,17 +43,17 @@ OK     Auswertung nach der Szene
 OK     victory → OUTCOME
 OK     Niederlage ohne Siegesszene
 OK     outcome → OUTCOME
-OK     Laufbahn-Erfahrung verbucht
+OK     Rang-XP verbucht
 OK     career → CAREER
 OK     career-depth → CAREER
 OK     career-weapons → CAREER
 OK     title-again → TITLE
-OK     Eskalation im zweiten Zyklus
+OK     Eskalation im zweiten Durchlauf
 OK     Schwarm mit über hundert Gegnern
 OK     endgame-swarm → PLAY
 OK     Bedrohung in der Routenwahl
 OK     route-threat → ROUTE
-OK     Entfesselung obenauf
+OK     Evolution obenauf
 OK     evolution → LEVEL_UP
 OK     Klingensturm installiert
 OK     evolution-taken → PLAY

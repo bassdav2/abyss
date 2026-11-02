@@ -262,7 +262,7 @@ public final class HudRenderer {
         int xpWidth = (int) Math.round(250 * Math.min(1, p.xp() / need));
         f.fill(43, 61, xpWidth, 6, Pal.VIOLET_3);
         f.fill(43, 61, xpWidth, 2, Pal.VIOLET_5);
-        font.drawShadow(f, "ÜBERLADUNG", 46, 50, Frame.alpha(Pal.VIOLET_4, .8), SHADOW, 1);
+        font.drawShadow(f, "XP", 46, 50, Frame.alpha(Pal.VIOLET_4, .8), SHADOW, 1);
     }
 
     // --- Oben rechts: Raum, Zyklus, Eskalation, Schrott, Kerne -----------------------------------
@@ -282,7 +282,9 @@ public final class HudRenderer {
                 SHADOW,
                 1);
         String cycle =
-                "ZYKLUS " + (run.cycle() + 1) + (run.pressure() > 0 ? " · D" + run.pressure() : "");
+                "DURCHLAUF "
+                        + (run.cycle() + 1)
+                        + (run.pressure() > 0 ? " · S" + run.pressure() : "");
         font.drawShadow(f, cycle, x + 10, 42, run.pressure() > 0 ? Pal.RED_4 : MUTED, SHADOW, 1);
         if (run.escalation() > 0)
             font.drawShadow(
@@ -424,8 +426,8 @@ public final class HudRenderer {
             font.drawCentered(f, more, x + 9, y + 6, MUTED, SHADOW, 1);
             font.drawShadow(
                     f,
-                    "TAB · ALLE MODULE",
-                    right - font.width("TAB · ALLE MODULE"),
+                    "TAB · ALLE UPGRADES",
+                    right - font.width("TAB · ALLE UPGRADES"),
                     H - 8 - MODULE_ROWS * cell - 12,
                     DIM,
                     SHADOW,
@@ -440,16 +442,16 @@ public final class HudRenderer {
             lines =
                     new String[] {
                         "A/D BEWEGEN  ·  LEERTASTE SPRINGEN  ·  J ANGREIFEN",
-                        "SHIFT AUSWEICHEN  ·  K MODUL  ·  ROTE MARKIERUNGEN = ANGRIFF"
+                        "SHIFT AUSWEICHEN  ·  K FÄHIGKEIT  ·  ROTE MARKIERUNGEN = ANGRIFF"
                     };
         else if (run.phase() == GameRun.Phase.ROOM_CLEARED)
             lines =
                     run.rewardAvailable()
                             ? new String[] {
-                                "E AN DER BERGUNGSKAPSEL: MODUL WÄHLEN",
-                                "DANACH RECHTS DURCHS SCHOTT"
+                                "E AN DER BEUTEKAPSEL: UPGRADE WÄHLEN",
+                                "DANACH RECHTS DURCH DIE TÜR"
                             }
-                            : new String[] {"RECHTS DURCHS SCHOTT: E ÖFFNET DIE ROUTENWAHL"};
+                            : new String[] {"RECHTS DURCH DIE TÜR: E ÖFFNET DIE ROUTENWAHL"};
         else return;
         int y = 392;
         for (String line : lines) {
@@ -480,7 +482,12 @@ public final class HudRenderer {
         f.fill(x, y, filled, 10, boss.armored() ? Pal.RED_3 : Pal.RUST_6);
         f.fill(x, y, filled, 2, boss.armored() ? Pal.RED_4 : Pal.RUST_7);
         for (int k = 1; k < 3; k++) f.fill(x + w * k / 3, y, 1, 10, Pal.OUTLINE);
-        String state = boss.armored() ? "PANZERUNG AKTIV" : "KERN OFFEN · JETZT ANGREIFEN";
+        String state =
+                boss.kind().guarded()
+                        ? boss.armored()
+                                ? "DECKUNG · WEICH AUS, WARTE AUF SEINE PAUSE"
+                                : "PAUSE · JETZT ZUSCHLAGEN"
+                        : boss.armored() ? "PANZERUNG AKTIV" : "KERN OFFEN · JETZT ANGREIFEN";
         if (!boss.armored() || ((int) (time * 2)) % 2 == 0)
             font.drawCentered(
                     f, state, W / 2, y + 15, boss.armored() ? MUTED : Pal.RUST_7, SHADOW, 1);

@@ -110,6 +110,17 @@ final class Combat {
             e.eliteShield -= absorbed;
             damage -= absorbed;
         }
+        damage = e.limitDamage(damage);
+        if (e.kind.guarded() && source != Source.MACHINE) {
+            // Deckung: was über die offene Deckung hinausgeht, prallt ab. Eigene Torpedos und
+            // Anlagen schlagen durch, das ist die Belohnung fürs Mitdenken.
+            double allowed = Math.min(damage, Math.max(0, e.guard));
+            e.guard -= allowed;
+            if (allowed < damage * .5 && run.rng.nextInt(5) == 0)
+                run.emit(GameEvent.at(GameEvent.Type.BLOCK, e.x, e.centerY()));
+            damage = allowed;
+            if (damage <= 0) return 0;
+        }
         e.health = Math.max(0, e.health - damage);
         e.regenDelay = 4;
         if (source != Source.BURN) e.hurtTime = .14;
@@ -171,13 +182,10 @@ final class Combat {
      */
     private void pull(Enemy e, double sourceX) {
         if (e.kind == EnemyKind.TURRET || e.state == Enemy.State.HIDDEN) return;
-        double factor = e.kind.boss() ? .1 : e.affix.elite() ? .6 : 1;
         double gap = Math.abs(e.x - sourceX) - e.width / 2 - 50;
         if (gap <= 0) return;
-        e.knockVx = -Math.signum(e.x - sourceX) * 9 * gap * factor;
-        if (e.kind.boss()) return;
-        e.state = Enemy.State.STUNNED;
-        e.stateTime = .35;
+        e.knockVx = -Math.signum(e.x - sourceX) * 9 * gap * e.pullFactor();
+        e.stun(.35);
     }
 
     private void applyKnockback(Enemy e, double knockback, double sourceX, boolean direct) {
@@ -187,18 +195,12 @@ final class Combat {
         }
         if (knockback <= 0 || e.kind == EnemyKind.TURRET || e.state == Enemy.State.HIDDEN) return;
         double direction = e.x == sourceX ? run.player.facing : Math.signum(e.x - sourceX);
-        double factor = e.kind.boss() ? .12 : e.affix.elite() ? .5 : 1;
-        e.knockVx = direction * knockback * run.player.stats.knockback() * factor;
-        if (e.kind.boss()) return;
-        if (e.state == Enemy.State.APPROACH || e.state == Enemy.State.RECOVER) {
-            e.state = Enemy.State.STUNNED;
-            e.stateTime = .2;
-        } else if (direct
+        e.knockVx = direction * knockback * run.player.stats.knockback() * e.knockbackFactor();
+        if (!e.staggerable()) return;
+        if (e.state == Enemy.State.APPROACH || e.state == Enemy.State.RECOVER) e.stun(.2);
+        else if (direct
                 && e.state == Enemy.State.WINDUP
-                && run.rng.nextDouble() < .25 * run.player.stacks(Item.BALLAST)) {
-            e.state = Enemy.State.STUNNED;
-            e.stateTime = .4;
-        }
+                && run.rng.nextDouble() < .25 * run.player.stacks(Item.BALLAST)) e.stun(.4);
     }
 
     private void applyStatuses(Enemy e, double base) {
@@ -212,15 +214,15 @@ final class Combat {
     }
 
     /**
-     * Wendet einen Zustand an; Bosse werden statt eingefroren nur verlangsamt.
+     * Wendet einen Zustand an; wie der Gegner reagiert, entscheidet er selbst (Wächter frieren
+     * nicht ein, siehe {@link Boss}).
      *
      * @param e Ziel
      * @param status Zustand
      * @param seconds Dauer
      */
     void applyStatus(Enemy e, Status status, double seconds) {
-        if (status == Status.FREEZE && e.kind.boss()) e.statuses.apply(Status.CHILL, seconds * 1.5);
-        else e.statuses.apply(status, seconds);
+        e.applyStatus(status, seconds);
     }
 
     private void killed(Enemy e) {
@@ -230,13 +232,7 @@ final class Combat {
         boolean summoned = e.parentId != 0;
         int salvage = summoned ? 1 : e.kind.salvage() + (e.affix.elite() ? 8 : 0);
         if (salvage > 0) run.dropScrap(e.x, e.centerY(), salvage);
-        double shard =
-                e.kind.boss()
-                        ? 30
-                        : e.kind.swarm() || summoned
-                                ? 1
-                                : 1 + e.kind.threat() + (e.affix.elite() ? 8 : 0);
-        run.drop(Pickup.Kind.SHARD, shard, e.x, e.centerY());
+        run.drop(Pickup.Kind.SHARD, e.shardReward(), e.x, e.centerY());
         if (e.affix.elite() || e.kind == EnemyKind.SMUGGLER)
             run.drop(Pickup.Kind.CORE, 1, e.x, e.centerY());
         if (e.kind == EnemyKind.HIVE)
@@ -256,15 +252,7 @@ final class Combat {
             run.smugglersCaught++;
             run.emit(new GameEvent(GameEvent.Type.MACHINE, e.x, e.centerY(), 0, "CAUGHT"));
         }
-        if (e.kind.boss()) {
-            run.cancelHordes();
-            run.drop(Pickup.Kind.CORE, e.kind == EnemyKind.CAPTAIN ? 5 : 3, e.x, e.centerY());
-            for (var minion : run.enemies)
-                if (e.children.contains(minion.id) && minion.alive()) {
-                    minion.health = 0;
-                    run.emit(GameEvent.at(GameEvent.Type.ENEMY_DOWN, minion.x, minion.centerY()));
-                }
-        }
+        e.onDefeated(run);
         p.addEnergy(6 + 4 * p.stacks(Item.SIPHON));
         p.heal(3 * p.stacks(Item.RECOVERY));
         if (p.stacks(Item.BLOOD_PACT) > 0) p.heal(p.maxHealth * .01);
@@ -313,15 +301,7 @@ final class Combat {
             explode(e.x, e.centerY(), 125, 16 * run.enemyDamage(), true, false, null);
         run.emit(
                 new GameEvent(
-                        e.kind.boss()
-                                ? GameEvent.Type.BOSS_DOWN
-                                : e.affix.elite()
-                                        ? GameEvent.Type.ELITE_DOWN
-                                        : GameEvent.Type.ENEMY_DOWN,
-                        e.x,
-                        e.y - e.height * .5,
-                        e.kind.ordinal(),
-                        e.kind.title()));
+                        e.downEvent(), e.x, e.y - e.height * .5, e.kind.ordinal(), e.kind.title()));
     }
 
     /** Höllenglut: ein brennender Gegner steckt beim Tod seine Nachbarn an. */

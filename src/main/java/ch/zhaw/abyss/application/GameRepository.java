@@ -1,12 +1,15 @@
-package ch.zhaw.abyss.ports;
+package ch.zhaw.abyss.application;
 
-import ch.zhaw.abyss.application.Profile;
 import ch.zhaw.abyss.domain.RunCheckpoint;
 
 import java.io.IOException;
 import java.util.Optional;
 
-/** Persistenzgrenze: Die Anwendungslogik kennt weder Pfade noch Dateiformate. */
+/**
+ * Persistenzgrenze (Port): Die Anwendungslogik kennt weder Pfade noch Dateiformate. Das Interface
+ * gehört zur Schicht, die es benutzt; {@code infrastructure.FileGameRepository} implementiert es
+ * von aussen (Dependency Inversion). So hat {@code application} keine Abhängigkeit nach aussen.
+ */
 public interface GameRepository {
     Profile loadProfile() throws IOException;
 

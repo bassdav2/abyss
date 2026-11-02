@@ -20,7 +20,7 @@ public record RoomLayout(double width, List<Platform> platforms, double rewardX)
         if (width < GameRun.VIEW_WIDTH || width > 4 * GameRun.VIEW_WIDTH)
             throw new IllegalArgumentException("Ungültige Raumbreite");
         if (rewardX < WALL || rewardX > width - WALL)
-            throw new IllegalArgumentException("Bergung liegt ausserhalb des Raums");
+            throw new IllegalArgumentException("Beute liegt ausserhalb des Raums");
         for (Platform platform : platforms)
             if (platform.x() < 0 || platform.right() > width || platform.y() >= GameRun.FLOOR)
                 throw new IllegalArgumentException("Plattform liegt ausserhalb des Raums");

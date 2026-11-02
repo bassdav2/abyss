@@ -41,16 +41,20 @@ Diese Spannen sind neue Schätzungen, keine erfassten Ist-Zeiten. Reihenfolge un
 
 ## Risikoliste
 
-| Risiko | Eintritt / Auswirkung | Massnahme / Status |
-|---|---|---|
-| Team versteht übernommenen KI-Code nicht ausreichend | Hoch / hoch | Ownership verteilen; Ablauf- und Änderungsreviews; vor Abgabe eigene Begründungen |
-| UI-/Bibliothekswahl oder Spielthema nicht freigegeben | Offen / hoch | Fachdozent prüfen lassen; JavaFX und eigene Domäne belegen |
-| Kampf wirkt repetitiv oder zu einfach | Mittel / hoch | Menschen testen; Bot-Ergebnisse nicht als Spassnachweis ausgeben |
-| Grafik von Hintergründen und Figuren wirkt uneinheitlich | Niedrig / mittel | Seit 1.0 eine Palette und prozedurale Pixel-Pipeline; Übersichtsbögen (`artSheet`) prüfen |
-| Andere Teamplattformen bauen nicht | Mittel / hoch | OS-/Architektur-spezifische JavaFX-Pakete; separate CI oder echte Geräteprüfung |
-| Save-Dateien sind beschädigt | Niedrig / mittel | Validierung, temporäres Schreiben, Original-Backups; Integrationstests |
-| Profil und Checkpoint werden durch Absturz inkonsistent | Niedrig / niedrig bis mittel | Je Datei atomar; keine gemeinsame Transaktion; bei Bedarf ein gemeinsames Snapshot-Format einführen |
-| Wünsche wachsen über Semesterbudget | Hoch / hoch | Zwölf Räume und klarer Kern; keine Multiplayer-/Engine-Migration ohne bewussten Entscheid |
+Stand Iteration 3 (26.10.2026), Nummern wie in der Projektskizze M1, fortgeführt. Visualisiert in `docs/diagrams/15-risikomatrix.svg` (Quelle: `RISKS` in `tools/write_diagrams.py`).
+
+| Nr. | Risiko | Wahrsch. / Schaden | Änderung seit Iteration 2 | Massnahme / Status |
+|---|---|---|---|---|
+| R1 | Team versteht den KI-gestützten Prototyp nicht ausreichend | hoch / hoch | gleich | Paketverantwortung, Code-Walkthroughs, Änderungen nur mit Test |
+| R2 | Umfang wächst über das Semester hinaus | mittel / hoch | gleich | Feature-Stopp, Arbeit fliesst in Refactorings statt Inhalte |
+| R3 | Steuerung und Fairness überzeugen nicht | mittel / mittel | Schaden gesunken | Spielspass ist laut Dozent nicht zentral für die Bewertung |
+| R4 | KI-Einsatz wird nicht akzeptiert | niedrig / hoch | Wahrscheinlichkeit gesunken | Zwei Reviews ohne Einwand; Deklaration wird laufend ergänzt |
+| R5 | Darstellung auf schwächeren Rechnern zu langsam | niedrig / mittel | gleich | Zeichenzeit messen |
+| R6 | Probleme unter Windows oder Linux | mittel / mittel | gleich | Test auf den Rechnern im Team |
+| R7 | Teammitglieder fallen aus oder fehlen beim Feedback | mittel / mittel | gleich | Teilnahme am Feedback ist ab LE07 Pflicht für die Unterrichtspunkte |
+| R8 | Spielstände werden beschädigt | niedrig / mittel | gleich | Validierung, Sicherung der Originale, Tests |
+| R9 | Technische Qualität (Kohäsion, Kopplung, Patterns) genügt der Bewertung nicht | mittel / hoch | **neu** | Refactoring-Plan in ARCHITEKTUR_ANALYSE.md, erste Schritte umgesetzt, ArchitectureTest |
+| R10 | Refactorings brechen das lauffähige Spiel | niedrig / mittel | **neu** | 210 Unit-Tests und UI-Durchlauf vor jeder Abgabe |
 
 ## Offene Entscheidungen
 

@@ -241,6 +241,35 @@ final class Instruments {
                 .poly(12);
     }
 
+    /** Chiptune-Lead: schmales Rechteck wie aus einer alten Spielkonsole. */
+    static Patch chipLead() {
+        return Patch.of(SQUARE)
+                .pulse(.25, 0)
+                .lowpass(9000, .7)
+                .vibrato(.12, 6, .25)
+                .env(.002, .12, .75, .06)
+                .mono(0);
+    }
+
+    /** Dünnes Rechteck für Oktavdopplungen. */
+    static Patch chipThin() {
+        return Patch.of(SQUARE).pulse(.125, 0).lowpass(8000, .7).env(.002, .1, .7, .05).mono(0);
+    }
+
+    /** Chiptune-Bass aus Dreieck und Rechteck. */
+    static Patch chipBass() {
+        return Patch.of(TRIANGLE)
+                .osc2(SQUARE, .25, 0)
+                .lowpass(2600, .7)
+                .env(.002, .1, .8, .03)
+                .mono(0);
+    }
+
+    /** Schnelles Chiptune-Arpeggio. */
+    static Patch chipArp() {
+        return Patch.of(SQUARE).pulse(.125, 0).lowpass(7000, .7).env(.001, .06, .5, .02).poly(4);
+    }
+
     /** Sonarimpuls. */
     static Patch sonar() {
         return Patch.of(SINE).osc2(SINE, .2, 12.02).env(.002, 2.2, 0, 1.5).poly(3);

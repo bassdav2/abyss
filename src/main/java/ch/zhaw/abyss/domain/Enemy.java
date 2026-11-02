@@ -6,8 +6,13 @@ import java.util.List;
 /**
  * Ein Gegner mit Art, Elite-Eigenschaft und expliziter Zustandsmaschine. Das Verhalten ist eine
  * zustandslose Strategie ({@link EnemyBehavior}); sämtlicher veränderlicher Zustand liegt hier.
+ *
+ * <p>Wie ein Gegner auf Treffer, Rückstoss, Betäubung und Raumtechnik reagiert, legen
+ * überschreibbare Methoden fest. Wächter spezialisieren sie in {@link Boss} (Polymorphismus statt
+ * Typabfragen wie {@code kind.boss()}). Erzeugt werden Gegner über die Fabrikmethode {@link
+ * #create}.
  */
-public final class Enemy extends Actor {
+public class Enemy extends Actor {
     /** Zustände der Kampf-Zustandsmaschine. */
     public enum State {
         SPAWNING,
@@ -43,6 +48,18 @@ public final class Enemy extends Actor {
     /** Rasend nach zu langem Kampf: mehr Schaden und schnellere Muster. */
     boolean furious;
 
+    /**
+     * Deckung gedeckter Bosse: so viel Schaden darf gerade noch durch. Sie füllt sich langsam und
+     * in den Erholungsfenstern schnell; alles darüber prallt ab.
+     */
+    double guard;
+
+    /** War im letzten Schritt ein Erholungsfenster offen (für den Deckungsstoss beim Öffnen)? */
+    boolean exposedLast;
+
+    /** Abklingzeit des Blinzelns, mit dem der Lotse Nahkämpfern ausweicht. */
+    double blinkCooldown;
+
     /** Darstellungsgrösse, etwa für Kolosse. */
     double size = 1;
 
@@ -65,16 +82,143 @@ public final class Enemy extends Actor {
         this.behavior = kind.behavior();
         this.actionCooldown = delay;
         this.facing = -1;
-        this.stateTime = kind.boss() ? 2.2 : kind.swarm() ? .3 : kind == EnemyKind.EGG ? 3.2 : .55;
+        this.stateTime = kind.swarm() ? .3 : kind == EnemyKind.EGG ? 3.2 : .55;
         this.homeX = x;
         this.homeY = y;
         if (affix == Affix.SHIELDED) eliteShield = maxHealth * .35;
+    }
+
+    /**
+     * Fabrikmethode: Wächterarten werden als {@link Boss} erzeugt, alle anderen als {@code Enemy}.
+     *
+     * @param id eindeutige Nummer
+     * @param kind Gegnerart
+     * @param affix Elite-Eigenschaft
+     * @param x Position
+     * @param y Position
+     * @param strength Lebensfaktor
+     * @param delay Verzögerung bis zum ersten Angriff
+     * @return neuer Gegner
+     */
+    static Enemy create(
+            long id,
+            EnemyKind kind,
+            Affix affix,
+            double x,
+            double y,
+            double strength,
+            double delay) {
+        return kind.boss()
+                ? new Boss(id, kind, affix, x, y, strength, delay)
+                : new Enemy(id, kind, affix, x, y, strength, delay);
     }
 
     @Override
     boolean flying() {
         return kind.flying();
     }
+
+    // --- Reaktionen, die Wächter in Boss überschreiben -----------------------------------------
+
+    /**
+     * @return {@code true}, wenn sich der Gegner betäuben, hochschleudern oder verschieben lässt
+     */
+    boolean staggerable() {
+        return true;
+    }
+
+    /**
+     * Betäubt den Gegner.
+     *
+     * @param seconds Dauer
+     * @return {@code true}, wenn die Betäubung wirkt
+     */
+    boolean stun(double seconds) {
+        state = State.STUNNED;
+        stateTime = seconds;
+        return true;
+    }
+
+    /**
+     * @return Anteil des Rückstosses, der beim Gegner ankommt
+     */
+    double knockbackFactor() {
+        return affix.elite() ? .5 : 1;
+    }
+
+    /**
+     * @return Anteil eines Sogs, der beim Gegner ankommt
+     */
+    double pullFactor() {
+        return affix.elite() ? .6 : 1;
+    }
+
+    /**
+     * Begrenzt einen Treffer, etwa auf die Grenze der aktuellen Bossphase.
+     *
+     * @param damage berechneter Schaden
+     * @return tatsächlich wirksamer Schaden
+     */
+    double limitDamage(double damage) {
+        return damage;
+    }
+
+    /**
+     * Wendet einen Zustand wie Brand oder Frost an.
+     *
+     * @param status Zustand
+     * @param seconds Dauer
+     */
+    void applyStatus(Status status, double seconds) {
+        statuses.apply(status, seconds);
+    }
+
+    /**
+     * @return Anteil der maximalen Lebenspunkte, den ein Torpedotreffer kostet
+     */
+    double torpedoShare() {
+        return .5;
+    }
+
+    /**
+     * Legt den Kern frei, wenn der Gegner einen hat. Gewöhnliche Gegner haben keinen.
+     *
+     * @param into Zustand während des Freiliegens
+     * @param seconds Dauer
+     * @return {@code true}, wenn ein Kern freigelegt wurde
+     */
+    boolean expose(State into, double seconds) {
+        return false;
+    }
+
+    /**
+     * @return {@code true}, wenn der Gegner Kampfphasen hat
+     */
+    boolean hasPhases() {
+        return false;
+    }
+
+    /**
+     * @return Wert der Splitter, die der Gegner beim Ende fallen lässt
+     */
+    double shardReward() {
+        if (kind.swarm() || parentId != 0) return 1;
+        return 1 + kind.threat() + (affix.elite() ? 8 : 0);
+    }
+
+    /**
+     * @return Ereignis, das beim Ende des Gegners gemeldet wird
+     */
+    GameEvent.Type downEvent() {
+        return affix.elite() ? GameEvent.Type.ELITE_DOWN : GameEvent.Type.ENEMY_DOWN;
+    }
+
+    /**
+     * Zusätzliche Folgen, wenn der Gegner besiegt wird. Gewöhnliche Gegner haben keine.
+     *
+     * @param run laufender Tauchgang
+     */
+    void onDefeated(GameRun run) {}
 
     /**
      * @return Gegnerart
@@ -186,14 +330,14 @@ public final class Enemy extends Actor {
      * @return {@code true}, wenn der Gegner gerade Panzerung trägt
      */
     public boolean armored() {
-        return kind.boss() && state != State.RECOVER && state != State.STUNNED;
+        return false;
     }
 
     /**
      * @return {@code true}, solange der Gegner nicht getroffen werden kann
      */
     public boolean untargetable() {
-        return veiled || state == State.HIDDEN || state == State.SPAWNING && kind.boss();
+        return veiled || state == State.HIDDEN;
     }
 
     /**

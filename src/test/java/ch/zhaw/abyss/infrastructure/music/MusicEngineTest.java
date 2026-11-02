@@ -54,7 +54,7 @@ class MusicEngineTest {
     @Test
     void everyScoreBuildsWithAHarmonyThatFillsTheSong() {
         var songs = Scores.all();
-        assertEquals(10, songs.size());
+        assertEquals(11, songs.size());
         assertEquals(MusicEngine.songIds(), songs.keySet().stream().toList());
         for (var song : songs.values()) {
             assertTrue(song.parts.size() >= 8, song.id);

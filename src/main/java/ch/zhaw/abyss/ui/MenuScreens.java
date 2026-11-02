@@ -43,13 +43,13 @@ final class MenuScreens {
     private static final String[] TABS = {
         "TAUCHER",
         "WAFFEN",
-        "MODULE",
+        "FÄHIGKEITEN",
         "BAUPLÄNE",
         "AUSRÜSTUNG",
-        "GARDEROBE",
-        "KOMPENDIUM",
-        "LOGBUCH",
-        "RESONANZEN"
+        "AUSSEHEN",
+        "SAMMLUNG",
+        "ERFOLGE",
+        "SYNERGIEN"
     };
 
     private final Navigator nav;
@@ -131,9 +131,9 @@ final class MenuScreens {
         }
         if (g.button("new", x, y, w, 36, "NEUER TAUCHGANG", saved ? Tone.STEEL : Tone.AMBER, true))
             nav.loadout();
-        if (g.button("archive", x + (w + gap), y, w, 36, "ARCHIV", Tone.STEEL, true))
+        if (g.button("archive", x + (w + gap), y, w, 36, "FREISCHALTEN", Tone.STEEL, true))
             nav.archive(0);
-        if (g.button("wardrobe", x + 2 * (w + gap), y, w, 36, "GARDEROBE", Tone.STEEL, true))
+        if (g.button("wardrobe", x + 2 * (w + gap), y, w, 36, "AUSSEHEN", Tone.STEEL, true))
             nav.wardrobe();
         if (g.button("settings", x + 3 * (w + gap), y, w, 36, "OPTIONEN", Tone.STEEL, true))
             nav.settings(false);
@@ -143,7 +143,7 @@ final class MenuScreens {
                 448,
                 200,
                 28,
-                "LAUFBAHN · RANG " + profile.career().rank(),
+                "TALENTE · RANG " + profile.career().rank(),
                 Tone.VIOLET,
                 true)) nav.career();
         if (g.button("help", CX - 34, 452, 130, 20, "STEUERUNG", Tone.QUIET, true)) nav.help(false);
@@ -161,10 +161,10 @@ final class MenuScreens {
                         + profile.bestRoom()
                         + "/"
                         + RoomGenerator.ROOM_COUNT
-                        + "   ·   LAUFBAHNRANG "
+                        + "   ·   RANG "
                         + profile.career().rank(),
                 Gui.MUTED);
-        g.right(W - 12, H - 16, "V1.6", 0xFF3A4654);
+        g.right(W - 12, H - 16, "V1.7", 0xFF3A4654);
     }
 
     // --- Laufbahn: Ränge, Skill-Bäume, Waffenmeisterschaft ---------------------------------------
@@ -185,7 +185,7 @@ final class MenuScreens {
         var career = profile.career();
         var trees = SkillTree.values();
         g.header(
-                "LAUFBAHN",
+                "TALENTE",
                 "RANG " + career.rank() + " · " + career.points(SkillTree.DEPTH) + " PUNKTE FREI",
                 Tone.VIOLET);
         var f = g.frame();
@@ -324,7 +324,7 @@ final class MenuScreens {
                 nav.toast(
                         shown.weapon() != null
                                 ? shown.weapon().title()
-                                        + " freigeschaltet · in der Schleuse wählbar"
+                                        + " freigeschaltet · in der Vorbereitung wählbar"
                                 : shown.title() + " freigeschaltet");
             } else nav.toast("Nicht genug Punkte");
         }
@@ -360,12 +360,10 @@ final class MenuScreens {
                             ? "+"
                                     + (4 * level)
                                     + " % Schaden"
-                                    + (level >= 5
-                                            ? ", +" + (level >= 10 ? 10 : 5) + " % Kritik"
-                                            : "")
+                                    + (level >= 5 ? ", +" + (level >= 10 ? 10 : 5) + " % Krit" : "")
                             : weapon.career()
-                                    ? "Laufbahn: Endknoten eines Klassenbaums"
-                                    : "Archiv: für Datenkerne";
+                                    ? "Talente: letzter Knoten eines Klassenbaums"
+                                    : "Freischalten: für Kerne";
             g.text(x + 44, y + 40, note, owned ? Gui.MUTED : Gui.DIM);
         }
         g.center(
@@ -381,7 +379,7 @@ final class MenuScreens {
         var service = nav.service();
         var profile = service.profile();
         var f = g.frame();
-        g.header("SCHLEUSE", "WER TAUCHT HEUTE?", Tone.AMBER);
+        g.header("VORBEREITUNG", "WER TAUCHT HEUTE?", Tone.AMBER);
         cores(g, profile.cores());
         g.prefer("dive");
         // Spinde mit den Klassen
@@ -403,7 +401,7 @@ final class MenuScreens {
                                         if (service.purchase(unlock)) {
                                             loadout = loadout.withDiver(diver);
                                             nav.toast(diver.title() + " freigeschaltet");
-                                        } else nav.toast("Nicht genug Datenkerne");
+                                        } else nav.toast("Nicht genug Kerne");
                                     });
             }
             if (g.focused(id)) shown = diver;
@@ -432,7 +430,7 @@ final class MenuScreens {
                 648,
                 104,
                 Math.round(shown.health())
-                        + " HP  ·  TEMPO "
+                        + " LEBEN  ·  TEMPO "
                         + Math.round(shown.speed() * 100)
                         + " %",
                 Pal.TEAL_5);
@@ -441,7 +439,7 @@ final class MenuScreens {
         g.text(
                 648,
                 dy,
-                "LAUFBAHN · RANG "
+                "TALENTE · RANG "
                         + career.rank(shown)
                         + " · "
                         + career.points(treeOf(shown))
@@ -495,7 +493,7 @@ final class MenuScreens {
                         g,
                         "module",
                         328,
-                        "MODUL · " + loadout.module().cost() + " E",
+                        "FÄHIGKEIT · " + loadout.module().cost() + " E",
                         IconArt.module(loadout.module()),
                         loadout.module().title(),
                         loadout.module().description());
@@ -508,10 +506,10 @@ final class MenuScreens {
                                             modules.size())));
         String pressureInfo =
                 loadout.pressure() == 0
-                        ? "Ein Sieg schaltet Druckstufe 1 frei."
+                        ? "Ein Sieg schaltet Schwierigkeit 1 frei."
                         : "+"
                                 + loadout.pressure() * 12
-                                + " % Gegnerintegrität, +"
+                                + " % Gegnerleben, +"
                                 + loadout.pressure() * 10
                                 + " % Schaden.";
         d =
@@ -519,9 +517,12 @@ final class MenuScreens {
                         g,
                         "pressure",
                         640,
-                        "DRUCK · MAX " + profile.maxPressure() + "/" + RunSetup.MAX_PRESSURE,
+                        "SCHWIERIGKEIT · MAX "
+                                + profile.maxPressure()
+                                + "/"
+                                + RunSetup.MAX_PRESSURE,
                         IconArt.misc("skull"),
-                        loadout.pressure() == 0 ? "Normal" : "Druckstufe " + loadout.pressure(),
+                        loadout.pressure() == 0 ? "Normal" : "Schwierigkeit " + loadout.pressure(),
                         pressureInfo);
         if (d != 0)
             loadout =
@@ -535,7 +536,7 @@ final class MenuScreens {
                         36,
                         386,
                         576,
-                        "Entdecker · mehr Integrität, mehr Schaden",
+                        "Entdecker · mehr Leben, mehr Schaden",
                         loadout.explorer());
         if (explorer != loadout.explorer()) loadout = loadout.withExplorer(explorer);
         g.text(36, 430, "SEED", Gui.DIM);
@@ -547,13 +548,13 @@ final class MenuScreens {
             service.rememberLoadout(loadout);
             nav.title();
         }
-        if (g.button("wardrobe", 172, FOOT + 4, 180, 32, "GARDEROBE", Tone.STEEL, true)) {
+        if (g.button("wardrobe", 172, FOOT + 4, 180, 32, "AUSSEHEN", Tone.STEEL, true)) {
             service.rememberLoadout(loadout);
             nav.wardrobe();
         }
         // Tauchhebel
         g.panel(640, 368, 304, 104);
-        g.text(656, 380, "SCHLEUSE BEREIT", Pal.TEAL_5);
+        g.text(656, 380, "BEREIT ZUM TAUCHEN", Pal.TEAL_5);
         boolean lamp = ((int) (g.time() * 2)) % 2 == 0;
         f.fill(920, 380, 10, 10, lamp ? Pal.GREEN_4 : Pal.GREEN_1);
         if (g.button("dive", 656, 400, 272, 48, "TAUCHEN  →", Tone.AMBER, true)) {
@@ -580,7 +581,7 @@ final class MenuScreens {
         var service = nav.service();
         var profile = service.profile();
         var f = g.frame();
-        g.header("GARDEROBE", "DEIN ANZUG. DEINE FARBEN.", Tone.TEAL);
+        g.header("AUSSEHEN", "DEIN ANZUG. DEINE FARBEN.", Tone.TEAL);
         cores(g, profile.cores());
         var diver = loadout != null ? loadout.diver() : profile.loadout().diver();
         var weapon = loadout != null ? loadout.weapon() : profile.loadout().weapon();
@@ -687,7 +688,7 @@ final class MenuScreens {
 
     void archive(Gui g) {
         var profile = nav.service().profile();
-        g.header("ARCHIV", "WAS DU FINDEST, BLEIBT.", Tone.TEAL);
+        g.header("FREISCHALTEN", "WAS DU FINDEST, BLEIBT.", Tone.TEAL);
         cores(g, profile.cores());
         g.panel(16, 66, 192, 416);
         for (int i = 0; i < TABS.length; i++) {
@@ -737,7 +738,7 @@ final class MenuScreens {
             String id = "unlock." + unlock.id();
             if (g.card(id, x, y, 172, 50, accent, true) && !owned) {
                 if (service.purchase(unlock)) nav.toast(unlock.title() + " freigeschaltet");
-                else nav.toast(buyable ? "Nicht möglich" : "Nicht genug Datenkerne");
+                else nav.toast(buyable ? "Nicht möglich" : "Nicht genug Kerne");
             }
             if (g.focused(id) || shown == null) shown = unlock;
             var icon = iconFor(unlock);
@@ -831,7 +832,7 @@ final class MenuScreens {
                     tx,
                     420,
                     AW - 120,
-                    "Noch nicht gefunden. Bergungen, Händler und Kapellen liefern neue Module.",
+                    "Noch nicht gefunden. Beute, Händler und Schreine liefern neue Upgrades.",
                     Gui.MUTED,
                     3);
             return;
@@ -841,7 +842,7 @@ final class MenuScreens {
                 tx,
                 410,
                 shown.evolution()
-                        ? "ENTFESSELT  ·  AUS "
+                        ? "EVOLUTION  ·  AUS "
                                 + shown.base().title().toUpperCase()
                                 + " + "
                                 + shown.partner().title().toUpperCase()
@@ -857,7 +858,7 @@ final class MenuScreens {
                 g.text(
                         tx,
                         466,
-                        "RESONANZ " + synergy.title().toUpperCase() + " MIT " + partner.title(),
+                        "SYNERGIE " + synergy.title().toUpperCase() + " MIT " + partner.title(),
                         Pal.VIOLET_4);
                 break;
             }
@@ -897,7 +898,11 @@ final class MenuScreens {
     }
 
     private void resonances(Gui g) {
-        g.text(AX + 8, AY + 10, "ZWEI MODULE IM SELBEN TAUCHGANG ERGEBEN EINEN BONUS", Pal.TEAL_5);
+        g.text(
+                AX + 8,
+                AY + 10,
+                "ZWEI UPGRADES IM SELBEN TAUCHGANG ERGEBEN EINEN BONUS",
+                Pal.TEAL_5);
         var all = Synergy.values();
         Synergy shown = null;
         for (int i = 0; i < all.length; i++) {
@@ -988,10 +993,10 @@ final class MenuScreens {
             {"S + LEERTASTE", "Durch einen Laufsteg nach unten fallen"},
             {"J / LINKE MAUS", "Angriff · halten für Kombination · in der Luft Luftangriff"},
             {"SHIFT / L", "Ausweichen · kurz unverwundbar, auch in der Luft"},
-            {"K / RECHTE MAUS", "Aktives Modul · kostet Energie"},
-            {"E", "Bergung, Händlerin, Werkstatt, Kapelle, Schott, Schalter"},
-            {"Q", "Reparaturset · +35 Integrität"},
-            {"I / TAB  ·  M", "Ausrüstung mit allen Modulen  ·  Bootskarte"},
+            {"K / RECHTE MAUS", "Fähigkeit · kostet Energie"},
+            {"E", "Beute, Händlerin, Werkstatt, Schrein, Tür, Schalter"},
+            {"Q", "Medkit · +35 Leben"},
+            {"I / TAB  ·  M", "Ausrüstung mit allen Upgrades  ·  Bootskarte"},
             {"ESC · F11 · F12", "Pause · Vollbild · Bildschirmfoto"},
             {
                 "MENÜS",

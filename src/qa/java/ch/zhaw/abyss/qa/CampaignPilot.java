@@ -7,6 +7,7 @@ import ch.zhaw.abyss.domain.InputFrame;
 import ch.zhaw.abyss.domain.Interaction;
 import ch.zhaw.abyss.domain.Item;
 import ch.zhaw.abyss.domain.Offer;
+import ch.zhaw.abyss.domain.Player;
 import ch.zhaw.abyss.domain.Projectile;
 import ch.zhaw.abyss.domain.RoomPlan;
 import ch.zhaw.abyss.domain.ShrineDeal;
@@ -38,7 +39,9 @@ public final class CampaignPilot {
         if (autoLevel) levelUp(run);
         var p = run.player();
         var b = InputFrame.builder();
-        if (p.vy() < 0) b.holdJump();
+        int lance = lanceDanger(run);
+        boolean stayLow = lance < 0;
+        if (p.vy() < 0 && !stayLow) b.holdJump();
         if (p.health() < p.maxHealth() * .4) b.heal();
         Enemy target =
                 run.enemies().stream()
@@ -73,8 +76,9 @@ public final class CampaignPilot {
             b.attack();
             b.aim(toward);
         }
-        if (p.grounded() && target.centerY() < p.y() - 150 && Math.abs(dx) < 260) b.jump();
-        if (p.grounded() && dy > 60 && target.grounded() && Math.abs(dx) < 700) {
+        if (p.grounded() && target.centerY() < p.y() - 150 && Math.abs(dx) < 260 && !stayLow)
+            b.jump();
+        if (p.grounded() && dy > 60 && target.grounded() && Math.abs(dx) < 700 && !stayLow) {
             b.down();
             b.jump();
         }
@@ -82,9 +86,11 @@ public final class CampaignPilot {
             if (p.dashCooldown() <= 0) {
                 b.dash();
                 b.move(-toward);
-            } else if (p.grounded()) b.jump();
+            } else if (p.grounded() && !stayLow) b.jump();
         }
-        if (lowDanger(run) && p.grounded()) b.jump();
+        if (lowDanger(run) && p.grounded() && !stayLow) b.jump();
+        if (lance == 1 && p.grounded()) b.jump();
+        if (lance == 2 && p.dashCooldown() <= 0) b.dash();
         if (highBeam(run)) b.move(toward);
         if (p.abilityCooldown() <= 0
                 && p.energy() >= p.module().cost()
@@ -137,6 +143,33 @@ public final class CampaignPilot {
                     && Math.abs(q.y() - p.centerY()) < 90
                     && Math.signum(p.x() - q.x()) == Math.signum(q.vx())) return true;
         return false;
+    }
+
+    /**
+     * Lanzen kurz vor dem Einschlag: 1 tief (springen), -1 hoch (unten bleiben), 2 senkrecht oder
+     * gezielt (ausweichen), 0 keine Gefahr.
+     */
+    private static int lanceDanger(GameRun run) {
+        var p = run.player();
+        int verdict = 0;
+        for (var l : run.lances()) {
+            double c = Math.cos(l.angle()), s = Math.sin(l.angle());
+            if (Math.abs(s) < .2) {
+                double eta = l.remaining() + Math.abs(p.x() - l.x()) / 1350;
+                if (l.y() > FLOOR - 80 && eta < .45 && eta > .04) verdict = 1;
+                else if (l.y() < FLOOR - 80 && l.y() > FLOOR - 280 && eta < .8 && verdict == 0)
+                    verdict = -1;
+            } else if (s > .9) {
+                double eta = l.remaining() + (p.y() - Player.HEIGHT - l.y()) / 1400;
+                if (Math.abs(l.x() - p.x()) < 42 && eta < .2 && eta > -.05) verdict = 2;
+            } else {
+                double px = p.x() - l.x(), py = p.centerY() - l.y();
+                double along = px * c + py * s, off = Math.abs(-px * s + py * c);
+                double eta = l.remaining() + Math.max(0, along) / 1800;
+                if (along > 0 && off < 60 && eta < .22) verdict = 2;
+            }
+        }
+        return verdict;
     }
 
     private static boolean lowDanger(GameRun run) {

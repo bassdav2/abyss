@@ -74,7 +74,7 @@ final class PlayerMotor {
         if (Math.abs(p.lungeVelocity) < 4) p.lungeVelocity = 0;
         boolean wasGrounded = p.grounded;
         double fallSpeed = p.vy;
-        Physics.move(p, run.layout(), dt);
+        p.move(run.layout(), dt);
         if (!wasGrounded && p.grounded) {
             if (p.slamming) run.arsenal.slamImpact();
             else if (fallSpeed > 380)

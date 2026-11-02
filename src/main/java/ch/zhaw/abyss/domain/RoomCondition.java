@@ -10,11 +10,11 @@ public enum RoomCondition {
     /** Das Licht ist ausgefallen; mehr Schrott als Ausgleich. */
     BLACKOUT("Stromausfall", "Nur Stirnlampe und Gegneraugen leuchten. +60 % Schrott."),
     /** Jede Welle bringt einen zusätzlichen Gegner; die Bergung ist selten oder besser. */
-    ALARM("Alarmstufe Rot", "Ein zusätzlicher Gegner je Welle. Seltene Bergung."),
+    ALARM("Alarmstufe Rot", "Ein zusätzlicher Gegner je Welle. Seltene Beute."),
     /** Zusätzliche Dampfaustritte; dafür zwei weitere Vorratskisten. */
     LEAK("Druckleck", "Zwei zusätzliche Dampfaustritte. Zwei weitere Vorratskisten."),
     /** Überlebe, bis das Leck abgedichtet ist; Gegner strömen nach. Seltene Bergung. */
-    BREACH("Hüllenbruch", "Halte 40 Sekunden durch, bis das Leck dicht ist. Seltene Bergung."),
+    BREACH("Hüllenbruch", "Halte 40 Sekunden durch, bis das Leck dicht ist. Seltene Beute."),
     /** Das Boot krängt in Abständen; alles rutscht, Trümmer fallen. Mehr Schrott. */
     LIST("Schlagseite", "Das Boot krängt: alles rutscht, Trümmer fallen. +40 % Schrott.");
 

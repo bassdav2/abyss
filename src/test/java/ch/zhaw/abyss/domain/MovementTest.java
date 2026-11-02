@@ -53,12 +53,12 @@ class MovementTest {
         run.player.y = 400;
         run.player.vy = 0;
         run.player.grounded = false;
-        for (int i = 0; i < 60; i++) Physics.move(run.player, layout, TestRuns.STEP);
+        for (int i = 0; i < 60; i++) run.player.move(layout, TestRuns.STEP);
         assertEquals(470, run.player.y, 1e-6);
         assertTrue(run.player.grounded);
         assertSame(platform, run.player.platform);
         run.player.dropTime = .28;
-        for (int i = 0; i < 60; i++) Physics.move(run.player, layout, TestRuns.STEP);
+        for (int i = 0; i < 60; i++) run.player.move(layout, TestRuns.STEP);
         assertEquals(GameRun.FLOOR, run.player.y, 1e-6);
     }
 
@@ -72,7 +72,7 @@ class MovementTest {
         run.player.grounded = false;
         double highest = run.player.y;
         for (int i = 0; i < 40; i++) {
-            Physics.move(run.player, layout, TestRuns.STEP);
+            run.player.move(layout, TestRuns.STEP);
             highest = Math.min(highest, run.player.y);
         }
         assertTrue(highest < 470, "springt durch den Steg nach oben");

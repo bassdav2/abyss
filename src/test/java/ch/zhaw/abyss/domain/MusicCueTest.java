@@ -54,6 +54,14 @@ class MusicCueTest {
     }
 
     @Test
+    void theLotsePlaysLastOrder() {
+        var run = TestRuns.standard();
+        TestRuns.empty(run);
+        TestRuns.place(run, EnemyKind.CAPTAIN, 1100);
+        assertEquals("lotse", MusicDirector.cue(run, false, 0).song());
+    }
+
+    @Test
     void theEmpressHasHerOwnThemeAndSpeedsUpInFury() {
         var run = TestRuns.standard();
         TestRuns.empty(run);

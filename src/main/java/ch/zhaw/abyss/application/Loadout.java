@@ -26,7 +26,7 @@ public record Loadout(
         if (diver == null || weapon == null || module == null)
             throw new IllegalArgumentException("Unvollständige Auswahl");
         if (pressure < 0 || pressure > RunSetup.MAX_PRESSURE)
-            throw new IllegalArgumentException("Ungültige Druckstufe");
+            throw new IllegalArgumentException("Ungültige Schwierigkeit");
     }
 
     /**
