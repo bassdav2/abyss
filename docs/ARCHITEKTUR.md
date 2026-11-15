@@ -35,9 +35,9 @@ Abhängigkeiten zeigen nach innen: UI → Anwendung → Domäne; Infrastruktur i
 
 | Muster | Umsetzung | Nutzen |
 |---|---|---|
-| Strategie | `EnemyBehavior` mit 17 Implementierungen; `Weapon` als Daten-Strategie der Angriffe | Neue Gegner ohne Änderung an `GameRun` |
+| Strategie | `EnemyBehavior` mit 28 Implementierungen; `Weapon` als Daten-Strategie der Angriffe | Neue Gegner ohne Änderung an `GameRun` |
 | Schablonenmethode | `Brain.update` (final) steuert Annähern → Ausholen → Angriff → Erholung; Arten überschreiben Einstiegspunkte | Gemeinsame, testbare Zustandsmaschine |
-| Fabrikmethode | `EnemyKind.behavior()` | Zuordnung Art → Verhalten an einer Stelle |
+| Simple Factory | `EnemyKind.behavior()`, `Enemy.create` | Zuordnung Art → Verhalten an einer Stelle |
 | Beobachter (Pull) | `GameEvent`-Liste, von UI und Audio pro Bild entnommen | Effekte/Audio ohne Rückwirkung auf Regeln |
 | Aggregat | `GameRun` als einzige Änderungsschnittstelle eines Tauchgangs | Konsistenz und Prüfbarkeit |
 | Wertobjekte | Records: `RoomPlan`, `RunSetup`, `RunCheckpoint`, `StatSheet`, `Offer`, `Profile` | Unveränderlichkeit, einfache Tests |

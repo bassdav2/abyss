@@ -297,7 +297,7 @@ Actor <|-- Enemy
 Enemy <|-- Boss
 Enemy --> "1" EnemyKind
 Enemy --> "1" EnemyBehavior
-EnemyKind ..> EnemyBehavior : Fabrikmethode
+EnemyKind ..> EnemyBehavior : Simple Factory
 EnemyBehavior <|.. Brain
 Brain <|-- Brains
 legend bottom
@@ -340,13 +340,15 @@ S -> Repo : saveCheckpoint(run.checkpoint())
 S --> W : run
 W -> W : play()
 ''',
-'07-combat-sequence': r'''title Sequenz: Werkzeugtreffer in einem Simulationsschritt
+'07-combat-sequence': r'''title Sequenz: Werkzeugtreffer in einem Simulationsschritt (Systemoperation step)
 participant ":GameWindow" as W
+participant ":GameService" as S
 participant ":GameRun" as R
 participant ":Combat" as C
 participant ":Enemy" as E
 participant ":WorldRenderer" as V
-W -> R : update(1/120 s, input)
+W -> S : step(1/120 s, input)
+S -> R : update(1/120 s, input)
 R -> R : updatePlayer(): startSwing / updateSwing
 alt aktives Trefferfenster
  R -> C : hitEnemy(enemy, schaden, MELEE, rückstoss, x)
@@ -358,41 +360,50 @@ alt aktives Trefferfenster
  C -> R : emit(HIT / CRIT)
 end
 R -> E : behavior.update(): Vorwarnung, Angriff
+S -> S : recordOutcome()
 W -> R : drainEvents()
 W -> V : event(e) → Funken, Zahlen, Trefferpause
 ''',
-'08-reward-sequence': r'''title Sequenz: Bergung wählen (UC-01, Schritt 5)
+'08-reward-sequence': r'''title Sequenz: Bergung wählen (UC-01, Schritt 5, Systemoperation take)
 actor "Spieler/in" as P
 participant ":GameWindow" as W
+participant ":RunScreens" as U
+participant ":GameService" as S
 participant ":GameRun" as R
 participant ":Player" as Pl
 P -> W : E
 W -> R : interaction()
 R --> W : REWARD
-W -> W : reward() zeigt offers()
-P -> W : Angebot 2
-W -> R : take(offers().get(1))
+W -> U : reward() zeigt offers()
+P -> U : Angebot 2
+U -> S : take(offers().get(1))
+S -> R : take(offer)
 R -> R : Phase, Angebot, Preis prüfen
 R -> Pl : install(item) / weapon wechseln
 Pl -> Pl : recompute(): StatSheet
 R -> R : rewardAvailable = false
-R --> W : true
-W -> W : play()
+R --> S : true
+S --> U : true
+U -> W : play()
 ''',
-'09-room-sequence': r'''title Sequenz: Raumwechsel und Sicherung
+'09-room-sequence': r'''title Sequenz: Raumwechsel und Sicherung (UC-01, Schritte 6–7, Systemoperation chooseNextRoom)
 participant ":RunScreens" as U
+participant ":GameService" as S
 participant ":GameRun" as R
 participant ":RoomGenerator" as G
-participant ":GameService" as S
 participant ":GameRepository" as Repo
-U -> R : chooseNextRoom(abzweig)
+U -> S : chooseNextRoom(abzweig)
+S -> R : chooseNextRoom(abzweig)
 R -> R : Phase ROOM_CLEARED prüfen
 R -> G : choices(tiefe + 1)
-G --> R : RoomPlan
-R -> R : enterRoom(plan): Figur, Gefahren, Kisten, Checkpoint
+G --> R : RoomPlan (1–2, bei Bedarf erzeugt)
+R -> R : enterRoom(plan): Figur, Gefahren, Kisten
 R -> R : spawnWave() oder clearRoom()
-U -> S : saveRoom()
+R --> S : true
+S -> S : saveRoom()
 S -> Repo : saveCheckpoint(run.checkpoint())
+S -> S : recordOutcome()
+S --> U : true
 ''',
 '10-resume-sequence': r'''title Sequenz: Fortsetzen (UC-01, Erweiterung 1a)
 participant ":GameWindow" as W

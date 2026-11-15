@@ -17,13 +17,15 @@ skinparam packageBorderColor #6E8B91
 skinparam stateBackgroundColor #EAF3F2
 skinparam stateBorderColor #355863
 hide empty members
-title Sequenz: Werkzeugtreffer in einem Simulationsschritt
+title Sequenz: Werkzeugtreffer in einem Simulationsschritt (Systemoperation step)
 participant ":GameWindow" as W
+participant ":GameService" as S
 participant ":GameRun" as R
 participant ":Combat" as C
 participant ":Enemy" as E
 participant ":WorldRenderer" as V
-W -> R : update(1/120 s, input)
+W -> S : step(1/120 s, input)
+S -> R : update(1/120 s, input)
 R -> R : updatePlayer(): startSwing / updateSwing
 alt aktives Trefferfenster
  R -> C : hitEnemy(enemy, schaden, MELEE, rückstoss, x)
@@ -35,6 +37,7 @@ alt aktives Trefferfenster
  C -> R : emit(HIT / CRIT)
 end
 R -> E : behavior.update(): Vorwarnung, Angriff
+S -> S : recordOutcome()
 W -> R : drainEvents()
 W -> V : event(e) → Funken, Zahlen, Trefferpause
 

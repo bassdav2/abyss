@@ -11,7 +11,7 @@ Die Zahlen unten wurden am Code gemessen (`src/main/java`, Kommentare und Leerze
 | Schichten, Abhängigkeiten nach innen | `domain` importiert keine andere Schicht, kein JavaFX, kein Dateisystem (über alle Importe geprüft). `application` hängt nur von `domain` und `ports` ab. |
 | Strategie | `EnemyBehavior` mit 28 Implementierungen (23 Gegnerarten, 5 Wächter) |
 | Schablonenmethode | `Brain.update` ist `final` und legt den Ablauf Annähern → Ausholen → Angriff → Erholung fest; Unterklassen füllen nur Einstiegspunkte |
-| Fabrikmethode | `EnemyKind.behavior()` ordnet jeder Art ihr Verhalten zu |
+| Simple Factory | `EnemyKind.behavior()` ordnet jeder Art ihr Verhalten zu |
 | Vererbung | `Actor` ← `Player`, `Enemy`; `Brain` ← 28 Verhaltensklassen |
 | Aggregat, Controller | `GameRun` ist die Konsistenzgrenze eines Tauchgangs, `GameService` nimmt die Systemoperationen entgegen |
 | Port/Adapter | `GameRepository` (Port) und `FileGameRepository` (Adapter); die Domäne bleibt ohne Dateien testbar |
@@ -68,7 +68,7 @@ Grundlage: Feedback aus Iterations-Review 2 (13.10.) und LE06 (20.10.). Das Spie
 |---|---|---|---|
 | Systemoperationen laufen über `GameService` (`step`, `chooseNextRoom`, `take`, `acceptDeal`, `repair`, `useConsole`, `chooseLevelUp`). Die UI entscheidet nicht mehr, wann gesichert oder verbucht wird. | GRASP Controller, Trennung UI/Domäne | 8 verändernde Aufrufe von `GameRun` aus `ui`, Sichern nach Raumwechsel in `RunScreens` | 0 |
 | `GameRepository` liegt in `application`, Paket `ports` aufgelöst | Dependency Inversion, zyklenfreie Pakete | Zyklus `application` ↔ `ports` | 0 Zyklen |
-| `Boss extends Enemy` mit Fabrikmethode `Enemy.create`; Wächter überschreiben Rückstoss, Betäubung, Schadensgrenze, Frost, Kern freilegen, Beute | Vererbung, GRASP Polymorphism, Information Expert, GoF Fabrikmethode | 28 `kind.boss()`-Abfragen in `domain` | 7, nur noch bei der Erzeugung |
+| `Boss extends Enemy` mit Simple Factory `Enemy.create`; Wächter überschreiben Rückstoss, Betäubung, Schadensgrenze, Frost, Kern freilegen, Beute | Vererbung, GRASP Polymorphism, Information Expert, Simple Factory | 28 `kind.boss()`-Abfragen in `domain` | 7, nur noch bei der Erzeugung |
 | Basisklasse `Body` für `Actor`, `Projectile`, `Pickup`; `Physics.move` wird `Actor.move` | Generalisierung, Verantwortung möglichst weit oben, keine Duplikate | Schwerkraft 3-mal einzeln programmiert, statische Hilfsklasse | 1 Implementierung (`Body.fall`), `Physics` entfernt |
 | `ArchitectureTest` prüft Schichtregeln und Zyklen über die Importe | Protected Variations | Regeln nur von Hand geprüft | 6 automatische Regeln |
 

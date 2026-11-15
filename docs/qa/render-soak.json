@@ -1,14 +1,14 @@
 {
   "seconds": 60,
-  "frames": 26980,
+  "frames": 26528,
   "errors": 0,
-  "runs": 1,
-  "wins": 1,
+  "runs": 0,
+  "wins": 0,
   "losses": 0,
-  "averageRenderMs": 2.210,
-  "p95RenderMs": 2.429,
-  "worstRenderMs": 77.341,
-  "roomThemesSeen": 23,
-  "eventTypesSeen": 45,
+  "averageRenderMs": 2.245,
+  "p95RenderMs": 2.485,
+  "worstRenderMs": 77.469,
+  "roomThemesSeen": 19,
+  "eventTypesSeen": 43,
   "note": "Headless-Software-Rendering mit Testspieler, zwei Simulationsschritte pro Bild. Kein menschlicher Spieltest."
 }

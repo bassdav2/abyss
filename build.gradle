@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'jacoco'
 }
 
 group = 'ch.zhaw.abyss'
@@ -143,6 +144,19 @@ tasks.withType(JavaCompile).configureEach {
 test {
     useJUnitPlatform()
     testLogging { events 'failed', 'skipped' }
+    finalizedBy jacocoTestReport
+}
+
+jacoco { toolVersion = '0.8.14' }
+
+jacocoTestReport {
+    description = 'Testabdeckung der Unit-Tests: build/reports/jacoco/test/html/index.html'
+    dependsOn test
+    reports {
+        html.required = true
+        csv.required = true
+        xml.required = false
+    }
 }
 
 tasks.register('copyRuntime', Copy) {

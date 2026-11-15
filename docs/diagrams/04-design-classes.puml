@@ -122,7 +122,7 @@ Actor <|-- Enemy
 Enemy <|-- Boss
 Enemy --> "1" EnemyKind
 Enemy --> "1" EnemyBehavior
-EnemyKind ..> EnemyBehavior : Fabrikmethode
+EnemyKind ..> EnemyBehavior : Simple Factory
 EnemyBehavior <|.. Brain
 Brain <|-- Brains
 legend bottom

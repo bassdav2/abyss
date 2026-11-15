@@ -83,7 +83,11 @@ public final class GameRun {
     private Phase phase;
     private int cycle, kills, wave;
     int smugglersCaught;
-    private double breach, lastBreachSpawn, list;
+    private double breach, lastBreachSpawn;
+
+    /** Schlagseite: laufende Sekunden seit Raumbeginn; der Takt ergibt sich modulo LIST_CYCLE. */
+    private double listClock;
+
     private int listSide = 1;
 
     /** Dauer eines Hüllenbruchs in Sekunden. */
@@ -413,7 +417,7 @@ public final class GameRun {
         fixtures.clear();
         breach = 0;
         lastBreachSpawn = 0;
-        list = 0;
+        listClock = 0;
         listSide = 1;
         wave = 0;
         waveDelay = -1;
@@ -543,12 +547,18 @@ public final class GameRun {
     /** Taktlänge der Schlagseite in Sekunden. */
     static final double LIST_CYCLE = 11;
 
-    /** Schlagseite: alle 11 Sekunden krängt das Boot, vorher knarzt und warnt es. */
+    /** Sekunde im Takt, ab der das Boot knarzt und warnt. */
+    private static final double LIST_WARNING_AT = 7.5;
+
+    /** Sekunde im Takt, ab der das Boot krängt; die Krängung dauert bis zum Taktende. */
+    private static final double LIST_TILT_AT = 9;
+
+    /** Schlagseite: Jeden Takt krängt das Boot einmal, vorher knarzt und warnt es. */
     private void updateList(double dt) {
-        double before = list % LIST_CYCLE;
-        list += dt;
-        double t = list % LIST_CYCLE;
-        if (before < 7.5 && t >= 7.5) {
+        double before = listClock % LIST_CYCLE;
+        listClock += dt;
+        double now = listClock % LIST_CYCLE;
+        if (before < LIST_WARNING_AT && now >= LIST_WARNING_AT) {
             listSide = -listSide;
             emit(new GameEvent(GameEvent.Type.MACHINE, player.x, FLOOR, listSide, "LIST_WARN"));
             for (int i = 0; i < 3; i++) {
@@ -556,7 +566,7 @@ public final class GameRun {
                 hazards.add(new Hazard(x, 110, Hazard.Kind.BARRAGE, -1.5, 1.9));
             }
         }
-        if (before < 9 && t >= 9)
+        if (before < LIST_TILT_AT && now >= LIST_TILT_AT)
             emit(new GameEvent(GameEvent.Type.MACHINE, player.x, FLOOR, listSide, "LIST"));
     }
 
@@ -565,9 +575,11 @@ public final class GameRun {
      */
     public double listTilt() {
         if (room.condition() != RoomCondition.LIST || phase != Phase.RUNNING) return 0;
-        double t = list % LIST_CYCLE;
-        if (t >= 9) return listSide * Math.sin((t - 9) / 2 * Math.PI);
-        if (t >= 7.5) return listSide * .08 * Math.sin(t * 40);
+        double now = listClock % LIST_CYCLE;
+        if (now >= LIST_TILT_AT)
+            return listSide
+                    * Math.sin((now - LIST_TILT_AT) / (LIST_CYCLE - LIST_TILT_AT) * Math.PI);
+        if (now >= LIST_WARNING_AT) return listSide * .08 * Math.sin(now * 40);
         return 0;
     }
 

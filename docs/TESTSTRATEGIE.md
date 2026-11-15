@@ -36,10 +36,24 @@ Stand 04.10.2026, geprüft auf Apple Silicon macOS mit JDK 25 und JavaFX 26.0.2.
 | Lotse | Testspieler-Kämpfe 58–79 s statt 8–27 s, 15/15 Siege; gegen unendlichen Schaden 65 s (Entdecker 49 s). Sechs Bildproben der Lotsenmuster in `docs/qa/endgame` (Kreuzfeuer, Taktfeuer, Ankerkette, Zielstrahlen, Enterangriff, Sonarringe) |
 | Endgame-Ton und Ruckeln | Ereignisrate im dritten Durchlauf bis 7 000/s (erster Durchlauf ≈ 30/s); 30 s Endgame in Echtzeit über die echte Tonausgabe: 3 µs je Klang im Spiel-Thread, Ausgabe läuft durch. Trefferpausen froren vorher 4–19 % der Zeit ein, jetzt ≈ 4 % in allen Durchläufen. Raumwechsel nach Bosskämpfen unter 1 ms |
 | Soundtrack | 11 Stücke (neu: „Letzte Order“ für den Lotsen) je 80 s ohne Ausgabegerät aufgenommen: Spitze höchstens 0,99, RMS −14 bis −17 dB, 28- bis 53-fache Echtzeit; Klangbalance und Harmonien automatisch geprüft, nicht angehört (`docs/qa/music-report.json`) |
-| Render-Probelauf | 60 s, 26 980 Bilder, 0 Fehler, Mittel 2,2 ms, 95 % unter 2,4 ms inklusive Oberflächenebene; einzelne Spitze 77 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
+| Render-Probelauf | 60 s, 26 528 Bilder, 0 Fehler, Mittel 2,2 ms, 95 % unter 2,5 ms (Lauf vom 9. November 2026) inklusive Oberflächenebene; einzelne Spitze 77 ms beim ersten Aufbau (`docs/qa/render-soak.json`) |
 | Schwarm-Lastprobe | Testspieler über fünf Zyklen, bis 1600 Gegner gleichzeitig. Bei 600–999 Gegnern ≈ 3,6 ms Zeichnen und 0,4 ms Simulation pro Bild, bei 1000+ Gegnern ≈ 3,9 ms und 1,0 ms. Einzelne Spitzen bis knapp 200 ms bei Raumwechseln und grossen Abschusswellen (`./gradlew swarmBench --args="777 5 0"`) |
 | Balance | Testspieler ohne Laufbahnboni gewinnt Zyklus 1 mit jeder Klasse (8/8 je Klasse). Zwei Endgame-Läufe: beide besiegen die Prismenkaiserin im zweiten Zyklus, einer fällt im dritten Zyklus an ihr, der andere gewinnt alle fünf Zyklen. Danach wurden Wächter ab Eskalation 40 zäher, weil sie dort in Sekunden fielen. Kein menschlicher Spieltest |
 | Balancebericht, 30 Seeds je Klasse | Mechanikerin, Harpunier, Schweisserin, Funkerin je 30/30; Koloss 26/30 (nach Anhebung auf 150 Integrität und 20 % Schutz); keine Hänger |
+
+## Testabdeckung
+
+Gemessen mit JaCoCo über die JUnit-Tests (`./gradlew test`, Bericht in `build/reports/jacoco/test/html/index.html`). Lauf vom 13. November 2026, 210 Tests.
+
+| Schicht | Zeilen | Zweige | Bemerkung |
+|---|---|---|---|
+| `domain` | 95,2 % | 85,7 % | Spielregeln ohne Fenster und Dateien |
+| `application` | 92,1 % | 74,9 % | `GameService` mit Speicher im Arbeitsspeicher |
+| `infrastructure` | 90,8 % | 73,8 % | Dateiformat 70,3 %, Musik 94,4 %, `AudioSystem` 0 % |
+| `ui` | 58,7 % | 56,8 % | Zeichnen 81,1 %, Pixelebene 92,6 %; `GameWindow`, `MenuScreens`, `RunScreens` und `Gui` 0 % |
+| Gesamt | 76,4 % | 69,5 % | 12 954 von 16 952 Zeilen |
+
+Die Fenster-Klassen brauchen JavaFX und werden nur von `uiSmoke` ausgeführt; dieser Lauf zählt nicht zur gemessenen Abdeckung.
 
 ## Reproduktion
 

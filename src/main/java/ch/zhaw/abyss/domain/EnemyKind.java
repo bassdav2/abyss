@@ -195,7 +195,7 @@ public enum EnemyKind {
     }
 
     /**
-     * Fabrikmethode für das Verhalten. Jede Instanz ist zustandslos; Zustand liegt am Gegner.
+     * Simple Factory für das Verhalten. Jede Instanz ist zustandslos; Zustand liegt am Gegner.
      *
      * @return Verhaltensstrategie
      */

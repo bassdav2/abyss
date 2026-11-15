@@ -9,8 +9,8 @@ import java.util.List;
  *
  * <p>Wie ein Gegner auf Treffer, Rückstoss, Betäubung und Raumtechnik reagiert, legen
  * überschreibbare Methoden fest. Wächter spezialisieren sie in {@link Boss} (Polymorphismus statt
- * Typabfragen wie {@code kind.boss()}). Erzeugt werden Gegner über die Fabrikmethode {@link
- * #create}.
+ * Typabfragen wie {@code kind.boss()}). Erzeugt werden Gegner über die statische Fabrik (Simple
+ * Factory) {@link #create}.
  */
 public class Enemy extends Actor {
     /** Zustände der Kampf-Zustandsmaschine. */
@@ -89,7 +89,7 @@ public class Enemy extends Actor {
     }
 
     /**
-     * Fabrikmethode: Wächterarten werden als {@link Boss} erzeugt, alle anderen als {@code Enemy}.
+     * Simple Factory: Wächterarten werden als {@link Boss} erzeugt, alle anderen als {@code Enemy}.
      *
      * @param id eindeutige Nummer
      * @param kind Gegnerart

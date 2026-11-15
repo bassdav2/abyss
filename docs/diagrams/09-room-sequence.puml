@@ -17,19 +17,23 @@ skinparam packageBorderColor #6E8B91
 skinparam stateBackgroundColor #EAF3F2
 skinparam stateBorderColor #355863
 hide empty members
-title Sequenz: Raumwechsel und Sicherung
+title Sequenz: Raumwechsel und Sicherung (UC-01, Schritte 6–7, Systemoperation chooseNextRoom)
 participant ":RunScreens" as U
+participant ":GameService" as S
 participant ":GameRun" as R
 participant ":RoomGenerator" as G
-participant ":GameService" as S
 participant ":GameRepository" as Repo
-U -> R : chooseNextRoom(abzweig)
+U -> S : chooseNextRoom(abzweig)
+S -> R : chooseNextRoom(abzweig)
 R -> R : Phase ROOM_CLEARED prüfen
 R -> G : choices(tiefe + 1)
-G --> R : RoomPlan
-R -> R : enterRoom(plan): Figur, Gefahren, Kisten, Checkpoint
+G --> R : RoomPlan (1–2, bei Bedarf erzeugt)
+R -> R : enterRoom(plan): Figur, Gefahren, Kisten
 R -> R : spawnWave() oder clearRoom()
-U -> S : saveRoom()
+R --> S : true
+S -> S : saveRoom()
 S -> Repo : saveCheckpoint(run.checkpoint())
+S -> S : recordOutcome()
+S --> U : true
 
 @enduml
